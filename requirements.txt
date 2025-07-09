@@ -1,5 +1,5 @@
 alembic==1.14.1
-anyio==4.9.0
+anyio==4.5.2
 APScheduler==3.11.0
 asgiref==3.9.1
 blinker==1.9.0
