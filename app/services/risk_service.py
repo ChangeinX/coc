@@ -1,24 +1,10 @@
 from sqlalchemy import select, desc
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from app.extensions import db
 from app.models import PlayerSnapshot
 
-# ------------------------------------------------------------------------
-# Risk Scoring Heuristics
-# ------------------------------------------------------------------------
-# The goal is to surface *recently* idle members first.
-#   • 2 days idle  → "think what's going on?"
-#   • 3 days idle  → "it's getting intense"
-#   • ≥4 days idle → "sitting duck – kick candidate"
-#
-# To express this we translate idle days → a non‑linear percentage that feeds a
-# heavier _idle_ weight.  Combined with other axes (war, donations) we keep the
-# composite score in the familiar 0–100 range so the dashboard continues to
-# sort naturally without change.
-# ------------------------------------------------------------------------
 
-# --- Axis Weights (sum to 1.0) -------------------------------------------
 _WEIGHTS = {
     "war": 0.40,       # 40 pts when clan is actively warring
     "idle": 0.35,      # ↑ from 0.25 → emphasise recency of idleness
@@ -30,7 +16,7 @@ _WAR_ATTACKS_TOTAL = 4
 _IDLE_DAYS_CEIL = 4  # cap for bucket lookup – kept for compatibility
 _DEFICIT_CEIL = 0.50
 _DROP_CEIL = 0.30
-_CLAN_WAR_WINDOW = 42  # days to look back for any war activity
+_CLAN_WAR_WINDOW = 42
 
 # Idle buckets → percentage contribution on the idle axis
 def _idle_pct_from_days(days: int) -> float:
@@ -41,7 +27,7 @@ def _idle_pct_from_days(days: int) -> float:
         return 0.75  # getting intense
     if days == 2:
         return 0.50  # mild concern
-    return 0.0  # active within 24‑48 h → no idle penalty
+    return 0.0  # active within 24‑48h → no idle penalty
 
 
 def _clamp01(x: float) -> float:
@@ -70,19 +56,13 @@ async def get_history(player_tag: str, days: int = 30):
     res = db.session.execute(stmt).scalars().all()
     return list(reversed(res))
 
-
-# ------------------------------------------------------------------------
-# Composite Risk Score ----------------------------------------------------
-# ------------------------------------------------------------------------
-
-def score(history: list["PlayerSnapshot"], clan_history_map: dict | None = None) -> int:
+def score(history: list["PlayerSnapshot"], clan_history_map: dict | None = None) -> tuple[int, datetime]:
     if len(history) < 2:
-        return 0
+        return 0, history[-1].ts
 
     latest = history[-1]
     prev = history[-8] if len(history) >= 8 else history[0]
 
-    # --- WAR participation ------------------------------------------------
     if latest.war_attacks_used is None:
         war_miss_pct = 0.0
     else:
@@ -95,26 +75,21 @@ def score(history: list["PlayerSnapshot"], clan_history_map: dict | None = None)
     if clan_history_map is not None:
         clan_active = _clan_has_war(clan_history_map)
 
-    # --- Inactivity -------------------------------------------------------
     last_change = next(
-        (
-            s
-            for s in reversed(history)
-            if s.trophies != latest.trophies or s.donations != latest.donations
-        ),
+        (s for s in reversed(history)
+         if s.trophies != latest.trophies or s.donations != latest.donations),
         history[0],
     )
-    idle_days = (latest.ts - last_change.ts).days
+    activity_ts = latest.last_seen or last_change.ts
+    idle_days = (latest.ts - activity_ts).days
     idle_pct = _idle_pct_from_days(idle_days)
 
-    # --- Donation deficit & sudden drop ----------------------------------
     ratio = latest.donations / max(latest.donations_received, 1)
     deficit_pct = _clamp01((_DEFICIT_CEIL - ratio) / _DEFICIT_CEIL)
 
     drop_ratio = (prev.donations - latest.donations) / max(prev.donations, 1)
     drop_pct = _clamp01(drop_ratio / _DROP_CEIL)
 
-    # --- Weighted sum -----------------------------------------------------
     raw = (
         (_WEIGHTS["war"] if clan_active else 0) * war_miss_pct
         + _WEIGHTS["idle"] * idle_pct
@@ -122,7 +97,7 @@ def score(history: list["PlayerSnapshot"], clan_history_map: dict | None = None)
         + _WEIGHTS["don_drop"] * drop_pct
     )
 
-    return int(round(raw * _MAX))
+    return int(round(raw * _MAX)), activity_ts
 
 
 async def clan_at_risk(clan_tag: str) -> list[dict]:
@@ -146,11 +121,12 @@ async def clan_at_risk(clan_tag: str) -> list[dict]:
     results = []
     for p in players:
         hist = await get_history(p.player_tag, 30)
+        score_val, last_seen_ts = score(hist)
         results.append({
             "player_tag": p.player_tag,
             "name": p.name,
-            "risk_score": score(hist),
+            "risk_score": score_val,
+            "last_seen": last_seen_ts.date().isoformat(),
         })
 
-    results.sort(key=lambda r: r["risk_score"], reverse=True)
-    return results
+    return sorted(results, key=lambda r: r["risk_score"], reverse=True)

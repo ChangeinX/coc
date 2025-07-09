@@ -6,11 +6,18 @@ from app.utils import normalize_tag
 bp = Blueprint("front", __name__)
 
 
-def _merge_risk(member_list: list[dict], risk_list: list[dict]) -> list[dict]:
-    rmap = {r["player_tag"]: r["risk_score"] for r in risk_list}
-    for m in member_list:
-        m["risk_score"] = rmap.get(m["tag"].lstrip("#").upper(), 0)
-    return member_list
+def _merge_risk(members: list[dict], risk: list[dict]) -> list[dict]:
+    rmap = {r["player_tag"]: r for r in risk}
+    for m in members:
+        info = rmap.get(m["tag"].lstrip("#").upper())
+        if info:
+            m["risk_score"] = info["risk_score"]
+            m["last_seen"]  = info["last_seen"]
+        else:
+            m["risk_score"] = 0
+            m["last_seen"]  = None
+    return members
+
 
 
 @bp.get("/dashboard/")

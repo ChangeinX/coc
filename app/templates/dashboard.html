@@ -12,38 +12,40 @@
 
 <body class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 p-4">
 <div class="max-w-5xl mx-auto space-y-6" id="app">
+
     <!-- Search -->
     <div class="flex gap-2 justify-center">
-        <input id="tagInput" class="max-w-xs px-3 py-2 rounded border" placeholder="Clan tag (without #)"
+        <input id="tagInput"
+               class="max-w-xs px-3 py-2 rounded border"
+               placeholder="Clan tag (without #)"
                value="{{ tag or '' }}">
         <button id="loadBtn" class="px-4 py-2 rounded bg-slate-800 text-white">Load</button>
     </div>
 
-    <!-- Flash error -->
     {% if error %}
     <p class="text-center text-red-600 font-medium">{{ error }}</p>
     {% endif %}
 
-    <!-- ---------------- CLAN DATA PRESENT ---------------- -->
     {% if clan %}
     {% import 'stat.html' as s %}
 
-    <!-- STAT CARDS -->
+    <!--  Stat cards  -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         {{ s.stat('users', 'Members', clan.members) }}
         {{ s.stat('shield-alert', 'Level', clan.clanLevel) }}
         {{ s.stat('sword', 'War Wins', clan.warWins | default(0)) }}
-        {{ s.stat('sword', 'War Losses', clan.warLosses | default(0)) }}
+        {{ s.stat('sword', 'War Losses', clan.warLosses| default(0)) }}
     </div>
 
-    <!-- TOP-RISK LIST -->
+    <!--  At-risk list  -->
     <h2 class="mt-8 text-xl font-semibold text-slate-700">At-Risk Members</h2>
     <div class="overflow-x-auto shadow bg-white rounded mb-6">
-        <table class="min-w-full">
+        <table class="min-w-full text-sm">
             <thead class="bg-slate-50 text-left text-slate-600">
             <tr>
                 <th class="px-4 py-3">Player</th>
                 <th class="px-4 py-3">Tag</th>
+                <th class="px-4 py-3">Last Seen</th>
                 <th class="px-4 py-3">Score</th>
             </tr>
             </thead>
@@ -52,12 +54,13 @@
             <tr class="border-b last:border-none hover:bg-rose-50 cursor-pointer"
                 onclick="openModal('{{ p.tag }}')">
                 <td class="px-4 py-2 font-medium">{{ p.name }}</td>
-                <td class="px-4 py-2 text-sm text-slate-500">#{{ p.tag }}</td>
+                <td class="px-4 py-2 text-slate-500">{{ p.tag }}</td>
+                <td class="px-4 py-2">{{ p.last_seen | default('—') }}</td>
                 <td class="px-4 py-2">
                     {% set c = 'green' if p.risk_score<40 else 'yellow' if p.risk_score<70 else 'red' %}
                     <span class="inline-block px-3 py-1 text-white rounded-full bg-{{ c }}-500">
-            {{ p.risk_score }}
-          </span>
+              {{ p.risk_score }}
+            </span>
                 </td>
             </tr>
             {% endfor %}
@@ -65,18 +68,31 @@
         </table>
     </div>
 
-    <!-- FULL MEMBERS TABLE -->
+    <!--  Complete member list  -->
     <h2 class="text-xl font-semibold text-slate-700">All Members</h2>
     <div class="overflow-x-auto shadow bg-white rounded">
-        <table class="min-w-full text-sm">
+        <table id="membersTable" class="min-w-full text-sm">
             <thead class="bg-slate-50 text-left text-slate-600">
             <tr>
                 <th class="px-3 py-2">Player</th>
-                <th class="px-3 py-2">Role</th>
-                <th class="px-3 py-2">TH</th>
-                <th class="px-3 py-2">Trophies</th>
-                <th class="px-3 py-2">Don ► Rec</th>
-                <th class="px-3 py-2">Risk</th>
+                <th class="px-3 py-2 cursor-pointer select-none"
+                    data-sort="role" data-type="string">Role
+                </th>
+                <th class="px-3 py-2 cursor-pointer select-none
+                   text-center" data-sort="th" data-type="number">TH
+                </th>
+                <th class="px-3 py-2 cursor-pointer select-none
+                   text-center" data-sort="trophies" data-type="number">Trophies
+                </th>
+                <th class="px-3 py-2 cursor-pointer select-none
+                   text-center" data-sort="donations" data-type="number">Don ► Rec
+                </th>
+                <th class="px-3 py-2 cursor-pointer select-none
+                   text-center" data-sort="last" data-type="date">Last Seen
+                </th>
+                <th class="px-3 py-2 cursor-pointer select-none
+                   text-center" data-sort="risk" data-type="number">Risk
+                </th>
             </tr>
             </thead>
             <tbody>
@@ -84,10 +100,11 @@
             <tr class="border-b last:border-none hover:bg-slate-50 cursor-pointer"
                 onclick="openModal('{{ m.tag }}')">
                 <td class="px-3 py-2 font-medium">{{ m.name }}</td>
-                <td class="px-3 py-2">{{ m.role|capitalize }}</td>
+                <td class="px-3 py-2">{{ m.role | capitalize }}</td>
                 <td class="px-3 py-2 text-center">{{ m.townHallLevel }}</td>
                 <td class="px-3 py-2 text-center">{{ m.trophies }}</td>
                 <td class="px-3 py-2 text-center">{{ m.donations }}/{{ m.donationsReceived }}</td>
+                <td class="px-3 py-2 text-center">{{ m.last_seen | default('—') }}</td>
                 <td class="px-3 py-2 text-center">
                     {% set c = 'green' if m.risk_score<40 else 'yellow' if m.risk_score<70 else 'red' %}
                     <span class="inline-block w-10 text-white rounded-full bg-{{ c }}-500">{{ m.risk_score }}</span>
@@ -100,16 +117,15 @@
     {% endif %}
 
 </div>
-<!-- PLAYER MODAL -->
+
+<!--  Player modal  -->
 <div id="modalBackdrop" class="hidden fixed inset-0 bg-black/40 z-40"></div>
 <div id="playerModal"
      class="hidden fixed inset-0 flex items-center justify-center z-50">
-  <div class="bg-white w-full max-w-lg rounded-xl shadow-xl p-6 relative">
-    <button class="absolute top-3 right-3 text-slate-400" onclick="closeModal()">✕</button>
-    <div id="modalBody" class="space-y-4">
-      <!-- dynamic content -->
+    <div class="bg-white w-full max-w-lg rounded-xl shadow-xl p-6 relative">
+        <button class="absolute top-3 right-3 text-slate-400" onclick="closeModal()">✕</button>
+        <div id="modalBody" class="space-y-4"><!-- populated by JS --></div>
     </div>
-  </div>
 </div>
 
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
