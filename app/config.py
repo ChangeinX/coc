@@ -2,6 +2,7 @@ import os
 
 
 class Config:
+    LOG_LEVEL = "INFO"
     # Flask
     SECRET_KEY = os.getenv("SECRET_KEY", "dev")
     JSON_SORT_KEYS = False

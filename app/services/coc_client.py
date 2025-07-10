@@ -1,10 +1,14 @@
 import asyncio
+import logging
 from functools import wraps
 from datetime import datetime, timedelta
 import httpx
 from flask import current_app
 
 from app.utils import encode_tag
+
+
+logger = logging.getLogger(__name__)
 
 # rudimentary in-process rate gate
 _last_reset = datetime.utcnow()
@@ -49,6 +53,7 @@ class CoCClient:
                 except ValueError:
                     reason = ""
                 if resp.status_code == 403 and reason.startswith("accessDenied"):
+                    logger.warning(f"Access denied for {path}: {reason}")
                     return {"state": "accessDenied"}
                 return {"state": "notInWar"}  # 404 or unknown 403 reason
 

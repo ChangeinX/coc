@@ -1,13 +1,15 @@
+import logging
+from asyncio import gather
 from datetime import datetime
 
-from asyncio import gather
-
-from app.services.coc_client import get_client
-from app.services.player_service import get_player
-from app.services.player_cache import upsert_player
 from app.extensions import db, cache
 from app.models import ClanSnapshot
+from app.services.coc_client import get_client
+from app.services.player_cache import upsert_player
+from app.services.player_service import get_player
 from app.utils import normalize_tag
+
+logger = logging.getLogger(__name__)
 
 
 async def fetch_clan(tag: str) -> dict:
@@ -22,6 +24,9 @@ async def get_clan(tag: str) -> dict:
         return cached
 
     data = await fetch_clan(tag)
+
+    logger.info(f"Data fetched for clan {tag}: {data.get('name', 'Unknown')}")
+
     cache.set(key, data)
 
     # Persist minimal snapshot (async context outside of event loop)

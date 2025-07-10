@@ -1,9 +1,12 @@
+import logging
+
 from flask import Blueprint, render_template
 from app.services.clan_service import get_clan
 from app.services.risk_service import clan_at_risk
 from app.utils import normalize_tag
 
 bp = Blueprint("front", __name__)
+logger = logging.getLogger(__name__)
 
 
 def _merge_risk(members: list[dict], risk: list[dict]) -> list[dict]:
@@ -29,6 +32,7 @@ async def dash(tag: str | None = None):
             clan = await get_clan(tag)
             risk = await clan_at_risk(normalize_tag(tag))
             members = _merge_risk(clan.get("memberList", []), risk)
+            logger.info(f"Found {len(members)} members in clan {tag}")
 
             # expose top-N risk separately for convenience
             top_risk = sorted(members, key=lambda m: m["risk_score"], reverse=True)[:10]
