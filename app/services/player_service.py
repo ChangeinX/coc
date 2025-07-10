@@ -7,10 +7,6 @@ from app.utils import normalize_tag
 
 
 def _activity(prev: PlayerSnapshot, now: dict) -> bool:
-    """
-    Return **True** only if we see a change that *must* be triggered by the player.
-    Trophy *drops* (being raided) are ignored.
-    """
     return (
             now["trophies"] > prev.trophies or
             now.get("donations", 0) > prev.donations or
@@ -24,10 +20,6 @@ async def _fetch_player(tag: str) -> dict:
 
 
 async def get_player(tag: str) -> dict:
-    """
-    Fetch live player data, cache it, and snapshot **last_seen**
-    only when the player shows *positive* activity.
-    """
     tag = tag.upper()
     cache_key = f"player:{tag}"
     if cached := cache.get(cache_key):

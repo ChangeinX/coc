@@ -1,8 +1,11 @@
-FROM --platform=linux/amd64 python:3.11-slim
+FROM python:3.11-slim
 
 WORKDIR /opt/app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
-CMD ["sh","-c","gunicorn --bind 0.0.0.0:${PORT:-8000} run:app"]
+CMD ["sh", "-c", "uvicorn run:app \
+  --host 0.0.0.0 \
+  --port ${PORT:-8000} \
+  --workers 2"]
