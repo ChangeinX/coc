@@ -16,6 +16,4 @@ def spa(path: str):
     return send_from_directory(static_dir, "index.html")
 
 if __name__ == "__main__":
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    app.run(debug=True)
+    app.run(port=8000)
