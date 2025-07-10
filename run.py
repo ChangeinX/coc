@@ -1,5 +1,8 @@
 from flask import current_app, send_from_directory
 from pathlib import Path
+
+from asgiref.wsgi import WsgiToAsgi
+
 from app import create_app
 
 app = create_app()
@@ -14,6 +17,8 @@ def spa(path: str):
     if path and (static_dir / path).exists():
         return send_from_directory(static_dir, path)
     return send_from_directory(static_dir, "index.html")
+
+asgi_app = WsgiToAsgi(app)
 
 if __name__ == "__main__":
     app.run(port=8000)
