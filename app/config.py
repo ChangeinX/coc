@@ -16,6 +16,12 @@ class Config:
     COC_TOKEN = os.getenv("COC_API_TOKEN")  # required
     COC_BASE = "https://api.clashofclans.com/v1"
 
+    # OAuth
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+    APPLE_CLIENT_ID = os.getenv("APPLE_CLIENT_ID")
+    APPLE_CLIENT_SECRET = os.getenv("APPLE_CLIENT_SECRET")
+
     # Cache (SimpleCache by default; swap config for redis if wanted)
     CACHE_TYPE = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT = 300  # 5 min

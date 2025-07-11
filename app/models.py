@@ -66,3 +66,13 @@ class LoyaltyMembership(db.Model):
             name="uq_clan_membership",
         ),
     )
+
+
+class User(db.Model):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    provider = db.Column(db.String(50), nullable=False)
+    provider_id = db.Column(db.String(255), unique=True, nullable=False)
+
