@@ -22,7 +22,7 @@ def _merge_risk(members: list[dict], risk: list[dict]) -> list[dict]:
     return members
 
 
-DEFAULT_TAG = "2PPPQ"
+DEFAULT_TAG = "UV0YR2Q8"
 
 
 @bp.get("/", defaults={"tag": DEFAULT_TAG})
