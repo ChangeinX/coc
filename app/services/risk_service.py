@@ -1,9 +1,10 @@
-from sqlalchemy import select, desc
 from datetime import timedelta, datetime
+from typing import List, Optional
+
+from sqlalchemy import select, desc
 
 from app.extensions import db
 from app.models import PlayerSnapshot
-
 
 _WEIGHTS = {
     "war": 0.40,  # 40 pts when clan is actively warring
@@ -12,8 +13,7 @@ _WEIGHTS = {
     "don_drop": 0.10,
 }
 _MAX = 100
-_WAR_ATTACKS_TOTAL = 4
-_IDLE_DAYS_CEIL = 4  # cap for bucket lookup – kept for compatibility
+_WAR_ATTACKS_TOTAL = 2
 _DEFICIT_CEIL = 0.50
 _DROP_CEIL = 0.30
 _CLAN_WAR_WINDOW = 42
@@ -35,9 +35,26 @@ def _clamp01(x: float) -> float:
     return max(0.0, min(1.0, x))
 
 
+def _latest_war_snapshot(history: List[PlayerSnapshot]) -> Optional[PlayerSnapshot]:
+    """Newest snapshot that still contains war info (player was in the roster)."""
+    for snap in reversed(history):          # newest → oldest
+        if snap.war_attacks_used is not None:
+            return snap
+    return None
+
+def _infer_attack_cap(history: List[PlayerSnapshot]) -> int:
+    """Best-guess the max attacks available in the observed war."""
+    cap = max(
+        (snap.war_attacks_used or 0)
+        for snap in history
+        if snap.war_attacks_used is not None
+    )
+    return cap or _WAR_ATTACKS_TOTAL
+
+
 def _clan_has_war(history_map: dict[str, list]) -> bool:
     """Return *True* if ANY member has war attacks in the recent window."""
-    cutoff = history_map["now"] - timedelta(days=_CLAN_WAR_WINDOW)
+    cutoff = history_map["now"] - timedelta(days=_CLAN_WAR_WINDOW) # noqa
     for snapshots in history_map["all"]:
         if any(s.ts >= cutoff and s.war_attacks_used is not None for s in snapshots):
             return True
@@ -49,7 +66,7 @@ async def get_history(player_tag: str, days: int = 30):
     cutoff = db.func.now() - timedelta(days=days)
     stmt = (
         select(PlayerSnapshot)
-        .where(PlayerSnapshot.player_tag == player_tag, PlayerSnapshot.ts >= cutoff)
+        .where(PlayerSnapshot.player_tag == player_tag, PlayerSnapshot.ts >= cutoff) # noqa
         .order_by(desc(PlayerSnapshot.ts))
     )
     res = db.session.execute(stmt).scalars().all()
@@ -57,20 +74,22 @@ async def get_history(player_tag: str, days: int = 30):
 
 
 def score(
-    history: list["PlayerSnapshot"], clan_history_map: dict | None = None
+    history: List[PlayerSnapshot], clan_history_map: dict | None = None
 ) -> tuple[int, datetime]:
+    """Compute the 0-100 risk score for a single member."""
     if len(history) < 2:
         return 0, history[-1].ts
 
     latest = history[-1]
     prev = history[-8] if len(history) >= 8 else history[0]
 
-    if latest.war_attacks_used is None:
+    # WAR AXIS
+    war_snap = _latest_war_snapshot(history)
+    if war_snap is None:                    # member wasn’t on the war roster
         war_miss_pct = 0.0
     else:
-        war_miss_pct = _clamp01(
-            (_WAR_ATTACKS_TOTAL - latest.war_attacks_used) / _WAR_ATTACKS_TOTAL
-        )
+        cap = _infer_attack_cap(history)
+        war_miss_pct = _clamp01((cap - war_snap.war_attacks_used) / cap)
 
     # Disable war axis if the whole clan has been dormant.
     clan_active = True
@@ -107,10 +126,11 @@ def score(
 
 async def clan_at_risk(clan_tag: str) -> list[dict]:
     """Return sorted risk breakdown for every member in *clan_tag*."""
-    # latest snapshot for each member → compute history & score
+    # Get the latest snapshot for each member, then compute history & score
     subq = (
         select(
-            PlayerSnapshot.player_tag, db.func.max(PlayerSnapshot.ts).label("max_ts")
+            PlayerSnapshot.player_tag,
+            db.func.max(PlayerSnapshot.ts).label("max_ts"),
         )
         .where(PlayerSnapshot.clan_tag == clan_tag)
         .group_by(PlayerSnapshot.player_tag)

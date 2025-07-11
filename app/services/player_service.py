@@ -19,7 +19,7 @@ async def _fetch_player(tag: str) -> dict:
     return await get_client().player(tag)
 
 
-async def get_player(tag: str) -> dict:
+async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
     tag = tag.upper()
     cache_key = f"player:{tag}"
     if cached := cache.get(cache_key):
@@ -41,6 +41,10 @@ async def get_player(tag: str) -> dict:
         active = _activity(prev_snapshot, data)
         last_seen = now if active else (prev_snapshot.last_seen or prev_snapshot.ts)
 
+    attacks_used_val = (
+        war_attacks_used if war_attacks_used is not None else data.get("warAttacksUsed")
+    )
+
     ps = PlayerSnapshot(
         ts=now,
         player_tag=norm_tag,
@@ -51,7 +55,7 @@ async def get_player(tag: str) -> dict:
         trophies=data["trophies"],
         donations=data.get("donations", 0),
         donations_received=data.get("donationsReceived", 0),
-        war_attacks_used=data.get("warAttacksUsed"),  # may be None
+        war_attacks_used=attacks_used_val,
         last_seen=last_seen,
     )
     db.session.add(ps)
