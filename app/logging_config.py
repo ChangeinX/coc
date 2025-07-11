@@ -1,21 +1,20 @@
 import logging
-import os
 import sys
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
 
 def configure_logging(
     level: str | int = "INFO",
     log_dir: str | Path = "logs",
     log_file: str = "app.log",
-    max_bytes: int = 10 * 1024 * 1024,   # 10 MB
+    max_bytes: int = 10 * 1024 * 1024,  # 10 MB
     backup_count: int = 5,
 ) -> None:
-
     level = logging.getLevelName(level) if isinstance(level, str) else level
 
     root = logging.getLogger()
-    if root.handlers:          # Defensive: avoid configuring twice
+    if root.handlers:  # Defensive: avoid configuring twice
         return
 
     root.setLevel(level)
@@ -34,6 +33,7 @@ def configure_logging(
 
     # Propagate warnings captured by `warnings.warn(...)`
     logging.captureWarnings(True)
+
 
 def _default_formatter() -> logging.Formatter:
     return logging.Formatter(

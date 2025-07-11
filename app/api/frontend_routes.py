@@ -15,15 +15,18 @@ def _merge_risk(members: list[dict], risk: list[dict]) -> list[dict]:
         info = rmap.get(m["tag"].lstrip("#").upper())
         if info:
             m["risk_score"] = info["risk_score"]
-            m["last_seen"]  = info["last_seen"]
+            m["last_seen"] = info["last_seen"]
         else:
             m["risk_score"] = 0
-            m["last_seen"]  = None
+            m["last_seen"] = None
     return members
 
 
-@bp.get("/")
-@bp.get("/dashboard/")
+DEFAULT_TAG = "2PPPQ"
+
+
+@bp.get("/", defaults={"tag": DEFAULT_TAG})
+@bp.get("/dashboard/", defaults={"tag": DEFAULT_TAG})
 @bp.get("/dashboard/<string:tag>")
 async def dash(tag: str | None = None):
     ctx = {"tag": tag}

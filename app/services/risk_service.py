@@ -6,8 +6,8 @@ from app.models import PlayerSnapshot
 
 
 _WEIGHTS = {
-    "war": 0.40,       # 40 pts when clan is actively warring
-    "idle": 0.35,      # ↑ from 0.25 → emphasise recency of idleness
+    "war": 0.40,  # 40 pts when clan is actively warring
+    "idle": 0.35,  # ↑ from 0.25 → emphasise recency of idleness
     "don_deficit": 0.15,
     "don_drop": 0.10,
 }
@@ -17,6 +17,7 @@ _IDLE_DAYS_CEIL = 4  # cap for bucket lookup – kept for compatibility
 _DEFICIT_CEIL = 0.50
 _DROP_CEIL = 0.30
 _CLAN_WAR_WINDOW = 42
+
 
 # Idle buckets → percentage contribution on the idle axis
 def _idle_pct_from_days(days: int) -> float:
@@ -38,9 +39,7 @@ def _clan_has_war(history_map: dict[str, list]) -> bool:
     """Return *True* if ANY member has war attacks in the recent window."""
     cutoff = history_map["now"] - timedelta(days=_CLAN_WAR_WINDOW)
     for snapshots in history_map["all"]:
-        if any(
-            s.ts >= cutoff and s.war_attacks_used is not None for s in snapshots
-        ):
+        if any(s.ts >= cutoff and s.war_attacks_used is not None for s in snapshots):
             return True
     return False
 
@@ -56,7 +55,10 @@ async def get_history(player_tag: str, days: int = 30):
     res = db.session.execute(stmt).scalars().all()
     return list(reversed(res))
 
-def score(history: list["PlayerSnapshot"], clan_history_map: dict | None = None) -> tuple[int, datetime]:
+
+def score(
+    history: list["PlayerSnapshot"], clan_history_map: dict | None = None
+) -> tuple[int, datetime]:
     if len(history) < 2:
         return 0, history[-1].ts
 
@@ -76,8 +78,11 @@ def score(history: list["PlayerSnapshot"], clan_history_map: dict | None = None)
         clan_active = _clan_has_war(clan_history_map)
 
     last_change = next(
-        (s for s in reversed(history)
-         if s.trophies != latest.trophies or s.donations != latest.donations),
+        (
+            s
+            for s in reversed(history)
+            if s.trophies != latest.trophies or s.donations != latest.donations
+        ),
         history[0],
     )
     activity_ts = latest.last_seen or last_change.ts
@@ -122,11 +127,13 @@ async def clan_at_risk(clan_tag: str) -> list[dict]:
     for p in players:
         hist = await get_history(p.player_tag, 30)
         score_val, last_seen_ts = score(hist)
-        results.append({
-            "player_tag": p.player_tag,
-            "name": p.name,
-            "risk_score": score_val,
-            "last_seen": last_seen_ts.date().isoformat(),
-        })
+        results.append(
+            {
+                "player_tag": p.player_tag,
+                "name": p.name,
+                "risk_score": score_val,
+                "last_seen": last_seen_ts.date().isoformat(),
+            }
+        )
 
     return sorted(results, key=lambda r: r["risk_score"], reverse=True)

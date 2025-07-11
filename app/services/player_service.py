@@ -8,10 +8,10 @@ from app.utils import normalize_tag
 
 def _activity(prev: PlayerSnapshot, now: dict) -> bool:
     return (
-            now["trophies"] > prev.trophies or
-            now.get("donations", 0) > prev.donations or
-            now.get("donationsReceived", 0) > prev.donations_received or
-            (now.get("warAttacksUsed") or 0) > (prev.war_attacks_used or 0)
+        now["trophies"] > prev.trophies
+        or now.get("donations", 0) > prev.donations
+        or now.get("donationsReceived", 0) > prev.donations_received
+        or (now.get("warAttacksUsed") or 0) > (prev.war_attacks_used or 0)
     )
 
 
@@ -30,8 +30,7 @@ async def get_player(tag: str) -> dict:
     now = datetime.utcnow()
     norm_tag = normalize_tag(tag)
     prev_snapshot = (
-        PlayerSnapshot.query
-        .filter_by(player_tag=norm_tag)
+        PlayerSnapshot.query.filter_by(player_tag=norm_tag)
         .order_by(PlayerSnapshot.ts.desc())
         .first()
     )
@@ -40,9 +39,7 @@ async def get_player(tag: str) -> dict:
         last_seen = now
     else:
         active = _activity(prev_snapshot, data)
-        last_seen = now if active else (
-                prev_snapshot.last_seen or prev_snapshot.ts
-        )
+        last_seen = now if active else (prev_snapshot.last_seen or prev_snapshot.ts)
 
     ps = PlayerSnapshot(
         ts=now,

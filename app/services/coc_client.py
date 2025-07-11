@@ -28,6 +28,7 @@ def rate_limited(fn):
                 raise RuntimeError("Daily CoC API quota exceeded")
             _req_count += 1
         return await fn(*args, **kwargs)
+
     return wrapper
 
 
@@ -42,7 +43,7 @@ class CoCClient:
             base_url=self.base,
             headers=self.headers,
             timeout=10,
-            http2=True,          # re-uses TCP/TLS inside *this* context
+            http2=True,  # re-uses TCP/TLS inside *this* context
         ) as client:
             resp = await client.get(path)
 

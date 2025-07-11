@@ -7,8 +7,9 @@ from app import create_app
 
 app = create_app()
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
 def spa(path: str):
     # Make sure we have a Path object
     static_dir = Path(current_app.static_folder or Path(__file__).parent / "static")
@@ -17,6 +18,7 @@ def spa(path: str):
     if path and (static_dir / path).exists():
         return send_from_directory(static_dir, path)
     return send_from_directory(static_dir, "index.html")
+
 
 asgi_app = WsgiToAsgi(app)
 

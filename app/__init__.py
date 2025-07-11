@@ -10,6 +10,7 @@ from app.tasks.sync import register_jobs
 
 logger = logging.getLogger(__name__)
 
+
 def create_app(cfg_cls: type[Config] = Config) -> Flask:
     configure_logging(level=cfg_cls.LOG_LEVEL)
     app = Flask(__name__)
