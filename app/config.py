@@ -4,14 +4,10 @@ import os
 class Config:
     LOG_LEVEL = "INFO"
     # Flask
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev")
+    SECRET_KEY = os.getenv("SECRET_KEY")
     JSON_SORT_KEYS = False
 
-    # DB (async psycopg / SQLAlchemy 2.0 style URL)
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL",
-        "postgresql+psycopg://coc:coc@localhost:5432/coc",
-    )
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_POOL_SIZE = 10
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -30,3 +26,23 @@ class Config:
     # Rate-limit guard
     COC_REQS_PER_SEC = 10
     COC_REQS_PER_DAY = 5_000
+
+    PORT = 80
+
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+    SQLALCHEMY_ECHO = False
+    PORT = 8080
+
+
+class TestConfig(Config):
+    TESTING = True
+    PORT = 5555
+
+
+env_configs = {
+    "development": DevelopmentConfig,
+    "production": Config,
+    "testing": TestConfig,
+}

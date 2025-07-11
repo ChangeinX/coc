@@ -1,8 +1,9 @@
 from datetime import datetime
 
-from app.services.coc_client import get_client
 from app.extensions import db, cache
 from app.models import PlayerSnapshot
+from app.services.coc_client import get_client
+from app.services.loyalty_service import ensure_membership
 from app.utils import normalize_tag
 
 
@@ -60,6 +61,7 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
     )
     db.session.add(ps)
     db.session.commit()
+    ensure_membership(norm_tag, data.get("clan", {}).get("tag"), now)
 
     data["last_seen"] = last_seen.isoformat()
 

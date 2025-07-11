@@ -112,6 +112,7 @@ function renderPlayerCard(container, p) {
       ${stat("Trophies", p.trophies)}
       ${stat("Donations", p.donations)}
       ${stat("Received", p.donationsReceived)}
+      ${stat("Loyalty (days)", p.loyalty)}
     </div>
 
     <p class="mt-4">

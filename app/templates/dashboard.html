@@ -46,6 +46,7 @@
                 <th class="px-4 py-3">Player</th>
                 <th class="px-4 py-3">Tag</th>
                 <th class="px-4 py-3">Last Seen</th>
+                <th class="px-4 py-3">Loyalty</th>
                 <th class="px-4 py-3">Score</th>
             </tr>
             </thead>
@@ -56,6 +57,7 @@
                 <td class="px-4 py-2 font-medium">{{ p.name }}</td>
                 <td class="px-4 py-2 text-slate-500">{{ p.tag }}</td>
                 <td class="px-4 py-2">{{ p.last_seen | default('—') }}</td>
+                <td class="px-4 py-2 text-center">{{ p.loyalty }}</td>
                 <td class="px-4 py-2">
                     {% set c = 'green' if p.risk_score<40 else 'yellow' if p.risk_score<70 else 'red' %}
                     <span class="inline-block px-3 py-1 text-white rounded-full bg-{{ c }}-500">
@@ -90,6 +92,9 @@
                 <th class="px-3 py-2 cursor-pointer select-none
                    text-center" data-sort="last" data-type="date">Last Seen
                 </th>
+                <th class="px-3 py-2 cursor-pointer select-none text-center"
+                    data-sort="loyalty" data-type="number">Loyalty
+                </th>
                 <th class="px-3 py-2 cursor-pointer select-none
                    text-center" data-sort="risk" data-type="number">Risk
                 </th>
@@ -105,6 +110,7 @@
                 <td class="px-3 py-2 text-center">{{ m.trophies }}</td>
                 <td class="px-3 py-2 text-center">{{ m.donations }}/{{ m.donationsReceived }}</td>
                 <td class="px-3 py-2 text-center">{{ m.last_seen | default('—') }}</td>
+                <td class="px-3 py-2 text-center">{{ m.loyalty }}</td>
                 <td class="px-3 py-2 text-center">
                     {% set c = 'green' if m.risk_score<40 else 'yellow' if m.risk_score<70 else 'red' %}
                     <span class="inline-block w-10 text-white rounded-full bg-{{ c }}-500">{{ m.risk_score }}</span>

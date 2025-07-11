@@ -46,3 +46,23 @@ class Player(db.Model):
         server_default=db.func.now(),
         onupdate=db.func.now(),
     )
+
+class LoyaltyMembership(db.Model):
+    """Track how long a player has stayed in a particular clan."""
+
+    __tablename__ = "clan_memberships"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    player_tag = db.Column(db.String(15), index=True)
+    clan_tag = db.Column(db.String(15), index=True)
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    left_at = db.Column(db.DateTime, nullable=True)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "player_tag",
+            "clan_tag",
+            "joined_at",
+            name="uq_clan_membership",
+        ),
+    )

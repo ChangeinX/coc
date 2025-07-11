@@ -3,6 +3,7 @@ import logging
 from flask import Blueprint, render_template
 from app.services.clan_service import get_clan
 from app.services.risk_service import clan_at_risk
+from app.services.loyalty_service import get_player_loyalty
 from app.utils import normalize_tag
 
 bp = Blueprint("front", __name__)
@@ -19,6 +20,7 @@ def _merge_risk(members: list[dict], risk: list[dict]) -> list[dict]:
         else:
             m["risk_score"] = 0
             m["last_seen"] = None
+        m["loyalty"] = get_player_loyalty(m["tag"])
     return members
 
 
