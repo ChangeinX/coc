@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from app.services.clan_service import get_clan
+from app.services.clan_service import get_clan_snapshot
 from app.services.risk_service import clan_at_risk
 
 bp = Blueprint("clan", __name__, url_prefix="/clan")
@@ -7,7 +7,7 @@ bp = Blueprint("clan", __name__, url_prefix="/clan")
 
 @bp.get("/<string:tag>")
 async def clan_profile(tag: str):
-    data = await get_clan(tag.upper())
+    data = await get_clan_snapshot(tag.upper())
     return jsonify(data)
 
 

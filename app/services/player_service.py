@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from asyncio import to_thread
+
 from app.extensions import db, cache
 from app.models import PlayerSnapshot
 from app.services.coc_client import get_client
@@ -67,3 +69,15 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
 
     cache.set(cache_key, data, timeout=300)
     return data
+
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.services.snapshot_service import PlayerDict  # noqa: F401
+
+async def get_player_snapshot(tag: str) -> "PlayerDict | None":
+    from app.services.snapshot_service import get_player as _get_player
+    return await to_thread(_get_player, tag)
+
+__all__ = [*globals().get("__all__", []), "get_player_snapshot"]

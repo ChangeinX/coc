@@ -16,6 +16,17 @@ class ClanSnapshot(db.Model):
     __table_args__ = (db.UniqueConstraint("clan_tag", "ts", name="uq_clan_ts"),)
 
 
+class WarSnapshot(db.Model):
+    __tablename__ = "war_snapshots"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    ts = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    clan_tag = db.Column(db.String(15), index=True)
+    data = db.Column(db.JSON)  # full war JSON blob
+
+    __table_args__ = (db.UniqueConstraint("clan_tag", "ts", name="uq_war_ts"),)
+
+
 class PlayerSnapshot(db.Model):
     __tablename__ = "player_snapshots"
     id = db.Column(db.BigInteger, primary_key=True)
@@ -46,6 +57,7 @@ class Player(db.Model):
         server_default=db.func.now(),
         onupdate=db.func.now(),
     )
+
 
 class LoyaltyMembership(db.Model):
     """Track how long a player has stayed in a particular clan."""

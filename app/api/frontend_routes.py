@@ -1,7 +1,7 @@
 import logging
 
 from flask import Blueprint, render_template
-from app.services.clan_service import get_clan
+from app.services.clan_service import get_clan_snapshot
 from app.services.risk_service import clan_at_risk
 from app.services.loyalty_service import get_player_loyalty
 from app.utils import normalize_tag
@@ -34,7 +34,7 @@ async def dash(tag: str | None = None):
     ctx = {"tag": tag}
     if tag:
         try:
-            clan = await get_clan(tag)
+            clan = await get_clan_snapshot(tag)
             risk = await clan_at_risk(normalize_tag(tag))
             members = _merge_risk(clan.get("memberList", []), risk)
             logger.info(f"Found {len(members)} members in clan {tag}")

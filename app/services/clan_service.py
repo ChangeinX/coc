@@ -1,5 +1,5 @@
 import logging
-from asyncio import gather
+from asyncio import to_thread, gather
 from datetime import datetime
 
 from app.extensions import db, cache
@@ -52,3 +52,16 @@ async def get_clan(tag: str) -> dict:
 
     db.session.commit()
     return data
+
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.services.snapshot_service import ClanDict  # noqa: F401
+
+async def get_clan_snapshot(tag: str) -> "ClanDict | None":
+    from app.services.snapshot_service import get_clan as _get_clan  # lazy import
+    return await _get_clan(tag)
+
+
+__all__ = [*globals().get("__all__", []), "get_clan_snapshot"]
