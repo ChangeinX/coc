@@ -22,7 +22,7 @@ def _merge_risk(members: list[dict], risk: list[dict]) -> list[dict]:
     return members
 
 
-
+@bp.get("/")
 @bp.get("/dashboard/")
 @bp.get("/dashboard/<string:tag>")
 async def dash(tag: str | None = None):
