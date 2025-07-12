@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from app.services.war_service import current_war_snapshot
+from sync.services.war_service import current_war_snapshot
 
 bp = Blueprint("war", __name__, url_prefix="/war")
 
@@ -10,3 +10,4 @@ async def war_status(clan_tag: str):
     if data is None:
         return jsonify({"state": "notInWar"}), 200
     return jsonify(data)
+

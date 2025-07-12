@@ -2,11 +2,11 @@ from asyncio import to_thread
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from app.extensions import cache
-from app.extensions import db
-from app.models import WarSnapshot
-from app.services.coc_client import get_client
-from app.utils import normalize_tag
+from coclib.extensions import cache
+from coclib.extensions import db
+from coclib.models import WarSnapshot
+from .coc_client import get_client
+from coclib.utils import normalize_tag
 
 
 async def current_war(clan_tag: str) -> dict:
@@ -27,7 +27,7 @@ CACHE_TTL = 60  # seconds
 
 
 def _last_war_sync(clan_tag: str) -> "dict | None":
-    from app.models import WarSnapshot  # local import avoids circular refs
+    from coclib.models import WarSnapshot  # local import avoids circular refs
     row = (
         WarSnapshot.query.filter_by(clan_tag=clan_tag)
         .order_by(WarSnapshot.ts.desc())

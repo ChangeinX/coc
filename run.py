@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 import logging
 import os
 
@@ -7,7 +8,7 @@ load_dotenv()
 
 from asgiref.wsgi import WsgiToAsgi
 
-from app.config import env_configs
+from coclib.config import env_configs
 from app import create_app
 
 cfg_name = os.getenv("APP_ENV", "production")

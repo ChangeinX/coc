@@ -1,8 +1,8 @@
 from sqlalchemy.dialects.postgresql import insert
 
-from app.extensions import db
-from app.models import Player
-from app.utils import normalize_tag
+from coclib.extensions import db
+from coclib.models import Player
+from coclib.utils import normalize_tag
 
 
 def upsert_player(data: dict):
