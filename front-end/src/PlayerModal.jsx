@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchJSON } from './api.js';
+import Loading from './Loading.jsx';
 
 export default function PlayerModal({ tag, onClose }) {
   const [player, setPlayer] = useState(null);
@@ -25,7 +26,7 @@ export default function PlayerModal({ tag, onClose }) {
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <div className="bg-white w-full max-w-lg rounded-xl shadow-xl p-6 relative">
           <button className="absolute top-3 right-3 text-slate-400" onClick={onClose}>✕</button>
-          {!player && !error && <p className="text-center py-8">Loading…</p>}
+          {!player && !error && <Loading className="py-8" />}
           {error && <p className="text-center text-red-600 py-8">{error}</p>}
           {player && (
             <>

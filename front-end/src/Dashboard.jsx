@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import PlayerModal from './PlayerModal.jsx';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import Loading from './Loading.jsx';
 import { fetchJSON } from './api.js';
+
+const PlayerModal = lazy(() => import('./PlayerModal.jsx'));
 
 function Stat({ icon, label, value }) {
   return (
@@ -26,6 +28,7 @@ export default function Dashboard() {
   const [topRisk, setTopRisk] = useState([]);
   const [members, setMembers] = useState([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
   const [sortField, setSortField] = useState('');
   const [sortDir, setSortDir] = useState('asc');
@@ -63,6 +66,7 @@ export default function Dashboard() {
   }, [members, sortField, sortDir]);
 
   const load = async (clanTag) => {
+    setLoading(true);
     try {
       const clanData = await fetchJSON(`/clan/${encodeURIComponent(clanTag)}`);
       const riskData = await fetchJSON(
@@ -86,6 +90,7 @@ export default function Dashboard() {
     } catch (err) {
       setError(err.message);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -131,6 +136,8 @@ export default function Dashboard() {
         </button>
       </form>
       {error && <p className="text-center text-red-600 font-medium">{error}</p>}
+      {loading && !clan && <Loading className="py-20" />}
+      {loading && clan && <Loading className="py-4" />}
       {clan && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -242,7 +249,11 @@ export default function Dashboard() {
           </div>
         </>
       )}
-      {selected && <PlayerModal tag={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <Suspense fallback={<Loading className="py-8" />}> 
+          <PlayerModal tag={selected} onClose={() => setSelected(null)} />
+        </Suspense>
+      )}
     </div>
   );
 }
