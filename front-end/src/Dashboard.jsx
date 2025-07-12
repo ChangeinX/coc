@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PlayerModal from './PlayerModal.jsx';
+import { fetchJSON } from './api.js';
 
 const DEFAULT_TAG = 'UV0YR2Q8';
 
@@ -12,12 +13,8 @@ export default function Dashboard() {
 
   const load = async (clanTag) => {
     try {
-      const resClan = await fetch(`/clan/${encodeURIComponent(clanTag)}`);
-      if (!resClan.ok) throw new Error(`HTTP ${resClan.status}`);
-      const clanData = await resClan.json();
-      const resRisk = await fetch(`/clan/${encodeURIComponent(clanTag)}/members/at-risk`);
-      if (!resRisk.ok) throw new Error(`HTTP ${resRisk.status}`);
-      const riskData = await resRisk.json();
+      const clanData = await fetchJSON(`/clan/${encodeURIComponent(clanTag)}`);
+      const riskData = await fetchJSON(`/clan/${encodeURIComponent(clanTag)}/members/at-risk`);
       const rmap = Object.fromEntries(riskData.map(r => [r.player_tag, r]));
       const merged = clanData.memberList.map(m => ({
         ...m,

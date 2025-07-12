@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { fetchJSON } from './api.js';
 
 export default function PlayerModal({ tag, onClose }) {
   const [player, setPlayer] = useState(null);
@@ -7,9 +8,7 @@ export default function PlayerModal({ tag, onClose }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`/player/${encodeURIComponent(tag)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const data = await fetchJSON(`/player/${encodeURIComponent(tag)}`);
         setPlayer(data);
       } catch (err) {
         setError(err.message);

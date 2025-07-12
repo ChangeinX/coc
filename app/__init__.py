@@ -1,6 +1,7 @@
 import logging
 
 from flask import Flask
+from flask_cors import CORS
 
 from app.api import register_blueprints
 from app.config import Config
@@ -15,6 +16,8 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
     configure_logging(level=cfg_cls.LOG_LEVEL)
     app = Flask(__name__)
     app.config.from_object(cfg_cls)
+
+    CORS(app, origins="*")
 
     db.init_app(app)
     cache.init_app(app)
