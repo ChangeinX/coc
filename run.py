@@ -1,6 +1,8 @@
 # ruff: noqa: E402
 import logging
 import os
+import socket
+from contextlib import closing
 
 from dotenv import load_dotenv
 
@@ -22,6 +24,18 @@ logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", cfg_cls.PORT))
+    port = int(
+        os.getenv("PORT")
+        or (getattr(cfg_cls, "PORT", None) if getattr(cfg_cls, "PORT", 80) != 80 else 8000)
+    )
+
+    while True:
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+            try:
+                s.bind(("0.0.0.0", port))
+                break  # free we can use it
+            except OSError:
+                port += 1
+
     logger.info(f"Starting app in {cfg_name} mode on port {port}")
     app.run(host="0.0.0.0", port=port, debug=getattr(cfg_cls, "DEBUG", False))
