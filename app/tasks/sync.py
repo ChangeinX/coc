@@ -111,10 +111,12 @@ async def _sync_wars() -> None:
 def register_jobs():
     @scheduler.task(id="sync_clans", trigger=HOURLY[0], **HOURLY[1])
     def sync_clans() -> None:
-        asyncio.run(_sync_clans())
+        with scheduler.app.app_context():
+            asyncio.run(_sync_clans())
 
     @scheduler.task(id="sync_wars", trigger=WAR_CRON[0], **WAR_CRON[1])
     def sync_wars() -> None:
-        asyncio.run(_sync_wars())
+        with scheduler.app.app_context():
+            asyncio.run(_sync_wars())
 
 
