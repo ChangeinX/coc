@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from asyncio import to_thread
+from typing import TYPE_CHECKING
 
 from app.extensions import db, cache
 from app.models import PlayerSnapshot
@@ -71,7 +72,6 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
     return data
 
 
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.services.snapshot_service import PlayerDict  # noqa: F401

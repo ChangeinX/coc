@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from flask import Flask
 from flask_cors import CORS
@@ -14,7 +15,11 @@ logger = logging.getLogger(__name__)
 
 def create_app(cfg_cls: type[Config] = Config) -> Flask:
     configure_logging(level=cfg_cls.LOG_LEVEL)
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        static_folder=str(Path(__file__).resolve().parent.parent / "front-end" / "dist"),
+        static_url_path="",
+    )
     app.config.from_object(cfg_cls)
 
     CORS(app, resources={r"/*": {"origins": "*"}})

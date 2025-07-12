@@ -1,5 +1,8 @@
 from datetime import datetime
-from app.extensions import db
+from asyncio import to_thread
+from typing import TYPE_CHECKING
+
+from app.extensions import db, cache
 from app.models import WarSnapshot
 from app.services.coc_client import get_client
 from app.utils import normalize_tag
@@ -15,10 +18,6 @@ async def current_war(clan_tag: str) -> dict:
 
     return data
 
-
-from asyncio import to_thread
-from typing import TYPE_CHECKING
-from app.extensions import cache
 
 
 if TYPE_CHECKING:

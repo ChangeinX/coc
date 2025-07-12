@@ -1,6 +1,7 @@
 import logging
 from asyncio import gather
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from app.extensions import db, cache
 from app.models import ClanSnapshot
@@ -54,7 +55,6 @@ async def get_clan(tag: str) -> dict:
     return data
 
 
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.services.snapshot_service import ClanDict  # noqa: F401
