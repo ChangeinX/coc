@@ -8,7 +8,15 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from coclib.extensions import scheduler, db
 from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
-from .services import clan_service, player_service, war_service
+
+try:
+    # ``tasks`` may be executed either as part of the ``sync`` package or as a
+    # standalone module via ``python -m run``.  Prefer the relative import which
+    # works when ``sync`` is a package and fall back to importing the local
+    # ``services`` package when executed directly from the ``sync`` directory.
+    from .services import clan_service, player_service, war_service
+except ImportError:  # pragma: no cover - local execution
+    from services import clan_service, player_service, war_service
 from coclib.services.loyalty_service import ensure_membership
 from coclib.utils import normalize_tag
 
