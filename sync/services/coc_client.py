@@ -3,9 +3,9 @@ import logging
 from functools import wraps
 from datetime import datetime, timedelta
 import httpx
-from flask import current_app
+import os
 
-from app.utils import encode_tag
+from coclib.utils import encode_tag
 
 
 logger = logging.getLogger(__name__)
@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 _last_reset = datetime.utcnow()
 _req_count = 0
 _lock = asyncio.Lock()
+
+COC_BASE = os.getenv("COC_BASE", "https://api.clashofclans.com/v1")
+COC_TOKEN = os.getenv("COC_API_TOKEN")
+COC_REQS_PER_DAY = int(os.getenv("COC_REQS_PER_DAY", "5000"))
 
 
 def rate_limited(fn):
@@ -24,7 +28,7 @@ def rate_limited(fn):
             now = datetime.utcnow()
             if now - _last_reset > timedelta(days=1):
                 _last_reset, _req_count = now, 0
-            if _req_count >= current_app.config["COC_REQS_PER_DAY"]:
+            if _req_count >= COC_REQS_PER_DAY:
                 raise RuntimeError("Daily CoC API quota exceeded")
             _req_count += 1
         return await fn(*args, **kwargs)
@@ -83,8 +87,13 @@ class CoCClient:
         return await self.get(f"/clans/{encode_tag(tag)}/capitalraidseasons")
 
 
+_client: CoCClient | None = None
+
+
 def get_client() -> CoCClient:
-    cfg = current_app.config
-    if not hasattr(current_app, "_coc_client"):
-        current_app._coc_client = CoCClient(cfg["COC_BASE"], cfg["COC_TOKEN"])
-    return current_app._coc_client
+    global _client
+    if _client is None:
+        if not COC_TOKEN:
+            raise RuntimeError("COC_API_TOKEN environment variable not set")
+        _client = CoCClient(COC_BASE, COC_TOKEN)
+    return _client

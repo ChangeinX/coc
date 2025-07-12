@@ -6,11 +6,11 @@ from typing import Dict, Any, Tuple
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.extensions import scheduler, db
-from app.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
-from app.services import clan_service, player_service, war_service
-from app.services.loyalty_service import ensure_membership
-from app.utils import normalize_tag
+from coclib.extensions import scheduler, db
+from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
+from .services import clan_service, player_service, war_service
+from coclib.services.loyalty_service import ensure_membership
+from coclib.utils import normalize_tag
 
 Trigger = Tuple[str, Dict[str, Any]]
 HOURLY = "cron", {"minute": 5}
@@ -86,10 +86,10 @@ async def _sync_wars() -> None:
             logger.error("Failed to sync war for clan %s: %s", tag, exc)
             continue
 
-        if war.get("state") in ("notInWar", None):
+        if war.get("state") in ("notInWar", None) or "clan" not in war:
             continue  # clan not currently in war
 
-        for member in war["clan"]["members"]:
+        for member in war.get("clan", {}).get("members", []):
             p_tag = member["tag"]
             attacks_used = len(member.get("attacks", []))
 
