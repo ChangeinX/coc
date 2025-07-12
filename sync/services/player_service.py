@@ -2,11 +2,11 @@ from asyncio import to_thread
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from app.extensions import db, cache
-from app.models import PlayerSnapshot
-from app.services.coc_client import get_client
-from app.services.loyalty_service import ensure_membership
-from app.utils import normalize_tag
+from coclib.extensions import db, cache
+from coclib.models import PlayerSnapshot
+from sync.services.coc_client import get_client
+from coclib.services.loyalty_service import ensure_membership
+from coclib.utils import normalize_tag
 
 
 def _activity(prev: PlayerSnapshot, now: dict) -> bool:
@@ -71,13 +71,56 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
     return data
 
 
-if TYPE_CHECKING:
-    from app.services.snapshot_service import PlayerDict  # noqa: F401
+if TYPE_CHECKING:  # pragma: no cover - used for IDE type hints only
+    from typing import Optional, TypedDict
+
+    class PlayerDict(TypedDict):
+        tag: str
+        name: str
+        role: str | None
+        townHallLevel: int
+        trophies: int
+        donations: int
+        donationsReceived: int
+        warAttacksUsed: int | None
+        lastSeen: str
+        clanTag: str | None
+        ts: str
 
 
-async def get_player_snapshot(tag: str) -> "PlayerDict | None":
-    from app.services.snapshot_service import get_player as _get_player
-    return await to_thread(_get_player, tag)
+async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
+    norm_tag = normalize_tag(tag)
+    cache_key = f"snapshot:player:{norm_tag}"
+    if (cached := cache.get(cache_key)) is not None:
+        return cached
+
+    def _latest() -> PlayerSnapshot | None:
+        return (
+            PlayerSnapshot.query.filter_by(player_tag=norm_tag)
+            .order_by(PlayerSnapshot.ts.desc())
+            .first()
+        )
+
+    row = await to_thread(_latest)
+    if row is None:
+        return None
+
+    data: PlayerDict = {
+        "tag": row.player_tag,
+        "name": row.name,
+        "role": row.role,
+        "townHallLevel": row.town_hall,
+        "trophies": row.trophies,
+        "donations": row.donations,
+        "donationsReceived": row.donations_received,
+        "warAttacksUsed": row.war_attacks_used,
+        "lastSeen": (row.last_seen or row.ts).isoformat(),
+        "clanTag": row.clan_tag or None,
+        "ts": row.ts.isoformat(),
+    }
+
+    cache.set(cache_key, data, timeout=300)
+    return data
 
 
 __all__ = [*globals().get("__all__", []), "get_player_snapshot"]

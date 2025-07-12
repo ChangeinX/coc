@@ -5,9 +5,9 @@ from typing import Optional, TypedDict
 from asyncio import to_thread
 from sqlalchemy import func
 
-from app.extensions import cache, db
-from app.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
-from app.utils import normalize_tag
+from coclib.extensions import cache, db
+from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
+from coclib.utils import normalize_tag
 
 CACHE_TTL = 60
 

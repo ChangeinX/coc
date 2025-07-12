@@ -2,13 +2,12 @@ import logging
 import os
 
 from dotenv import load_dotenv
-
-load_dotenv()
-
 from asgiref.wsgi import WsgiToAsgi
 
-from app.config import env_configs
+from coclib.config import env_configs
 from app import create_app
+
+load_dotenv()
 
 cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = env_configs[cfg_name]

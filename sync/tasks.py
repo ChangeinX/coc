@@ -6,11 +6,11 @@ from typing import Dict, Any, Tuple
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.extensions import scheduler, db
-from app.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
-from app.services import clan_service, player_service, war_service
-from app.services.loyalty_service import ensure_membership
-from app.utils import normalize_tag
+from coclib.extensions import scheduler, db
+from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
+from sync.services import clan_service, player_service, war_service
+from coclib.services.loyalty_service import ensure_membership
+from coclib.utils import normalize_tag
 
 Trigger = Tuple[str, Dict[str, Any]]
 HOURLY = "cron", {"minute": 5}

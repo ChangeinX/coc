@@ -1,14 +1,14 @@
 import logging
 from asyncio import gather
 from datetime import datetime
-from typing import TYPE_CHECKING
 
-from app.extensions import db, cache
-from app.models import ClanSnapshot
-from app.services.coc_client import get_client
-from app.services.player_cache import upsert_player
-from app.services.player_service import get_player
-from app.utils import normalize_tag
+
+from coclib.extensions import db, cache
+from coclib.models import ClanSnapshot
+from sync.services.coc_client import get_client
+from sync.services.player_cache import upsert_player
+from sync.services.player_service import get_player
+from coclib.utils import normalize_tag
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +54,4 @@ async def get_clan(tag: str) -> dict:
     db.session.commit()
     return data
 
-
-if TYPE_CHECKING:
-    from app.services.snapshot_service import ClanDict  # noqa: F401
-
-
-async def get_clan_snapshot(tag: str) -> "ClanDict | None":
-    from app.services.snapshot_service import get_clan as _get_clan  # lazy import
-    return await _get_clan(tag)
-
-
-__all__ = [*globals().get("__all__", []), "get_clan_snapshot"]
+__all__ = [*globals().get("__all__", [])]

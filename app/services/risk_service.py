@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from sqlalchemy import select, desc
 
-from app.extensions import db
-from app.models import PlayerSnapshot
+from coclib.extensions import db
+from coclib.models import PlayerSnapshot
 
 _WEIGHTS = {
     "war": 0.40,  # 40 pts when clan is actively warring
