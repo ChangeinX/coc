@@ -31,7 +31,7 @@ class PlayerDict(TypedDict):
     donations: int
     donationsReceived: int
     warAttacksUsed: int | None
-    lastSeen: str
+    last_seen: str
     clanTag: str | None
     ts: str
 
@@ -58,7 +58,7 @@ def _player_row_to_dict(row: PlayerSnapshot) -> PlayerDict:  # type: ignore[over
         donations=row.donations,
         donationsReceived=row.donations_received,
         warAttacksUsed=row.war_attacks_used,
-        lastSeen=(row.last_seen or row.ts).isoformat(),
+        last_seen=(row.last_seen or row.ts).isoformat(),
         clanTag=row.clan_tag or None,
         ts=row.ts.isoformat(),
     )

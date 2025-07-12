@@ -10,3 +10,4 @@ async def war_status(clan_tag: str):
     if data is None:
         return jsonify({"state": "notInWar"}), 200
     return jsonify(data)
+
