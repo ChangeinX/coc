@@ -14,6 +14,8 @@ env/
 build/
 develop-eggs/
 dist/
+front-end/dist/
+front-end/node_modules
 downloads/
 eggs/
 .eggs/

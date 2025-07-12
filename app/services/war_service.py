@@ -1,4 +1,8 @@
+from asyncio import to_thread
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+from app.extensions import cache
 from app.extensions import db
 from app.models import WarSnapshot
 from app.services.coc_client import get_client
@@ -16,15 +20,11 @@ async def current_war(clan_tag: str) -> dict:
     return data
 
 
-from asyncio import to_thread
-from typing import TYPE_CHECKING
-from app.extensions import cache
-
-
 if TYPE_CHECKING:
     from typing import Optional, Dict  # noqa: F401
 
 CACHE_TTL = 60  # seconds
+
 
 def _last_war_sync(clan_tag: str) -> "dict | None":
     from app.models import WarSnapshot  # local import avoids circular refs
@@ -35,6 +35,7 @@ def _last_war_sync(clan_tag: str) -> "dict | None":
     )
     return None if row is None else row.data
 
+
 async def current_war_snapshot(clan_tag: str) -> "dict | None":
     clan_tag = normalize_tag(clan_tag)
     cache_key = f"snapshot:war:{clan_tag}"
@@ -44,5 +45,6 @@ async def current_war_snapshot(clan_tag: str) -> "dict | None":
     if data:
         cache.set(cache_key, data, timeout=CACHE_TTL)
     return data
+
 
 __all__ = [*globals().get("__all__", []), "current_war_snapshot"]
