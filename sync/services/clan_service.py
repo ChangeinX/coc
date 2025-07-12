@@ -5,9 +5,9 @@ from datetime import datetime
 
 from coclib.extensions import db, cache
 from coclib.models import ClanSnapshot
-from sync.services.coc_client import get_client
-from sync.services.player_cache import upsert_player
-from sync.services.player_service import get_player
+from .coc_client import get_client
+from .player_cache import upsert_player
+from .player_service import get_player
 from coclib.utils import normalize_tag
 
 logger = logging.getLogger(__name__)
