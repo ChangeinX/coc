@@ -1,6 +1,6 @@
-from datetime import datetime
-
 from asyncio import to_thread
+from datetime import datetime
+from typing import TYPE_CHECKING
 
 from app.extensions import db, cache
 from app.models import PlayerSnapshot
@@ -11,10 +11,10 @@ from app.utils import normalize_tag
 
 def _activity(prev: PlayerSnapshot, now: dict) -> bool:
     return (
-        now["trophies"] > prev.trophies
-        or now.get("donations", 0) > prev.donations
-        or now.get("donationsReceived", 0) > prev.donations_received
-        or (now.get("warAttacksUsed") or 0) > (prev.war_attacks_used or 0)
+            now["trophies"] > prev.trophies
+            or now.get("donations", 0) > prev.donations
+            or now.get("donationsReceived", 0) > prev.donations_received
+            or (now.get("warAttacksUsed") or 0) > (prev.war_attacks_used or 0)
     )
 
 
@@ -71,13 +71,13 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
     return data
 
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from app.services.snapshot_service import PlayerDict  # noqa: F401
+
 
 async def get_player_snapshot(tag: str) -> "PlayerDict | None":
     from app.services.snapshot_service import get_player as _get_player
     return await to_thread(_get_player, tag)
+
 
 __all__ = [*globals().get("__all__", []), "get_player_snapshot"]
