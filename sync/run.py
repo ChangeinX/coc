@@ -10,7 +10,16 @@ from flask import Flask
 from coclib.config import env_configs
 from coclib.extensions import db, cache, scheduler
 from coclib.logging_config import configure_logging
-from .tasks import register_jobs
+
+try:
+    # Prefer importing via the package name so ``python -m sync.run`` works
+    # when executed from the repository root.
+    from sync.tasks import register_jobs
+except ModuleNotFoundError:  # pragma: no cover - fallback for ``python -m run``
+    # ``python -m run`` executed from the ``sync`` directory does not have the
+    # parent package on ``sys.path``.  Fall back to a direct module import so
+    # it can still run as a standalone script.
+    from tasks import register_jobs
 
 cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = env_configs[cfg_name]
