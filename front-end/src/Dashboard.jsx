@@ -98,6 +98,10 @@ export default function Dashboard() {
     }
   });
 
+  useEffect(() => {
+    document.title = clan?.name || 'Clan Dashboard';
+  }, [clan]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const clanTag = tag.trim().toUpperCase();
