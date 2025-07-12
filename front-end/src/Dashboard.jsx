@@ -14,15 +14,23 @@ export default function Dashboard() {
   const load = async (clanTag) => {
     try {
       const clanData = await fetchJSON(`/clan/${encodeURIComponent(clanTag)}`);
-      const riskData = await fetchJSON(`/clan/${encodeURIComponent(clanTag)}/members/at-risk`);
-      const rmap = Object.fromEntries(riskData.map(r => [r.player_tag, r]));
-      const merged = clanData.memberList.map(m => ({
+      const riskData = await fetchJSON(
+        `/clan/${encodeURIComponent(clanTag)}/members/at-risk`
+      );
+      const loyaltyMap = await fetchJSON(
+        `/clan/${encodeURIComponent(clanTag)}/members/loyalty`
+      );
+      const rmap = Object.fromEntries(riskData.map((r) => [r.player_tag, r]));
+      const merged = clanData.memberList.map((m) => ({
         ...m,
-        risk_score: rmap[m.tag.replace('#','')]?.risk_score || 0,
-        last_seen: rmap[m.tag.replace('#','')]?.last_seen || null,
+        risk_score: rmap[m.tag.replace('#', '')]?.risk_score || 0,
+        last_seen: rmap[m.tag.replace('#', '')]?.last_seen || null,
+        loyalty: loyaltyMap[m.tag.replace('#', '')] || 0,
       }));
       setClan(clanData);
-      setTopRisk([...merged].sort((a,b) => b.risk_score - a.risk_score).slice(0,10));
+      setTopRisk(
+        [...merged].sort((a, b) => b.risk_score - a.risk_score).slice(0, 10)
+      );
       setError('');
     } catch (err) {
       setError(err.message);
@@ -63,6 +71,7 @@ export default function Dashboard() {
                   <th className="px-4 py-3">Player</th>
                   <th className="px-4 py-3">Tag</th>
                   <th className="px-4 py-3">Last Seen</th>
+                  <th className="px-4 py-3">Loyalty</th>
                   <th className="px-4 py-3">Score</th>
                 </tr>
               </thead>
@@ -76,6 +85,7 @@ export default function Dashboard() {
                     <td className="px-4 py-2 font-medium">{m.name}</td>
                     <td className="px-4 py-2 text-slate-500">{m.tag}</td>
                     <td className="px-4 py-2">{m.last_seen || '\u2014'}</td>
+                    <td className="px-4 py-2 text-center">{m.loyalty}</td>
                     <td className="px-4 py-2">{m.risk_score}</td>
                   </tr>
                 ))}

@@ -50,7 +50,16 @@ export default function PlayerModal({ tag, onClose }) {
                   <p className="text-sm text-slate-500">Received</p>
                   <p className="text-xl font-semibold">{player.donationsReceived}</p>
                 </div>
+                <div>
+                  <p className="text-sm text-slate-500">Loyalty (days)</p>
+                  <p className="text-xl font-semibold">{player.loyalty}</p>
+                </div>
               </div>
+
+              <p className="mt-4">
+                <span className="font-semibold">Last seen:</span>{' '}
+                {player.last_seen ? new Date(player.last_seen).toLocaleDateString() : '—'}
+              </p>
             </>
           )}
         </div>
