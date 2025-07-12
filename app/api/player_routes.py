@@ -11,3 +11,4 @@ async def player_profile(tag: str):
     data = await get_player_snapshot(norm_tag)
     data["loyalty"] = get_player_loyalty(norm_tag)
     return jsonify(data)
+

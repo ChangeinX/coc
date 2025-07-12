@@ -83,7 +83,7 @@ if TYPE_CHECKING:  # pragma: no cover - used for IDE type hints only
         donations: int
         donationsReceived: int
         warAttacksUsed: int | None
-        lastSeen: str
+        last_seen: str
         clanTag: str | None
         ts: str
 
@@ -114,7 +114,7 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         "donations": row.donations,
         "donationsReceived": row.donations_received,
         "warAttacksUsed": row.war_attacks_used,
-        "lastSeen": (row.last_seen or row.ts).isoformat(),
+        "last_seen": (row.last_seen or row.ts).isoformat(),
         "clanTag": row.clan_tag or None,
         "ts": row.ts.isoformat(),
     }
