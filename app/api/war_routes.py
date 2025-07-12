@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from app.services.war_service import current_war_snapshot
+from sync.services.war_service import current_war_snapshot
 
 bp = Blueprint("war", __name__, url_prefix="/war")
 

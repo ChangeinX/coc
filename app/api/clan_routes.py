@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 
-from app.services.clan_service import get_clan_snapshot
-from app.services.loyalty_service import get_clan_loyalty
+from app.services.snapshot_service import get_clan as get_clan_snapshot
+from coclib.services.loyalty_service import get_clan_loyalty
 from app.services.risk_service import clan_at_risk
 
 bp = Blueprint("clan", __name__, url_prefix="/clan")
