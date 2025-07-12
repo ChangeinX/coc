@@ -77,11 +77,14 @@ def score(
     history: List[PlayerSnapshot], clan_history_map: dict | None = None
 ) -> tuple[int, datetime]:
     """Compute the 0-100 risk score for a single member."""
-    if len(history) < 2:
-        return 0, history[-1].ts
+    if not history:
+        return 0, datetime.utcnow()
 
     latest = history[-1]
-    prev = history[-8] if len(history) >= 8 else history[0]
+    if len(history) < 2:
+        prev = history[0]
+    else:
+        prev = history[-8] if len(history) >= 8 else history[0]
 
     # WAR AXIS
     war_snap = _latest_war_snapshot(history)
