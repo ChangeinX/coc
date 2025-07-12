@@ -2,9 +2,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import PlayerModal from './PlayerModal.jsx';
 import { fetchJSON } from './api.js';
 
-function Stat({ label, value }) {
+function Stat({ icon, label, value }) {
   return (
     <div className="flex items-center gap-3 bg-white shadow rounded p-4">
+      {icon && (
+        <div className="p-3 rounded-full bg-slate-200">
+          <i data-lucide={icon} className="w-7 h-7" />
+        </div>
+      )}
       <div>
         <p className="text-sm text-slate-500">{label}</p>
         <p className="text-xl font-semibold text-slate-800">{value}</p>
@@ -87,6 +92,12 @@ export default function Dashboard() {
     load(DEFAULT_TAG);
   }, []);
 
+  useEffect(() => {
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const clanTag = tag.trim().toUpperCase();
@@ -119,10 +130,10 @@ export default function Dashboard() {
       {clan && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Stat label="Members" value={members.length} />
-            <Stat label="Level" value={clan.clanLevel} />
-            <Stat label="War Wins" value={clan.warWins || 0} />
-            <Stat label="War Losses" value={clan.warLosses || 0} />
+            <Stat icon="users" label="Members" value={members.length} />
+            <Stat icon="shield-alert" label="Level" value={clan.clanLevel} />
+            <Stat icon="sword" label="War Wins" value={clan.warWins || 0} />
+            <Stat icon="shield-off" label="War Losses" value={clan.warLosses || 0} />
           </div>
           <h2 className="text-xl font-semibold text-slate-700">At-Risk Members</h2>
           <div className="overflow-x-auto shadow bg-white rounded mb-6">
