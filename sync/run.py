@@ -10,7 +10,11 @@ from flask import Flask
 from coclib.config import env_configs
 from coclib.extensions import db, cache, scheduler
 from coclib.logging_config import configure_logging
-from .tasks import register_jobs
+# Import tasks with an absolute package path so the module can be executed
+# directly without Python treating it as a namespace package.  Using a
+# relative import here would raise ``ImportError: attempted relative import``
+# when ``sync/run.py`` is run as a script.
+from sync.tasks import register_jobs
 
 cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = env_configs[cfg_name]
