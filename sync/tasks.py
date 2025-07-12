@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from coclib.extensions import scheduler, db
 from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
-from sync.services import clan_service, player_service, war_service
+from .services import clan_service, player_service, war_service
 from coclib.services.loyalty_service import ensure_membership
 from coclib.utils import normalize_tag
 

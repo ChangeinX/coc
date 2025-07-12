@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from coclib.extensions import db, cache
 from coclib.models import PlayerSnapshot
-from sync.services.coc_client import get_client
+from .coc_client import get_client
 from coclib.services.loyalty_service import ensure_membership
 from coclib.utils import normalize_tag
 

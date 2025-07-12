@@ -10,7 +10,7 @@ from flask import Flask
 from coclib.config import env_configs
 from coclib.extensions import db, cache, scheduler
 from coclib.logging_config import configure_logging
-from sync.tasks import register_jobs
+from .tasks import register_jobs
 
 cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = env_configs[cfg_name]
