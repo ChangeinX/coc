@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict
 
-from app.extensions import db
-from app.models import LoyaltyMembership
-from app.utils import normalize_tag
+from coclib.extensions import db
+from coclib.models import LoyaltyMembership
+from coclib.utils import normalize_tag
 
 __all__ = [
     "ensure_membership",
