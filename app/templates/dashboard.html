@@ -22,6 +22,12 @@
         <button id="loadBtn" class="px-4 py-2 rounded bg-slate-800 text-white">Load</button>
     </div>
 
+    <div class="text-right">
+        <a href="{{ url_for('auth.login', provider='google') }}" class="text-blue-600">Login with Google</a>
+        |
+        <a href="{{ url_for('auth.login', provider='apple') }}" class="text-blue-600">Login with Apple</a>
+    </div>
+
     {% if error %}
     <p class="text-center text-red-600 font-medium">{{ error }}</p>
     {% endif %}

@@ -1,17 +1,15 @@
 import logging
 import os
-
-from dotenv import load_dotenv
-
-load_dotenv()
-
-from flask import current_app, send_from_directory
 from pathlib import Path
 
+from dotenv import load_dotenv
+from flask import current_app, send_from_directory
 from asgiref.wsgi import WsgiToAsgi
 
 from app.config import env_configs
 from app import create_app
+
+load_dotenv()
 
 cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = env_configs[cfg_name]
