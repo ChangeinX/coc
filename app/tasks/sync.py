@@ -13,7 +13,7 @@ from app.services.loyalty_service import ensure_membership
 from app.utils import normalize_tag
 
 Trigger = Tuple[str, Dict[str, Any]]
-HOURLY = "interval", {"minutes": 1}
+HOURLY = "cron", {"minute": 5}
 WAR_CRON = "cron", {"minute": "*/10"}
 
 logger = logging.getLogger(__name__)
