@@ -1,5 +1,6 @@
 from asyncio import to_thread
 from datetime import datetime
+import logging
 from typing import TYPE_CHECKING
 
 from coclib.extensions import db, cache
@@ -8,14 +9,7 @@ from sync.services.coc_client import get_client
 from coclib.services.loyalty_service import ensure_membership
 from coclib.utils import normalize_tag
 
-
-def _activity(prev: PlayerSnapshot, now: dict) -> bool:
-    return (
-            now["trophies"] > prev.trophies
-            or now.get("donations", 0) > prev.donations
-            or now.get("donationsReceived", 0) > prev.donations_received
-            or (now.get("warAttacksUsed") or 0) > (prev.war_attacks_used or 0)
-    )
+logger = logging.getLogger(__name__)
 
 
 async def _fetch_player(tag: str) -> dict:
@@ -38,11 +32,17 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
         .first()
     )
 
-    if not prev_snapshot:
-        last_seen = now
+    last_seen_api = now
+    if (ls := data.get("lastSeen")):
+        try:
+            last_seen_api = datetime.strptime(ls, "%Y%m%dT%H%M%S.%fZ")
+        except ValueError:
+            logger.warning("Invalid lastSeen %s for %s", ls, tag)
+
+    if prev_snapshot and last_seen_api < (prev_snapshot.last_seen or prev_snapshot.ts):
+        last_seen = prev_snapshot.last_seen or prev_snapshot.ts
     else:
-        active = _activity(prev_snapshot, data)
-        last_seen = now if active else (prev_snapshot.last_seen or prev_snapshot.ts)
+        last_seen = last_seen_api
 
     attacks_used_val = (
         war_attacks_used if war_attacks_used is not None else data.get("warAttacksUsed")
