@@ -108,7 +108,11 @@ def score(
         history[0],
     )
     activity_ts = latest.last_seen or last_change.ts
-    idle_days = (latest.ts - activity_ts).days
+    # ``latest.ts`` reflects when the last snapshot was taken which could be
+    # stale if the sync service has been down.  Use the current time so the
+    # idle calculation accurately reflects how long it has been since the
+    # member was last active.
+    idle_days = (datetime.utcnow() - activity_ts).days
     idle_pct = _idle_pct_from_days(idle_days)
 
     ratio = latest.donations / max(latest.donations_received, 1)
