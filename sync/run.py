@@ -1,14 +1,16 @@
+# ruff: noqa: E402
 import os
 import time
 import logging
 from dotenv import load_dotenv
+
+load_dotenv()
+
 from flask import Flask
 from coclib.config import env_configs
 from coclib.extensions import db, cache, scheduler
 from coclib.logging_config import configure_logging
 from sync.tasks import register_jobs
-
-load_dotenv()
 
 cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = env_configs[cfg_name]

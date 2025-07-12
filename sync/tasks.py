@@ -86,10 +86,10 @@ async def _sync_wars() -> None:
             logger.error("Failed to sync war for clan %s: %s", tag, exc)
             continue
 
-        if war.get("state") in ("notInWar", None):
+        if war.get("state") in ("notInWar", None) or "clan" not in war:
             continue  # clan not currently in war
 
-        for member in war["clan"]["members"]:
+        for member in war.get("clan", {}).get("members", []):
             p_tag = member["tag"]
             attacks_used = len(member.get("attacks", []))
 
