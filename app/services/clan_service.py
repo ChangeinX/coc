@@ -1,5 +1,5 @@
 import logging
-from asyncio import to_thread, gather
+from asyncio import gather
 from datetime import datetime
 
 from app.extensions import db, cache
