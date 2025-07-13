@@ -7,9 +7,11 @@ COPY back-end ./back-end
 COPY coclib ./coclib
 COPY migrations ./migrations
 
+WORKDIR /opt/app/back-end
+
 EXPOSE 8000
 
-CMD ["sh", "-c", "uvicorn back-end.run:asgi_app \
+CMD ["sh", "-c", "uvicorn run:asgi_app \
   --host 0.0.0.0 \
   --port ${PORT:-80} \
   --workers 1"]
