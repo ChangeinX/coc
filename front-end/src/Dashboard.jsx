@@ -128,14 +128,20 @@ export default function Dashboard() {
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
-            <form onSubmit={handleSubmit} className="flex gap-2 justify-center">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col sm:flex-row gap-2 justify-center"
+            >
                 <input
-                    className="max-w-xs px-3 py-2 rounded border"
+                    className="flex-1 w-full px-3 py-2 rounded border"
                     placeholder="Clan tag (without #)"
                     value={tag}
                     onChange={(e) => setTag(e.target.value)}
                 />
-                <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white">
+                <button
+                    type="submit"
+                    className="px-4 py-2 rounded bg-slate-800 text-white w-full sm:w-auto"
+                >
                     Load
                 </button>
             </form>
@@ -144,7 +150,7 @@ export default function Dashboard() {
             {loading && clan && <Loading className="py-4"/>}
             {clan && (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <Stat icon="users" label="Members" value={members.length}/>
                         <Stat icon="shield-alert" label="Level" value={clan.clanLevel}/>
                         <Stat icon="sword" label="War Wins" value={clan.warWins || 0}/>
@@ -152,7 +158,7 @@ export default function Dashboard() {
                     </div>
                     <h2 className="text-xl font-semibold text-slate-700">At-Risk Members</h2>
                     <div className="overflow-x-auto shadow bg-white rounded mb-6">
-                        <table className="min-w-full text-sm">
+                        <table className="min-w-full text-xs sm:text-sm">
                             <thead className="bg-slate-50 text-left text-slate-600">
                             <tr>
                                 <th className="px-4 py-3">Player</th>
@@ -181,12 +187,12 @@ export default function Dashboard() {
                     </div>
                     <h2 className="text-xl font-semibold text-slate-700">All Members</h2>
                     <div className="overflow-x-auto shadow bg-white rounded">
-                        <table className="min-w-full text-sm" id="membersTable">
+                        <table className="min-w-full text-xs sm:text-sm" id="membersTable">
                             <thead className="bg-slate-50 text-left text-slate-600">
                             <tr>
                                 <th className="px-3 py-2">Player</th>
                                 <th
-                                    className="px-3 py-2 cursor-pointer select-none"
+                                    className="px-3 py-2 cursor-pointer select-none hidden sm:table-cell"
                                     onClick={() => toggleSort('role')}
                                 >
                                     Role {sortField === 'role' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
@@ -198,13 +204,13 @@ export default function Dashboard() {
                                     TH {sortField === 'th' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                                 </th>
                                 <th
-                                    className="px-3 py-2 cursor-pointer select-none text-center"
+                                    className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell"
                                     onClick={() => toggleSort('trophies')}
                                 >
                                     Trophies {sortField === 'trophies' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                                 </th>
                                 <th
-                                    className="px-3 py-2 cursor-pointer select-none text-center"
+                                    className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell"
                                     onClick={() => toggleSort('donations')}
                                 >
                                     Don&nbsp;/&nbsp;Rec {sortField === 'donations' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
@@ -216,7 +222,7 @@ export default function Dashboard() {
                                     Last Seen {sortField === 'last' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                                 </th>
                                 <th
-                                    className="px-3 py-2 cursor-pointer select-none text-center"
+                                    className="px-3 py-2 cursor-pointer select-none text-center hidden sm:table-cell"
                                     onClick={() => toggleSort('loyalty')}
                                 >
                                     Loyalty {sortField === 'loyalty' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
@@ -237,14 +243,14 @@ export default function Dashboard() {
                                     onClick={() => setSelected(m.tag)}
                                 >
                                     <td className="px-3 py-2 font-medium">{m.name}</td>
-                                    <td className="px-3 py-2">{m.role}</td>
+                                    <td className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
                                     <td className="px-3 py-2 text-center">{m.townHallLevel}</td>
-                                    <td className="px-3 py-2 text-center">{m.trophies}</td>
-                                    <td className="px-3 py-2 text-center">
+                                    <td className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
+                                    <td className="px-3 py-2 text-center hidden md:table-cell">
                                         {m.donations}/{m.donationsReceived}
                                     </td>
                                     <td className="px-3 py-2 text-center">{m.last_seen || '\u2014'}</td>
-                                    <td className="px-3 py-2 text-center">{m.loyalty}</td>
+                                    <td className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
                                     <td className="px-3 py-2 text-center">{m.risk_score}</td>
                                 </tr>
                             ))}
