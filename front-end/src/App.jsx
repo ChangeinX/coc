@@ -14,8 +14,9 @@ export default function App() {
       });
       window.google.accounts.id.renderButton(
         document.getElementById('signin'),
-        { theme: 'outline', size: 'large' }
+        { theme: 'outline', size: 'large' },
       );
+      window.google.accounts.id.prompt();
     }
   }, [token]);
 
@@ -39,7 +40,10 @@ export default function App() {
     <>
       <button
         className="absolute top-4 right-4 px-2 py-1 bg-slate-800 text-white rounded"
-        onClick={() => setToken(null)}
+        onClick={() => {
+          window.google?.accounts.id.disableAutoSelect();
+          setToken(null);
+        }}
       >
         Sign Out
       </button>
