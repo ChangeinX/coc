@@ -8,6 +8,7 @@ from sqlalchemy import func
 from coclib.extensions import cache, db
 from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
 from coclib.utils import normalize_tag
+from sync.services.clan_service import get_clan as fetch_clan
 
 CACHE_TTL = 60
 
@@ -141,7 +142,15 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
         .first()
     )
     if row is None:
-        return None
+        await fetch_clan(tag)
+        row = (
+            ClanSnapshot.query
+            .filter_by(clan_tag=tag)
+            .order_by(ClanSnapshot.ts.desc())
+            .first()
+        )
+        if row is None:
+            return None
 
     base = _clan_row_to_dict(row)
     data = await _attach_members(base)

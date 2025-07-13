@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from coclib.extensions import db, cache
 from coclib.models import PlayerSnapshot
 from .coc_client import get_client
+from .player_cache import upsert_player
 from coclib.services.loyalty_service import ensure_membership
 from coclib.utils import normalize_tag
 
@@ -62,6 +63,7 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
         last_seen=last_seen,
     )
     db.session.add(ps)
+    upsert_player(data)
     db.session.commit()
     ensure_membership(norm_tag, data.get("clan", {}).get("tag"), now)
 
@@ -103,7 +105,10 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
 
     row = await to_thread(_latest)
     if row is None:
-        return None
+        await get_player(tag)
+        row = await to_thread(_latest)
+        if row is None:
+            return None
 
     data: PlayerDict = {
         "tag": row.player_tag,
