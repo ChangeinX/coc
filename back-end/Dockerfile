@@ -1,5 +1,9 @@
 FROM python:3.11-slim
 
+# Build this image from the back-end directory using the repository root as the
+# build context:
+#   docker build -f Dockerfile ..
+
 WORKDIR /opt/app
 COPY back-end/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
