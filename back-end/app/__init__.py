@@ -1,9 +1,11 @@
 import logging
 
+from pathlib import Path
+
 from flask import Flask
 from flask_cors import CORS
 
-from app.api import register_blueprints
+from .api import register_blueprints
 from coclib.config import Config
 from coclib.extensions import db, cache, migrate, scheduler
 from coclib.logging_config import configure_logging
@@ -21,7 +23,9 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
     db.init_app(app)
     cache.init_app(app)
     scheduler.init_app(app)
-    migrate.init_app(app, db)
+
+    migrations_dir = Path(__file__).resolve().parents[2] / "migrations"
+    migrate.init_app(app, db, directory=str(migrations_dir))
 
     register_blueprints(app)
 

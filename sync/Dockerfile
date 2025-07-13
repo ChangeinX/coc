@@ -5,6 +5,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
+# shared migration scripts
+COPY ../migrations /opt/migrations
+
 ENV PYTHONPATH=/opt/app
 
 EXPOSE 8000
