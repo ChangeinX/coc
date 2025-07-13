@@ -3,7 +3,7 @@ import logging
 from flask import Flask
 from flask_cors import CORS
 
-from app.api import register_blueprints
+from .api import register_blueprints
 from coclib.config import Config
 from coclib.extensions import db, cache, migrate, scheduler
 from coclib.logging_config import configure_logging

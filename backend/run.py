@@ -11,7 +11,7 @@ load_dotenv()
 from asgiref.wsgi import WsgiToAsgi
 
 from coclib.config import env_configs
-from app import create_app
+from .app import create_app
 
 cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = env_configs[cfg_name]

@@ -7,7 +7,7 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "uvicorn run:asgi_app \
+CMD ["sh", "-c", "uvicorn backend.run:asgi_app \
   --host 0.0.0.0 \
   --port ${PORT:-80} \
   --workers 1"]
