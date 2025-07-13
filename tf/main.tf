@@ -37,6 +37,7 @@ module "ecs" {
   region            = var.region
   app_image         = var.app_image
   worker_image      = var.worker_image
+  frontend_image    = var.frontend_image
   app_env           = var.app_env
   db_endpoint       = module.rds.db_endpoint
   db_password       = var.db_password

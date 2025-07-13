@@ -16,6 +16,7 @@ Each container logs to its own CloudWatch log group and the worker receives its 
 ```hcl
 app_image    = "<app image>"
 worker_image = "<worker image>"
+frontend_image = "<frontend image>"
 static_ip_image = "<image needing static IP>"
 static_ip_allowed_ip = "<your ip>/32"
 static_ip_key_name = "<ec2 key pair name>"

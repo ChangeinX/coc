@@ -20,6 +20,11 @@ variable "worker_image" {
   type        = string
 }
 
+variable "frontend_image" {
+  description = "Docker image for the React front-end"
+  type        = string
+}
+
 variable "app_env" {
   description = "Environment for the worker container"
   type        = string
