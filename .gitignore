@@ -80,10 +80,11 @@ target/
 celerybeat-schedule
 
 # dotenv
-.env
+back-end/.env
+*.env
 
 # virtualenv
-venv/
+venv
 ENV/
 
 # Spyder project settings
@@ -185,3 +186,4 @@ fabric.properties
 
 # idea folder, uncomment if you don't need it
 .idea
+/db/.env
