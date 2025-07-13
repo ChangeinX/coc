@@ -1,12 +1,15 @@
 FROM python:3.11-slim
 
+# Build this image from within the root directory:
+#   docker build -f sync/Dockerfile -t clan-boards/sync-package .
+
 WORKDIR /opt/app
-COPY requirements.txt .
+COPY sync/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # shared migration scripts
-COPY ../migrations /opt/migrations
+COPY migrations/ /opt/migrations
 
 ENV PYTHONPATH=/opt/app
 
