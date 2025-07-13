@@ -8,7 +8,9 @@ load_dotenv()
 from asgiref.wsgi import WsgiToAsgi
 from flask import Flask
 from coclib.config import env_configs
-from coclib.extensions import db, cache, scheduler
+from pathlib import Path
+
+from coclib.extensions import db, cache, scheduler, migrate
 from coclib.logging_config import configure_logging
 
 try:
@@ -28,6 +30,9 @@ app.config.from_object(cfg_cls)
 db.init_app(app)
 cache.init_app(app)
 scheduler.init_app(app)
+
+migrations_dir = Path(__file__).resolve().parents[1] / "migrations"
+migrate.init_app(app, db, directory=str(migrations_dir))
 
 app.register_blueprint(api_bp)
 
