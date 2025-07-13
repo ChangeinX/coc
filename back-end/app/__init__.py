@@ -2,10 +2,13 @@ import logging
 
 from pathlib import Path
 
-from flask import Flask
+from flask import Flask, g, request, abort
 from flask_cors import CORS
 
 from .api import register_blueprints
+from .models import User
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 from coclib.config import Config
 from coclib.extensions import db, cache, migrate, scheduler
 from coclib.logging_config import configure_logging
@@ -26,6 +29,32 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
 
     migrations_dir = Path(__file__).resolve().parents[2] / "migrations"
     migrate.init_app(app, db, directory=str(migrations_dir))
+
+
+    def require_auth():
+        if request.method == "OPTIONS":
+            return
+        auth = request.headers.get("Authorization", "")
+        if not auth.startswith("Bearer "):
+            abort(401)
+        token = auth.split(" ", 1)[1]
+        try:
+            info = id_token.verify_oauth2_token(
+                token,
+                google_requests.Request(),
+                app.config.get("GOOGLE_CLIENT_ID"),
+            )
+        except Exception:
+            abort(401)
+
+        user = User.query.filter_by(sub=info["sub"]).one_or_none()
+        if not user:
+            user = User(sub=info["sub"], email=info.get("email"), name=info.get("name"))
+            db.session.add(user)
+            db.session.commit()
+        g.user = user
+
+    app.before_request(require_auth)
 
     register_blueprints(app)
 
