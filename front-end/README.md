@@ -6,7 +6,9 @@ This folder contains a standalone React version of the dashboard. It can be buil
 
 ```bash
 npm install
-VITE_API_URL=http://localhost:8080 npm run dev
+VITE_API_URL=http://localhost:8080 \
+VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
+npm run dev
 ```
 
 The `VITE_API_URL` variable tells the dev server where the Flask API is
