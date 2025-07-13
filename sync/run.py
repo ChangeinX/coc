@@ -1,6 +1,7 @@
 # ruff: noqa: E402
 import logging
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,12 +14,8 @@ from pathlib import Path
 from coclib.extensions import db, cache, scheduler, migrate
 from coclib.logging_config import configure_logging
 
-try:
-    from sync.tasks import register_jobs
-    from sync.api import bp as api_bp
-except ModuleNotFoundError:  # pragma: no cover - fallback when executed locally
-    from tasks import register_jobs
-    from api import bp as api_bp
+from sync.tasks import register_jobs
+from sync.api import bp as api_bp
 
 cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = env_configs[cfg_name]
