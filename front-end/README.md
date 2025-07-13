@@ -14,6 +14,14 @@ npm run dev
 The `VITE_API_URL` variable tells the dev server where the Flask API is
 running. Omit it when the API shares the same origin.
 
+### Google Sign-In
+
+Create an OAuth 2.0 **Web** client in the Google Cloud Console and add
+`http://localhost:5173` to the **Authorized JavaScript origins**. Copy the
+client ID and provide it via the `VITE_GOOGLE_CLIENT_ID` environment variable
+when running the dev server. The backend must receive the same value through
+`GOOGLE_CLIENT_ID`.
+
 ## Production build
 
 ```bash
