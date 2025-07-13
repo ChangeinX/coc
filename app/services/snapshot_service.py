@@ -5,11 +5,13 @@ from typing import Optional, TypedDict
 from asyncio import to_thread
 from sqlalchemy import func
 
+import os
+import httpx
 from coclib.extensions import cache, db
 from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
 from coclib.utils import normalize_tag
-from sync.services.clan_service import get_clan as fetch_clan
 
+SYNC_BASE_URL = os.getenv("SYNC_BASE_URL", "http://sync:8080")
 CACHE_TTL = 60
 
 
@@ -142,7 +144,8 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
         .first()
     )
     if row is None:
-        await fetch_clan(tag)
+        async with httpx.AsyncClient(base_url=SYNC_BASE_URL, timeout=10) as client:
+            await client.post(f"/internal/clan/{tag}")
         row = (
             ClanSnapshot.query
             .filter_by(clan_tag=tag)
@@ -160,7 +163,7 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
 
 
 
-def get_player(tag: str) -> Optional[PlayerDict]:
+async def get_player(tag: str) -> Optional[PlayerDict]:
     """Return the latest Player snapshot or **None** if we have no data yet."""
     tag = normalize_tag(tag)
     cache_key = f"snapshot:player:{tag}"
@@ -174,8 +177,18 @@ def get_player(tag: str) -> Optional[PlayerDict]:
         .first()
     )
     if row is None:
-        return None
+        async with httpx.AsyncClient(base_url=SYNC_BASE_URL, timeout=10) as client:
+            await client.post(f"/internal/player/{tag}")
+        row = (
+            PlayerSnapshot.query  # type: ignore[attr-defined]
+            .filter_by(player_tag=tag)
+            .order_by(PlayerSnapshot.ts.desc())
+            .first()
+        )
+        if row is None:
+            return None
 
     data = _player_row_to_dict(row)
     cache.set(cache_key, data, timeout=CACHE_TTL)
     return data
+

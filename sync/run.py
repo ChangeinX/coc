@@ -1,7 +1,8 @@
 # ruff: noqa: E402
-import os
-import time
 import logging
+import os
+import socket
+from contextlib import closing
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,6 +11,7 @@ from flask import Flask
 from coclib.config import env_configs
 from coclib.extensions import db, cache, scheduler
 from coclib.logging_config import configure_logging
+from sync.api import bp as api_bp
 
 try:
     # Prefer importing via the package name so ``python -m sync.run`` works
@@ -31,6 +33,7 @@ app.config.from_object(cfg_cls)
 db.init_app(app)
 cache.init_app(app)
 scheduler.init_app(app)
+app.register_blueprint(api_bp)
 
 with app.app_context():
     register_jobs()
@@ -38,8 +41,19 @@ with app.app_context():
 
 logging.getLogger(__name__).info("Scheduler started")
 
-try:
+if __name__ == "__main__":
+    port = int(
+        os.getenv("PORT")
+        or (getattr(cfg_cls, "PORT", None) if getattr(cfg_cls, "PORT", 80) != 80 else 8000)
+    )
+
     while True:
-        time.sleep(60)
-except KeyboardInterrupt:
-    pass
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+            try:
+                s.bind(("0.0.0.0", port))
+                break
+            except OSError:
+                port += 1
+
+    logging.getLogger(__name__).info(f"Starting sync service on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=getattr(cfg_cls, "DEBUG", False))

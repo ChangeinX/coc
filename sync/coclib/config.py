@@ -27,6 +27,8 @@ class Config:
     COC_REQS_PER_SEC = 10
     COC_REQS_PER_DAY = 5_000
 
+    SYNC_BASE_URL = os.getenv("SYNC_BASE_URL", "http://sync:8080")
+
     PORT = 80
 
 
