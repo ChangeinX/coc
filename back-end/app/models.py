@@ -4,6 +4,7 @@ from coclib.models import (
     PlayerSnapshot,
     Player,
     LoyaltyMembership,
+    User,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "PlayerSnapshot",
     "Player",
     "LoyaltyMembership",
+    "User",
 ]
