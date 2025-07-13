@@ -1,8 +1,8 @@
 from flask import Flask
 
-from app.api.clan_routes import bp as clan_bp
-from app.api.player_routes import bp as player_bp
-from app.api.war_routes import bp as war_bp
+from .clan_routes import bp as clan_bp
+from .player_routes import bp as player_bp
+from .war_routes import bp as war_bp
 
 
 def register_blueprints(app: Flask):
