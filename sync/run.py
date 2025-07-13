@@ -1,25 +1,22 @@
 # ruff: noqa: E402
-import os
-import time
 import logging
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
+from asgiref.wsgi import WsgiToAsgi
 from flask import Flask
 from coclib.config import env_configs
 from coclib.extensions import db, cache, scheduler
 from coclib.logging_config import configure_logging
 
 try:
-    # Prefer importing via the package name so ``python -m sync.run`` works
-    # when executed from the repository root.
     from sync.tasks import register_jobs
-except ModuleNotFoundError:  # pragma: no cover - fallback for ``python -m run``
-    # ``python -m run`` executed from the ``sync`` directory does not have the
-    # parent package on ``sys.path``.  Fall back to a direct module import so
-    # it can still run as a standalone script.
+    from sync.api import bp as api_bp
+except ModuleNotFoundError:  # pragma: no cover - fallback when executed locally
     from tasks import register_jobs
+    from api import bp as api_bp
 
 cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = env_configs[cfg_name]
@@ -32,14 +29,16 @@ db.init_app(app)
 cache.init_app(app)
 scheduler.init_app(app)
 
+app.register_blueprint(api_bp)
+
 with app.app_context():
     register_jobs()
     scheduler.start()
 
-logging.getLogger(__name__).info("Scheduler started")
+asgi_app = WsgiToAsgi(app)
+logger = logging.getLogger(__name__)
 
-try:
-    while True:
-        time.sleep(60)
-except KeyboardInterrupt:
-    pass
+if __name__ == "__main__":
+    port = int(os.getenv("PORT") or (getattr(cfg_cls, "PORT", None) if getattr(cfg_cls, "PORT", 80) != 80 else 8000))
+    logger.info(f"Starting sync service on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=getattr(cfg_cls, "DEBUG", False))

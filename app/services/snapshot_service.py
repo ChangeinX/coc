@@ -1,13 +1,30 @@
 from __future__ import annotations
 
+import logging
+import os
 from typing import Optional, TypedDict
 
 from asyncio import to_thread
+import httpx
 from sqlalchemy import func
 
 from coclib.extensions import cache, db
 from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
 from coclib.utils import normalize_tag
+
+logger = logging.getLogger(__name__)
+SYNC_BASE = os.getenv("SYNC_BASE")
+
+
+async def _trigger_sync(path: str) -> None:
+    if not SYNC_BASE:
+        return
+    url = f"{SYNC_BASE.rstrip('/')}/{path.lstrip('/')}"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post(url)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.warning("Sync request to %s failed: %s", url, exc)
 
 CACHE_TTL = 60
 
@@ -141,7 +158,15 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
         .first()
     )
     if row is None:
-        return None
+        await _trigger_sync(f"clan/{tag}")
+        row = (
+            ClanSnapshot.query
+            .filter_by(clan_tag=tag)
+            .order_by(ClanSnapshot.ts.desc())
+            .first()
+        )
+        if row is None:
+            return None
 
     base = _clan_row_to_dict(row)
     data = await _attach_members(base)
@@ -151,7 +176,7 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
 
 
 
-def get_player(tag: str) -> Optional[PlayerDict]:
+async def get_player(tag: str) -> Optional[PlayerDict]:
     """Return the latest Player snapshot or **None** if we have no data yet."""
     tag = normalize_tag(tag)
     cache_key = f"snapshot:player:{tag}"
@@ -165,7 +190,15 @@ def get_player(tag: str) -> Optional[PlayerDict]:
         .first()
     )
     if row is None:
-        return None
+        await _trigger_sync(f"player/{tag}")
+        row = (
+            PlayerSnapshot.query
+            .filter_by(player_tag=tag)
+            .order_by(PlayerSnapshot.ts.desc())
+            .first()
+        )
+        if row is None:
+            return None
 
     data = _player_row_to_dict(row)
     cache.set(cache_key, data, timeout=CACHE_TTL)

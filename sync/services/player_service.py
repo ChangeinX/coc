@@ -1,6 +1,8 @@
 from asyncio import to_thread
 from datetime import datetime
 import logging
+import os
+import httpx
 from typing import TYPE_CHECKING
 
 from coclib.extensions import db, cache
@@ -10,6 +12,18 @@ from coclib.services.loyalty_service import ensure_membership
 from coclib.utils import normalize_tag
 
 logger = logging.getLogger(__name__)
+SYNC_BASE = os.getenv("SYNC_BASE")
+
+
+async def _trigger_sync(tag: str) -> None:
+    if not SYNC_BASE:
+        return
+    url = f"{SYNC_BASE.rstrip('/')}/player/{tag}"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post(url)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.warning("Sync request to %s failed: %s", url, exc)
 
 
 async def _fetch_player(tag: str) -> dict:
@@ -103,7 +117,10 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
 
     row = await to_thread(_latest)
     if row is None:
-        return None
+        await _trigger_sync(norm_tag)
+        row = await to_thread(_latest)
+        if row is None:
+            return None
 
     data: PlayerDict = {
         "tag": row.player_tag,
