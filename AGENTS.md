@@ -28,12 +28,5 @@ Any lint errors or build failures should fail the PR.
 ## Development notes
 
 - Keep shared logic in `coclib` rather than duplicating it in `sync` or `back-end`.
-- When modifying database models, run migrations with the standalone db app:
-  ```bash
-  cd db
-  flask --app app db migrate -m "message"
-  flask --app app db upgrade
-  ```
-- This keeps `migrations/` in sync with the models.
 - Dockerfiles in each subproject expect Python 3.11 and Node 18+.
 - Follow Ruff's default style rules for Python code.
