@@ -1,0 +1,19 @@
+{
+  "family": "clan-boards-static",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "static",
+      "image": "REPOSITORY_STATIC_PLACEHOLDER",
+      "essential": true,
+      "portMappings": [
+        {"containerPort": 8000, "hostPort": 8000}
+      ]
+    }
+  ]
+}

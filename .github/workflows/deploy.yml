@@ -1,0 +1,87 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECR_REPOSITORY_APP: ${{ secrets.ECR_REPOSITORY_APP }}
+      ECR_REPOSITORY_WORKER: ${{ secrets.ECR_REPOSITORY_WORKER }}
+      ECR_REPOSITORY_STATIC: ${{ secrets.ECR_REPOSITORY_STATIC }}
+      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+      APP_SERVICE: ${{ secrets.APP_SERVICE }}
+      STATIC_SERVICE: ${{ secrets.STATIC_SERVICE }}
+      APP_TASK_DEF: ecs/app-task-def.json
+      STATIC_TASK_DEF: ecs/static-task-def.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            app:
+              - 'back-end/**'
+              - 'front-end/**'
+              - 'coclib/**'
+              - 'migrations/**'
+            sync:
+              - 'sync/**'
+              - 'coclib/**'
+              - 'migrations/**'
+
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Set ECR_REGISTRY env
+        run: echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_ENV
+
+      - name: Build worker image
+        if: steps.filter.outputs.app == 'true'
+        run: |
+          docker build -t "$ECR_REGISTRY/$ECR_REPOSITORY_WORKER:latest" -f back-end/Dockerfile .
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY_WORKER:latest"
+
+      - name: Build app image
+        if: steps.filter.outputs.app == 'true'
+        run: |
+          docker build -t "$ECR_REGISTRY/$ECR_REPOSITORY_APP:latest" -f front-end/Dockerfile front-end
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY_APP:latest"
+
+      - name: Build static image
+        if: steps.filter.outputs.sync == 'true'
+        run: |
+          docker build -t "$ECR_REGISTRY/$ECR_REPOSITORY_STATIC:latest" -f sync/Dockerfile .
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY_STATIC:latest"
+
+      - name: Deploy app task
+        if: steps.filter.outputs.app == 'true'
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ env.APP_TASK_DEF }}
+          service: ${{ env.APP_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          image: |
+            container=worker,image="$ECR_REGISTRY/$ECR_REPOSITORY_WORKER:latest"
+            container=app,image="$ECR_REGISTRY/$ECR_REPOSITORY_APP:latest"
+
+      - name: Deploy static task
+        if: steps.filter.outputs.sync == 'true'
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ env.STATIC_TASK_DEF }}
+          service: ${{ env.STATIC_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          image: container=static,image="$ECR_REGISTRY/$ECR_REPOSITORY_STATIC:latest"
