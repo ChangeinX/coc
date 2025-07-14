@@ -67,7 +67,7 @@ jobs:
             --push front-end
           task_def=$(aws ecs describe-services --cluster $CLUSTER --services $APP_SERVICE --query 'services[0].taskDefinition' --output text)
           aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
-          jq --arg IMAGE "$ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }}" '.containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
+          jq --arg IMAGE "$ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
           new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
           aws ecs update-service --cluster $CLUSTER --service $APP_SERVICE --task-definition "$new_def"
 
@@ -82,7 +82,7 @@ jobs:
             --push .
           task_def=$(aws ecs describe-services --cluster $CLUSTER --services $WORKER_SERVICE --query 'services[0].taskDefinition' --output text)
           aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
-          jq --arg IMAGE "$ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }}" '.containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
+          jq --arg IMAGE "$ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
           new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
           aws ecs update-service --cluster $CLUSTER --service $WORKER_SERVICE --task-definition "$new_def"
 
@@ -97,6 +97,6 @@ jobs:
             --push .
           task_def=$(aws ecs describe-services --cluster $CLUSTER --services $STATIC_SERVICE --query 'services[0].taskDefinition' --output text)
           aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
-          jq --arg IMAGE "$ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }}" '.containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
+          jq --arg IMAGE "$ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
           new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
           aws ecs update-service --cluster $CLUSTER --service $STATIC_SERVICE --task-definition "$new_def"
