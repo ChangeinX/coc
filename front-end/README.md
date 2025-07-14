@@ -30,9 +30,14 @@ npm run build
 ```
 
 The production build output will be in the `dist/` directory. When building the
-Docker image you can supply `VITE_API_URL` to hard-code the backend URL:
+Docker image you can supply build arguments to set the backend URL and Google
+client ID:
 
 ```bash
-docker build --build-arg VITE_API_URL=https://api.example.com -t dashboard .
+docker build \
+  --build-arg VITE_API_URL=https://api.example.com \
+  --build-arg VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
+  --build-arg VITE_BASE_PATH=/ \
+  -t dashboard .
 ```
 
