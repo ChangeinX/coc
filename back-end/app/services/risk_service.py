@@ -5,6 +5,7 @@ from sqlalchemy import select, desc
 
 from coclib.extensions import db
 from coclib.models import PlayerSnapshot
+from .snapshot_service import get_clan as refresh_clan
 
 _WEIGHTS = {
     "war": 0.40,  # 40 pts when clan is actively warring
@@ -132,7 +133,13 @@ def score(
 
 
 async def clan_at_risk(clan_tag: str) -> list[dict]:
-    """Return sorted risk breakdown for every member in *clan_tag*."""
+    """Return sorted risk breakdown for every member in *clan_tag*.
+
+    The latest clan snapshot is fetched first so member data stays fresh.
+    """
+
+    await refresh_clan(clan_tag.upper())
+
     # Get the latest snapshot for each member, then compute history & score
     subq = (
         select(
