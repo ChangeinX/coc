@@ -1,5 +1,5 @@
 from asyncio import to_thread
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import os
 import httpx
@@ -13,6 +13,7 @@ from coclib.utils import normalize_tag
 
 logger = logging.getLogger(__name__)
 SYNC_BASE = os.getenv("SYNC_BASE")
+STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 
 async def _trigger_sync(tag: str) -> None:
@@ -110,7 +111,9 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
     norm_tag = normalize_tag(tag)
     cache_key = f"snapshot:player:{norm_tag}"
     if (cached := cache.get(cache_key)) is not None:
-        return cached
+        cached_ts = datetime.fromisoformat(cached["ts"])
+        if datetime.utcnow() - cached_ts <= STALE_AFTER:
+            return cached
 
     def _latest() -> PlayerSnapshot | None:
         return (
@@ -120,7 +123,8 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         )
 
     row = await to_thread(_latest)
-    if row is None:
+    needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
+    if needs_refresh:
         await _trigger_sync(norm_tag)
         row = await to_thread(_latest)
         if row is None:

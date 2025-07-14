@@ -1,6 +1,7 @@
 import logging
+import os
 from asyncio import gather
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 from coclib.extensions import db, cache
@@ -11,6 +12,7 @@ from .player_service import get_player
 from coclib.utils import normalize_tag
 
 logger = logging.getLogger(__name__)
+STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 
 async def fetch_clan(tag: str) -> dict:

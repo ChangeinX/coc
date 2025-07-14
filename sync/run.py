@@ -11,10 +11,9 @@ from flask import Flask
 from coclib.config import env_configs
 from pathlib import Path
 
-from coclib.extensions import db, cache, scheduler, migrate
+from coclib.extensions import db, cache, migrate
 from coclib.logging_config import configure_logging
 
-from sync.tasks import register_jobs
 from sync.api import bp as api_bp
 
 cfg_name = os.getenv("APP_ENV", "production")
@@ -26,16 +25,11 @@ app.config.from_object(cfg_cls)
 
 db.init_app(app)
 cache.init_app(app)
-scheduler.init_app(app)
 
 migrations_dir = Path(__file__).resolve().parents[1] / "migrations"
 migrate.init_app(app, db, directory=str(migrations_dir))
 
 app.register_blueprint(api_bp)
-
-with app.app_context():
-    register_jobs()
-    scheduler.start()
 
 asgi_app = WsgiToAsgi(app)
 logger = logging.getLogger(__name__)

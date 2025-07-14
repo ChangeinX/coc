@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 
-from sync.services import clan_service, player_service
+from sync.services import clan_service, player_service, war_service
 
 bp = Blueprint("sync_api", __name__, url_prefix="/sync")
 
@@ -14,4 +14,10 @@ async def fetch_player(tag: str):
 @bp.post("/clan/<string:tag>")
 async def fetch_clan(tag: str):
     data = await clan_service.get_clan(tag.upper())
+    return jsonify(data)
+
+
+@bp.post("/war/<string:tag>")
+async def fetch_war(tag: str):
+    data = await war_service.current_war(tag.upper())
     return jsonify(data)
