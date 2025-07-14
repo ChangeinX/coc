@@ -46,17 +46,21 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
         .first()
     )
 
-    last_seen_api = now
+    last_seen_api: datetime | None = None
     if (ls := data.get("lastSeen")):
         try:
             last_seen_api = datetime.strptime(ls, "%Y%m%dT%H%M%S.%fZ")
         except ValueError:
             logger.warning("Invalid lastSeen %s for %s", ls, tag)
 
-    if prev_snapshot and last_seen_api < (prev_snapshot.last_seen or prev_snapshot.ts):
-        last_seen = prev_snapshot.last_seen or prev_snapshot.ts
+    if prev_snapshot:
+        prev_seen = prev_snapshot.last_seen or prev_snapshot.ts
+        if last_seen_api is None:
+            last_seen = prev_seen
+        else:
+            last_seen = max(last_seen_api, prev_seen)
     else:
-        last_seen = last_seen_api
+        last_seen = last_seen_api or now
 
     attacks_used_val = (
         war_attacks_used if war_attacks_used is not None else data.get("warAttacksUsed")
