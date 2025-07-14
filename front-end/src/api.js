@@ -22,6 +22,9 @@ export async function fetchJSON(path, options = {}) {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
     const res = await fetch(`${API_URL}${path}`, options);
+    if (res.status === 401) {
+        localStorage.removeItem('token');
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
 }
