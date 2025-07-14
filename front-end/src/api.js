@@ -5,7 +5,15 @@
 // In production the API runs on the same host as the front-end so we use a
 // relative path. During local development set `VITE_API_URL` to the backend
 // URL (for example `http://localhost:8080`).
-export const API_URL = import.meta.env.VITE_API_URL || '';
+let apiUrl = import.meta.env.VITE_API_URL || '';
+// If the provided API URL omits a scheme, assume HTTPS to ensure requests
+// are sent to the correct host. This also strips any leading slashes so that
+// `fetch` doesn't treat the value as a relative path.
+if (apiUrl && !/^https?:\/\//i.test(apiUrl)) {
+    apiUrl = apiUrl.replace(/^\/*/, '');
+    apiUrl = `https://${apiUrl}`;
+}
+export const API_URL = apiUrl;
 
 export async function fetchJSON(path, options = {}) {
     const token = localStorage.getItem('token');
