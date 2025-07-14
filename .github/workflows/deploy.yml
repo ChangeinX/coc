@@ -19,7 +19,6 @@ jobs:
       STATIC_SERVICE: ${{ secrets.STATIC_SERVICE }}
       VITE_API_URL: ${{ secrets.VITE_API_URL }}
       VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-      VITE_BASE_PATH: ${{ secrets.VITE_BASE_PATH }}
 
     steps:
       - uses: actions/checkout@v3
@@ -54,7 +53,6 @@ jobs:
             -f front-end/Dockerfile \
             --build-arg VITE_API_URL=$VITE_API_URL \
             --build-arg VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
-            --build-arg VITE_BASE_PATH=$VITE_BASE_PATH \
             -t $ECR_REGISTRY/$APP_REPOSITORY:latest \
             -t $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }} front-end
           docker push $ECR_REGISTRY/$APP_REPOSITORY:latest
