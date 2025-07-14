@@ -10,7 +10,10 @@ export default function App() {
     if (!token && window.google) {
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: (res) => setToken(res.credential),
+        callback: (res) => {
+          localStorage.setItem('token', res.credential);
+          setToken(res.credential);
+        },
       });
       window.google.accounts.id.renderButton(
         document.getElementById('signin'),
@@ -42,6 +45,7 @@ export default function App() {
         className="absolute top-4 right-4 px-2 py-1 bg-slate-800 text-white rounded"
         onClick={() => {
           window.google?.accounts.id.disableAutoSelect();
+          localStorage.removeItem('token');
           setToken(null);
         }}
       >
