@@ -35,7 +35,7 @@ export default function PlayerModal({ tag, onClose }) {
                 <span>{player.name}</span>
                 <span className="text-sm font-normal text-slate-500">{player.tag}</span>
               </h3>
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div>
                   <p className="text-sm text-slate-500">Town Hall</p>
                   <p className="text-xl font-semibold">{player.townHallLevel}</p>
