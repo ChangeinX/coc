@@ -46,31 +46,45 @@ jobs:
         run: |
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Build and push app image
         if: steps.changes.outputs.app_any_changed == 'true'
         run: |
-          docker build \
+          docker buildx build \
+            --platform linux/arm64 \
             -f front-end/Dockerfile \
             --build-arg VITE_API_URL=$VITE_API_URL \
             --build-arg VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
             -t $ECR_REGISTRY/$APP_REPOSITORY:latest \
-            -t $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }} front-end
-          docker push $ECR_REGISTRY/$APP_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }}
+            -t $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }} \
+            --push front-end
           aws ecs update-service --cluster $CLUSTER --service $APP_SERVICE --force-new-deployment
 
       - name: Build and push worker image
         if: steps.changes.outputs.worker_any_changed == 'true'
         run: |
-          docker build -f back-end/Dockerfile -t $ECR_REGISTRY/$WORKER_REPOSITORY:latest -t $ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }} .
-          docker push $ECR_REGISTRY/$WORKER_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }}
+          docker buildx build \
+            --platform linux/arm64 \
+            -f back-end/Dockerfile \
+            -t $ECR_REGISTRY/$WORKER_REPOSITORY:latest \
+            -t $ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }} \
+            --push .
           aws ecs update-service --cluster $CLUSTER --service $WORKER_SERVICE --force-new-deployment
 
       - name: Build and push static image
         if: steps.changes.outputs.static_any_changed == 'true'
         run: |
-          docker build -f sync/Dockerfile -t $ECR_REGISTRY/$STATIC_REPOSITORY:latest -t $ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }} .
-          docker push $ECR_REGISTRY/$STATIC_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }}
+          docker buildx build \
+            --platform linux/arm64 \
+            -f sync/Dockerfile \
+            -t $ECR_REGISTRY/$STATIC_REPOSITORY:latest \
+            -t $ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }} \
+            --push .
           aws ecs update-service --cluster $CLUSTER --service $STATIC_SERVICE --force-new-deployment
