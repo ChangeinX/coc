@@ -55,13 +55,20 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
             logger.warning("Invalid lastSeen %s for %s", ls, tag)
 
     if prev_snapshot:
-        prev_seen = prev_snapshot.last_seen or prev_snapshot.ts
+        prev_seen = prev_snapshot.last_seen
         if last_seen_api is None:
             last_seen = prev_seen
         else:
-            last_seen = max(last_seen_api, prev_seen)
+            last_seen = (
+                max(last_seen_api, prev_seen)
+                if prev_seen is not None
+                else last_seen_api
+            )
     else:
         last_seen = last_seen_api or now
+
+    if last_seen is None:
+        last_seen = now
 
     attacks_used_val = (
         war_attacks_used if war_attacks_used is not None else data.get("warAttacksUsed")
