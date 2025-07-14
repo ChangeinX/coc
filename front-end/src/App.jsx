@@ -3,10 +3,30 @@ import Loading from './Loading.jsx';
 
 const Dashboard = lazy(() => import('./Dashboard.jsx'));
 
+function isTokenExpired(tok) {
+  try {
+    const payload = JSON.parse(atob(tok.split('.')[1]));
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
 export default function App() {
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [token, setToken] = useState(() => {
+    const stored = localStorage.getItem('token');
+    if (stored && isTokenExpired(stored)) {
+      localStorage.removeItem('token');
+      return null;
+    }
+    return stored;
+  });
 
   useEffect(() => {
+    if (token && isTokenExpired(token)) {
+      setToken(null);
+      return;
+    }
     if (!token && window.google) {
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
