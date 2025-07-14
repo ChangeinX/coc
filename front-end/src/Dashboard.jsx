@@ -21,9 +21,7 @@ function Stat({icon, label, value}) {
     );
 }
 
-const DEFAULT_TAG = 'UV0YR2Q8';
-
-export default function Dashboard() {
+export default function Dashboard({ defaultTag }) {
     const [tag, setTag] = useState('');
     const [clan, setClan] = useState(null);
     const [topRisk, setTopRisk] = useState([]);
@@ -116,8 +114,10 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
-        load(DEFAULT_TAG);
-    }, []);
+        if (defaultTag) {
+            load(defaultTag);
+        }
+    }, [defaultTag]);
 
     useEffect(() => {
         if (window.lucide) {
