@@ -1,0 +1,69 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+      APP_REPOSITORY: ${{ secrets.APP_REPOSITORY }}
+      WORKER_REPOSITORY: ${{ secrets.WORKER_REPOSITORY }}
+      STATIC_REPOSITORY: ${{ secrets.STATIC_REPOSITORY }}
+      CLUSTER: ${{ secrets.CLUSTER }}
+      APP_SERVICE: ${{ secrets.APP_SERVICE }}
+      WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
+      STATIC_SERVICE: ${{ secrets.STATIC_SERVICE }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Detect changes
+        id: changes
+        uses: tj-actions/changed-files@v41
+        with:
+          files_yaml: |
+            app:
+              - front-end/**
+            worker:
+              - back-end/**
+            static:
+              - sync/**
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+      - name: Build and push app image
+        if: steps.changes.outputs.app_any_changed == 'true'
+        run: |
+          docker build -f front-end/Dockerfile -t $ECR_REGISTRY/$APP_REPOSITORY:latest -t $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }} .
+          docker push $ECR_REGISTRY/$APP_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }}
+          aws ecs update-service --cluster $CLUSTER --service $APP_SERVICE --force-new-deployment
+
+      - name: Build and push worker image
+        if: steps.changes.outputs.worker_any_changed == 'true'
+        run: |
+          docker build -f back-end/Dockerfile -t $ECR_REGISTRY/$WORKER_REPOSITORY:latest -t $ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }} .
+          docker push $ECR_REGISTRY/$WORKER_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }}
+          aws ecs update-service --cluster $CLUSTER --service $WORKER_SERVICE --force-new-deployment
+
+      - name: Build and push static image
+        if: steps.changes.outputs.static_any_changed == 'true'
+        run: |
+          docker build -f sync/Dockerfile -t $ECR_REGISTRY/$STATIC_REPOSITORY:latest -t $ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }} .
+          docker push $ECR_REGISTRY/$STATIC_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }}
+          aws ecs update-service --cluster $CLUSTER --service $STATIC_SERVICE --force-new-deployment
