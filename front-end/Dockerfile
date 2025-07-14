@@ -4,9 +4,14 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 
-# Allow overriding the backend API during the build
+# Allow overriding build-time configuration
 ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_BASE_PATH
+ENV \
+    VITE_API_URL=$VITE_API_URL \
+    VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
+    VITE_BASE_PATH=$VITE_BASE_PATH
 
 RUN npm run build
 
