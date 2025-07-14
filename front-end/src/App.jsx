@@ -12,6 +12,22 @@ function isTokenExpired(tok) {
   }
 }
 
+function getInitials(tok) {
+  try {
+    const payload = JSON.parse(atob(tok.split('.')[1]));
+    const name = payload.name || '';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  } catch {
+    return '';
+  }
+}
+
 export default function App() {
   const [token, setToken] = useState(() => {
     const stored = localStorage.getItem('token');
@@ -21,6 +37,7 @@ export default function App() {
     }
     return stored;
   });
+  const [initials, setInitials] = useState(() => (token ? getInitials(token) : ''));
 
   useEffect(() => {
     if (token && isTokenExpired(token)) {
@@ -44,6 +61,10 @@ export default function App() {
   }, [token]);
 
   useEffect(() => {
+    setInitials(token ? getInitials(token) : '');
+  }, [token]);
+
+  useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
     } else {
@@ -53,24 +74,37 @@ export default function App() {
 
   if (!token) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div id="signin"></div>
-      </div>
+      <>
+        <header className="bg-gradient-to-r from-blue-600 to-slate-800 text-white p-4 text-center shadow-md">
+          <h1 className="text-lg font-semibold">Clan Dashboard</h1>
+        </header>
+        <div className="flex justify-center items-center h-[calc(100vh-4rem)]">
+          <div id="signin"></div>
+        </div>
+      </>
     );
   }
 
   return (
     <>
-      <button
-        className="absolute top-4 right-4 px-2 py-1 bg-slate-800 text-white rounded"
-        onClick={() => {
-          window.google?.accounts.id.disableAutoSelect();
-          localStorage.removeItem('token');
-          setToken(null);
-        }}
-      >
-        Sign Out
-      </button>
+      <header className="bg-gradient-to-r from-blue-600 to-slate-800 text-white p-4 flex items-center justify-between shadow-md">
+        <h1 className="text-lg font-semibold">Clan Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <span className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase">
+            {initials}
+          </span>
+          <button
+            className="px-3 py-1 text-sm rounded bg-slate-700"
+            onClick={() => {
+              window.google?.accounts.id.disableAutoSelect();
+              localStorage.removeItem('token');
+              setToken(null);
+            }}
+          >
+            Sign Out
+          </button>
+        </div>
+      </header>
       <Suspense fallback={<Loading className="h-screen" />}>
         <Dashboard />
       </Suspense>
