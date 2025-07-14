@@ -21,7 +21,7 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(cfg_cls)
 
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
 
     db.init_app(app)
     cache.init_app(app)
@@ -32,7 +32,8 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
 
 
     def require_auth():
-        if request.method == "OPTIONS":
+        path = request.path.rstrip("/")
+        if request.method == "OPTIONS" or path == "/health":
             return
         auth = request.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
