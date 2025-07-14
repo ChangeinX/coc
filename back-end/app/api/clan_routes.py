@@ -22,5 +22,7 @@ async def at_risk(tag: str):
 
 @bp.get("/<string:tag>/members/loyalty")
 async def loyalty(tag: str):
+    # Refresh clan snapshot to ensure membership list is current
+    await get_clan_snapshot(tag.upper())
     data = get_clan_loyalty(tag.upper())
     return jsonify(data)
