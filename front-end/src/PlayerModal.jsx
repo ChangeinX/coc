@@ -62,6 +62,18 @@ export default function PlayerModal({ tag, onClose }) {
                 <span className="font-semibold">Last seen:</span>{' '}
                 {player.last_seen ? new Date(player.last_seen).toLocaleDateString() : '—'}
               </p>
+              {player.risk_breakdown && player.risk_breakdown.length > 0 && (
+                <div className="mt-4">
+                  <p className="font-semibold">Risk Score: {player.risk_score}</p>
+                  <ul className="list-disc list-inside text-sm mt-1">
+                    {player.risk_breakdown.map((r, i) => (
+                      <li key={i}>
+                        {r.points} pts – {r.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </>
           )}
         </div>
