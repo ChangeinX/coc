@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useMemo, Suspense, lazy} from 'react';
 import Loading from './Loading.jsx';
-import {fetchJSON} from './api.js';
+import {fetchJSONCached} from './api.js';
 
 const PlayerModal = lazy(() => import('./PlayerModal.jsx'));
 
@@ -68,13 +68,27 @@ export default function Dashboard() {
     }, [members, sortField, sortDir]);
 
     const load = async (clanTag) => {
-        setLoading(true);
+        const cacheKey = `clan:${clanTag}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            try {
+                const data = JSON.parse(cached);
+                setClan(data.clan);
+                setMembers(data.members);
+                setTopRisk(data.topRisk);
+            } catch {
+                localStorage.removeItem(cacheKey);
+            }
+        } else {
+            setLoading(true);
+        }
+
         try {
-            const clanData = await fetchJSON(`/clan/${encodeURIComponent(clanTag)}`);
-            const riskData = await fetchJSON(
+            const clanData = await fetchJSONCached(`/clan/${encodeURIComponent(clanTag)}`);
+            const riskData = await fetchJSONCached(
                 `/clan/${encodeURIComponent(clanTag)}/members/at-risk`
             );
-            const loyaltyMap = await fetchJSON(
+            const loyaltyMap = await fetchJSONCached(
                 `/clan/${encodeURIComponent(clanTag)}/members/loyalty`
             );
             const rmap = Object.fromEntries(riskData.map((r) => [r.player_tag, r]));
@@ -85,12 +99,18 @@ export default function Dashboard() {
                 last_seen: rmap[m.tag.replace('#', '')]?.last_seen || null,
                 loyalty: loyaltyMap[m.tag.replace('#', '')] || 0,
             }));
+            const top = [...merged].sort((a, b) => b.risk_score - a.risk_score).slice(0, 10);
             setClan(clanData);
             setMembers(merged);
-            setTopRisk([...merged].sort((a, b) => b.risk_score - a.risk_score).slice(0, 10));
+            setTopRisk(top);
             setError('');
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify({ clan: clanData, members: merged, topRisk: top }));
+            } catch {
+                /* ignore */
+            }
         } catch (err) {
-            setError(err.message);
+            if (!clan) setError(err.message);
         }
         setLoading(false);
     };

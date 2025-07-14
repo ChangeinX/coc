@@ -1,1 +1,1 @@
-# Synchronization service package
+# Synchronization service package.
