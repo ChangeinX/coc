@@ -3,5 +3,11 @@ body {
     -webkit-font-smoothing: antialiased;
     background: linear-gradient(to bottom right, #f1f5f9, #e2e8f0);
     min-height: 100vh;
-    padding: 1rem;
+    padding: 0.5rem;
+}
+
+@media (min-width: 640px) {
+    body {
+        padding: 1rem;
+    }
 }
