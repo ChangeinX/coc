@@ -64,24 +64,47 @@ jobs:
           docker build -t "$ECR_REGISTRY/$ECR_REPOSITORY_STATIC:latest" -f sync/Dockerfile .
           docker push "$ECR_REGISTRY/$ECR_REPOSITORY_STATIC:latest"
 
+      - name: Render worker image
+        if: steps.filter.outputs.app == 'true'
+        id: render-worker
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.APP_TASK_DEF }}
+          container-name: worker
+          image: $ECR_REGISTRY/$ECR_REPOSITORY_WORKER:latest
+
+      - name: Render app image
+        if: steps.filter.outputs.app == 'true'
+        id: render-app
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-worker.outputs.task-definition }}
+          container-name: app
+          image: $ECR_REGISTRY/$ECR_REPOSITORY_APP:latest
+
       - name: Deploy app task
         if: steps.filter.outputs.app == 'true'
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ env.APP_TASK_DEF }}
+          task-definition: ${{ steps.render-app.outputs.task-definition }}
           service: ${{ env.APP_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
-          image: |
-            container=worker,image="$ECR_REGISTRY/$ECR_REPOSITORY_WORKER:latest"
-            container=app,image="$ECR_REGISTRY/$ECR_REPOSITORY_APP:latest"
+
+      - name: Render static image
+        if: steps.filter.outputs.sync == 'true'
+        id: render-static
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.STATIC_TASK_DEF }}
+          container-name: static
+          image: $ECR_REGISTRY/$ECR_REPOSITORY_STATIC:latest
 
       - name: Deploy static task
         if: steps.filter.outputs.sync == 'true'
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ env.STATIC_TASK_DEF }}
+          task-definition: ${{ steps.render-static.outputs.task-definition }}
           service: ${{ env.STATIC_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
-          image: container=static,image="$ECR_REGISTRY/$ECR_REPOSITORY_STATIC:latest"

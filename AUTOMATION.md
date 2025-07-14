@@ -9,7 +9,8 @@ Two ECS task definitions are provided in `ecs/`:
   service.
 
 The workflow only rebuilds images when their sources have changed. Images are
-published to Amazon ECR and the corresponding ECS service is updated.
+published to Amazon ECR. The task definition templates in `ecs/` are rendered
+with the new image URIs before deploying the updated services.
 
 ## Setup steps
 
@@ -28,4 +29,5 @@ published to Amazon ECR and the corresponding ECS service is updated.
      `ECR_REPOSITORY_STATIC` – names of the ECR repositories.
 4. Commit the workflow in `.github/workflows/deploy.yml` and push to the `main`
    branch. On each push the workflow will build any changed images, push them to
-   ECR and trigger a new deployment of the affected ECS services.
+   ECR and render the task definitions with those image URIs. The rendered
+   definitions are then deployed to the corresponding ECS services.
