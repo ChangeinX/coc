@@ -57,7 +57,11 @@ jobs:
             -t $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }} front-end
           docker push $ECR_REGISTRY/$APP_REPOSITORY:latest
           docker push $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }}
-          aws ecs update-service --cluster $CLUSTER --service $APP_SERVICE --force-new-deployment
+          task_def=$(aws ecs describe-services --cluster $CLUSTER --services $APP_SERVICE --query 'services[0].taskDefinition' --output text)
+          aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
+          jq --arg IMAGE "$ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }}" '.containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
+          new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          aws ecs update-service --cluster $CLUSTER --service $APP_SERVICE --task-definition "$new_def"
 
       - name: Build and push worker image
         if: steps.changes.outputs.worker_any_changed == 'true'
@@ -65,7 +69,11 @@ jobs:
           docker build -f back-end/Dockerfile -t $ECR_REGISTRY/$WORKER_REPOSITORY:latest -t $ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }} .
           docker push $ECR_REGISTRY/$WORKER_REPOSITORY:latest
           docker push $ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }}
-          aws ecs update-service --cluster $CLUSTER --service $WORKER_SERVICE --force-new-deployment
+          task_def=$(aws ecs describe-services --cluster $CLUSTER --services $WORKER_SERVICE --query 'services[0].taskDefinition' --output text)
+          aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
+          jq --arg IMAGE "$ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }}" '.containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
+          new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          aws ecs update-service --cluster $CLUSTER --service $WORKER_SERVICE --task-definition "$new_def"
 
       - name: Build and push static image
         if: steps.changes.outputs.static_any_changed == 'true'
@@ -73,4 +81,8 @@ jobs:
           docker build -f sync/Dockerfile -t $ECR_REGISTRY/$STATIC_REPOSITORY:latest -t $ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }} .
           docker push $ECR_REGISTRY/$STATIC_REPOSITORY:latest
           docker push $ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }}
-          aws ecs update-service --cluster $CLUSTER --service $STATIC_SERVICE --force-new-deployment
+          task_def=$(aws ecs describe-services --cluster $CLUSTER --services $STATIC_SERVICE --query 'services[0].taskDefinition' --output text)
+          aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
+          jq --arg IMAGE "$ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }}" '.containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
+          new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          aws ecs update-service --cluster $CLUSTER --service $STATIC_SERVICE --task-definition "$new_def"
