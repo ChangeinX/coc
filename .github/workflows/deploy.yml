@@ -47,7 +47,7 @@ jobs:
       - name: Build and push app image
         if: steps.changes.outputs.app_any_changed == 'true'
         run: |
-          docker build -f front-end/Dockerfile -t $ECR_REGISTRY/$APP_REPOSITORY:latest -t $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }} .
+          docker build -f front-end/Dockerfile -t $ECR_REGISTRY/$APP_REPOSITORY:latest -t $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }} front-end
           docker push $ECR_REGISTRY/$APP_REPOSITORY:latest
           docker push $ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }}
           aws ecs update-service --cluster $CLUSTER --service $APP_SERVICE --force-new-deployment
