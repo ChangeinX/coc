@@ -2,9 +2,6 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-
-load_dotenv()
-
 from flask import Flask
 
 from coclib.config import env_configs
@@ -12,6 +9,8 @@ from coclib.extensions import db, migrate
 
 # Import models so that Flask-Migrate can detect them
 from coclib import models  # noqa: F401
+
+load_dotenv()
 
 
 def create_app(cfg_cls=env_configs.get(os.getenv("APP_ENV", "production"))):
