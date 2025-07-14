@@ -2,7 +2,6 @@
 
 This folder contains a standalone React version of the dashboard. It can be built with Vite and served separately from the Python API.
 
-
 ## Development
 
 ```bash
