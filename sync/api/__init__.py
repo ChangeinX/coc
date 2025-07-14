@@ -21,3 +21,4 @@ async def fetch_clan(tag: str):
 async def fetch_war(tag: str):
     data = await war_service.current_war(tag.upper())
     return jsonify(data)
+
