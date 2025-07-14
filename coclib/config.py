@@ -31,6 +31,11 @@ class Config:
 
     PORT = 80
 
+    CORS_ORIGINS = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,https://dev.clan-boards.com,https://api.dev.clan-boards.com",
+    ).split(",")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
