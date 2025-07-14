@@ -87,3 +87,4 @@ class User(db.Model):
     sub = db.Column(db.String(255), unique=True, nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.String(255))
+    player_tag = db.Column(db.String(15), index=True)

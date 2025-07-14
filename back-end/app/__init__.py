@@ -55,10 +55,17 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
 
         user = User.query.filter_by(sub=info["sub"]).one_or_none()
         if not user:
-            user = User(sub=info["sub"], email=info.get("email"), name=info.get("name"))
+            user = User(
+                sub=info["sub"],
+                email=info.get("email"),
+                name=info.get("name"),
+            )
             db.session.add(user)
             db.session.commit()
         g.user = user
+
+        if not user.player_tag and not path.startswith("/user"):
+            abort(400)
 
     app.before_request(require_auth)
 
