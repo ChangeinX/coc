@@ -28,3 +28,35 @@ export async function fetchJSON(path, options = {}) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
 }
+
+const CACHE_PREFIX = 'cache:';
+
+export async function fetchJSONCached(path, options = {}) {
+    const key = `${CACHE_PREFIX}${path}`;
+    const cached = localStorage.getItem(key);
+    if (cached) {
+        try {
+            const parsed = JSON.parse(cached);
+            // Refresh cache in background
+            fetchJSON(path, options)
+                .then((data) => {
+                    try {
+                        localStorage.setItem(key, JSON.stringify(data));
+                    } catch {
+                        /* ignore */
+                    }
+                })
+                .catch(() => {});
+            return parsed;
+        } catch {
+            localStorage.removeItem(key);
+        }
+    }
+    const data = await fetchJSON(path, options);
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+    } catch {
+        /* ignore */
+    }
+    return data;
+}

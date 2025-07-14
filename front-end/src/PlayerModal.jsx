@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchJSON } from './api.js';
+import { fetchJSONCached } from './api.js';
 import Loading from './Loading.jsx';
 
 export default function PlayerModal({ tag, onClose }) {
@@ -9,7 +9,7 @@ export default function PlayerModal({ tag, onClose }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchJSON(`/player/${encodeURIComponent(tag)}`);
+        const data = await fetchJSONCached(`/player/${encodeURIComponent(tag)}`);
         setPlayer(data);
       } catch (err) {
         setError(err.message);
