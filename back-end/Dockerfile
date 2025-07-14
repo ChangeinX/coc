@@ -3,7 +3,6 @@ FROM python:3.11-slim
 # Build this image from within the root directory:
 #   docker build -f back-end/Dockerfile -t clash-of-clans/clan-boards-api .
 
-
 WORKDIR /opt/app
 
 # install dependencies
