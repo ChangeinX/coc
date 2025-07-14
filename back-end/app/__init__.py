@@ -21,6 +21,10 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(cfg_cls)
 
+    client_id = app.config.get("GOOGLE_CLIENT_ID")
+    if not client_id:
+        raise RuntimeError("GOOGLE_CLIENT_ID environment variable is required")
+
     CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
 
     db.init_app(app)
@@ -43,9 +47,10 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
             info = id_token.verify_oauth2_token(
                 token,
                 google_requests.Request(),
-                app.config.get("GOOGLE_CLIENT_ID"),
+                client_id,
             )
-        except Exception:
+        except Exception as exc:
+            logger.warning("Token verification failed: %s", exc)
             abort(401)
 
         user = User.query.filter_by(sub=info["sub"]).one_or_none()
