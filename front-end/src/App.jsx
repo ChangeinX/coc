@@ -1,5 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import Loading from './Loading.jsx';
+import PlayerTagForm from './PlayerTagForm.jsx';
+import { fetchJSON } from './api.js';
 
 const Dashboard = lazy(() => import('./Dashboard.jsx'));
 
@@ -38,6 +40,9 @@ export default function App() {
     return stored;
   });
   const [initials, setInitials] = useState(() => (token ? getInitials(token) : ''));
+  const [playerTag, setPlayerTag] = useState(null);
+  const [clanTag, setClanTag] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(false);
 
   useEffect(() => {
     if (token && isTokenExpired(token)) {
@@ -62,6 +67,25 @@ export default function App() {
 
   useEffect(() => {
     setInitials(token ? getInitials(token) : '');
+  }, [token]);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      if (!token) return;
+      setLoadingUser(true);
+      try {
+        const me = await fetchJSON('/user/me');
+        setPlayerTag(me.player_tag);
+        if (me.player_tag) {
+          const player = await fetchJSON(`/player/${encodeURIComponent(me.player_tag)}`);
+          if (player.clanTag) setClanTag(player.clanTag);
+        }
+      } catch {
+        setToken(null);
+      }
+      setLoadingUser(false);
+    };
+    loadUser();
   }, [token]);
 
   useEffect(() => {
@@ -99,15 +123,27 @@ export default function App() {
               window.google?.accounts.id.disableAutoSelect();
               localStorage.removeItem('token');
               setToken(null);
+              setPlayerTag(null);
+              setClanTag(null);
             }}
           >
             Sign Out
           </button>
         </div>
       </header>
-      <Suspense fallback={<Loading className="h-screen" />}>
-        <Dashboard />
-      </Suspense>
+      {loadingUser && <Loading className="h-[calc(100vh-4rem)]" />}
+      {!loadingUser && !playerTag && (
+        <PlayerTagForm
+          onSaved={(tag) => {
+            setPlayerTag(tag);
+          }}
+        />
+      )}
+      {!loadingUser && playerTag && (
+        <Suspense fallback={<Loading className="h-screen" />}>
+          <Dashboard defaultTag={clanTag} />
+        </Suspense>
+      )}
     </>
   );
 }
