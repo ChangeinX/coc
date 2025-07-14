@@ -67,7 +67,7 @@ jobs:
       - name: Render worker image
         if: steps.filter.outputs.app == 'true'
         id: render-worker
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        uses: aws-actions/amazon-ecs-render-task-definition@v1.7.4
         with:
           task-definition: ${{ env.APP_TASK_DEF }}
           container-name: worker
@@ -76,7 +76,7 @@ jobs:
       - name: Render app image
         if: steps.filter.outputs.app == 'true'
         id: render-app
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        uses: aws-actions/amazon-ecs-render-task-definition@v1.7.4
         with:
           task-definition: ${{ steps.render-worker.outputs.task-definition }}
           container-name: app
@@ -84,7 +84,7 @@ jobs:
 
       - name: Deploy app task
         if: steps.filter.outputs.app == 'true'
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2.3.3
         with:
           task-definition: ${{ steps.render-app.outputs.task-definition }}
           service: ${{ env.APP_SERVICE }}
@@ -94,7 +94,7 @@ jobs:
       - name: Render static image
         if: steps.filter.outputs.sync == 'true'
         id: render-static
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        uses: aws-actions/amazon-ecs-render-task-definition@v1.7.4
         with:
           task-definition: ${{ env.STATIC_TASK_DEF }}
           container-name: static
@@ -102,7 +102,7 @@ jobs:
 
       - name: Deploy static task
         if: steps.filter.outputs.sync == 'true'
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2.3.3
         with:
           task-definition: ${{ steps.render-static.outputs.task-definition }}
           service: ${{ env.STATIC_SERVICE }}
