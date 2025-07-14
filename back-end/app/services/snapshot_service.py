@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime, timedelta
 from typing import Optional, TypedDict
 
 from asyncio import to_thread
@@ -27,6 +28,7 @@ async def _trigger_sync(path: str) -> None:
         logger.warning("Sync request to %s failed: %s", url, exc)
 
 CACHE_TTL = 60
+STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 
 class ClanDict(TypedDict):
@@ -149,7 +151,9 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
     tag = normalize_tag(tag)
     cache_key = f"snapshot:clan:{tag}"
     if (cached := cache.get(cache_key)) is not None:
-        return cached
+        cached_ts = datetime.fromisoformat(cached["ts"])
+        if datetime.utcnow() - cached_ts <= STALE_AFTER:
+            return cached
 
     row: ClanSnapshot | None = (
         ClanSnapshot.query
@@ -157,7 +161,8 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
         .order_by(ClanSnapshot.ts.desc())
         .first()
     )
-    if row is None:
+    needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
+    if needs_refresh:
         await _trigger_sync(f"clan/{tag}")
         row = (
             ClanSnapshot.query
@@ -181,7 +186,9 @@ async def get_player(tag: str) -> Optional[PlayerDict]:
     tag = normalize_tag(tag)
     cache_key = f"snapshot:player:{tag}"
     if (cached := cache.get(cache_key)) is not None:
-        return cached  # pragma: no cover
+        cached_ts = datetime.fromisoformat(cached["ts"])
+        if datetime.utcnow() - cached_ts <= STALE_AFTER:
+            return cached  # pragma: no cover
 
     row: PlayerSnapshot | None = (
         PlayerSnapshot.query  # type: ignore[attr-defined]
@@ -189,7 +196,8 @@ async def get_player(tag: str) -> Optional[PlayerDict]:
         .order_by(PlayerSnapshot.ts.desc())
         .first()
     )
-    if row is None:
+    needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
+    if needs_refresh:
         await _trigger_sync(f"player/{tag}")
         row = (
             PlayerSnapshot.query
