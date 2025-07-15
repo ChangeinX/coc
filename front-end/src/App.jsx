@@ -4,6 +4,7 @@ import PlayerTagForm from './PlayerTagForm.jsx';
 import { fetchJSON } from './api.js';
 
 const Dashboard = lazy(() => import('./Dashboard.jsx'));
+const ClanSearchModal = lazy(() => import('./ClanSearchModal.jsx'));
 
 function isTokenExpired(tok) {
   try {
@@ -43,6 +44,7 @@ export default function App() {
   const [playerTag, setPlayerTag] = useState(null);
   const [clanTag, setClanTag] = useState(null);
   const [loadingUser, setLoadingUser] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     if (token && isTokenExpired(token)) {
@@ -109,13 +111,17 @@ export default function App() {
     }
   }, [token]);
 
+  useEffect(() => {
+    window.lucide?.createIcons();
+  });
+
   if (!token) {
     return (
       <>
-        <header className="bg-gradient-to-r from-blue-600 to-slate-800 text-white p-4 text-center shadow-md">
+        <header className="bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 text-center shadow-md">
           <h1 className="text-lg font-semibold">Clan Dashboard</h1>
         </header>
-        <div className="flex justify-center items-center h-[calc(100vh-4rem)]">
+        <div className="flex justify-center items-center h-[calc(100vh-4rem)] p-2 sm:p-4">
           <div id="signin"></div>
         </div>
       </>
@@ -124,9 +130,15 @@ export default function App() {
 
   return (
     <>
-      <header className="bg-gradient-to-r from-blue-600 to-slate-800 text-white p-4 flex items-center justify-between shadow-md">
+      <header className="bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md">
         <h1 className="text-lg font-semibold">Clan Dashboard</h1>
         <div className="flex items-center gap-3">
+          <button
+            className="p-2 rounded hover:bg-slate-700"
+            onClick={() => setShowSearch(true)}
+          >
+            <i data-lucide="search" className="w-5 h-5" />
+          </button>
           <span className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase">
             {initials}
           </span>
@@ -144,17 +156,24 @@ export default function App() {
           </button>
         </div>
       </header>
-      {loadingUser && <Loading className="h-[calc(100vh-4rem)]" />}
-      {!loadingUser && !playerTag && (
-        <PlayerTagForm
-          onSaved={(tag) => {
-            setPlayerTag(tag);
-          }}
-        />
-      )}
-      {!loadingUser && playerTag && (
+      <main className="p-2 sm:p-4">
+        {loadingUser && <Loading className="h-[calc(100vh-4rem)]" />}
+        {!loadingUser && !playerTag && (
+          <PlayerTagForm
+            onSaved={(tag) => {
+              setPlayerTag(tag);
+            }}
+          />
+        )}
+        {!loadingUser && playerTag && (
+          <Suspense fallback={<Loading className="h-screen" />}>
+            <Dashboard defaultTag={clanTag} showSearchForm={false} />
+          </Suspense>
+        )}
+      </main>
+      {showSearch && (
         <Suspense fallback={<Loading className="h-screen" />}>
-          <Dashboard defaultTag={clanTag} />
+          <ClanSearchModal onClose={() => setShowSearch(false)} />
         </Suspense>
       )}
     </>
