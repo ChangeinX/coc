@@ -225,13 +225,14 @@ async def clan_at_risk(clan_tag: str) -> list[dict]:
     results = []
     for p in players:
         hist = await get_history(p.player_tag, 30)
-        score_val, last_seen_ts = score(hist)
+        score_val, last_seen_ts, breakdown = score_breakdown(hist)
         results.append(
             {
                 "player_tag": p.player_tag,
                 "name": p.name,
                 "risk_score": score_val,
                 "last_seen": last_seen_ts.date().isoformat(),
+                "risk_breakdown": breakdown,
             }
         )
 

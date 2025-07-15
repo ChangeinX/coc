@@ -1,12 +1,8 @@
 import React, { useRef } from 'react';
 import { VariableSizeList as List } from 'react-window';
-import RiskBadge, { getRiskClasses } from './RiskBadge.jsx';
+import RiskRing from './RiskRing.jsx';
+import DonationRing from './DonationRing.jsx';
 import { timeAgo } from '../lib/time.js';
-
-function RiskDot({ score }) {
-  const cls = getRiskClasses(score).split(' ')[0];
-  return <span className={`inline-block w-3 h-3 rounded-full ${cls}`}></span>;
-}
 
 function Row({ index, style, data }) {
   const { members, openIndex, setOpenIndex, getSize, listRef } = data;
@@ -27,18 +23,31 @@ function Row({ index, style, data }) {
           )}
           <span className="text-xs bg-slate-200 rounded px-1">TH{m.townHallLevel}</span>
         </div>
-        <RiskDot score={m.risk_score} />
+        <RiskRing score={m.risk_score} size={32} />
       </div>
       {open && (
         <div className="text-sm space-y-1 pb-2">
           <div className="flex justify-between">
             <span>Trophies: {m.trophies}</span>
-            <span>Last: {m.last_seen ? timeAgo(m.last_seen) : '—'}</span>
+            <span>Last Seen: {m.last_seen ? timeAgo(m.last_seen) : '—'}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
+            <span>Don/Rec: {m.donations}/{m.donationsReceived}</span>
+            <DonationRing donations={m.donations} received={m.donationsReceived} size={32} />
+          </div>
+          <div className="flex justify-between items-center">
             <span>Days in Clan: {m.loyalty}</span>
-            <span>Risk: <RiskBadge score={m.risk_score} /></span>
+            <RiskRing score={m.risk_score} size={32} />
           </div>
+          {m.risk_breakdown && m.risk_breakdown.length > 0 && (
+            <ul className="list-disc list-inside text-xs pt-1">
+              {m.risk_breakdown.map((r, i) => (
+                <li key={i}>
+                  {r.points} pts – {r.reason}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>
