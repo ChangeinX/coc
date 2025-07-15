@@ -30,9 +30,15 @@ async def current_war(clan_tag: str) -> dict:
     clan_tag = normalize_tag(clan_tag)
     data = await get_client().current_war(clan_tag)
 
-    ws = WarSnapshot(ts=datetime.utcnow(), clan_tag=clan_tag, data=data)
-    db.session.add(ws)
-    db.session.commit()
+    last = (
+        WarSnapshot.query.filter_by(clan_tag=clan_tag)
+        .order_by(WarSnapshot.ts.desc())
+        .first()
+    )
+    if not last or last.data != data:
+        ws = WarSnapshot(ts=datetime.utcnow(), clan_tag=clan_tag, data=data)
+        db.session.add(ws)
+        db.session.commit()
 
     return data
 
