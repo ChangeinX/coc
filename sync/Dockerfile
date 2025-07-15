@@ -13,7 +13,6 @@ COPY coclib/  ./coclib
 
 # shared migration scripts
 COPY migrations/ /opt/migrations
-
 ENV PYTHONPATH=/opt/app
 
 EXPOSE 8000
