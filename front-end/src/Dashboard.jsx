@@ -181,7 +181,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true }) {
                     </div>
                     <h2 className="text-xl font-semibold text-slate-700">At-Risk Members</h2>
                     <div className="overflow-x-auto shadow bg-white rounded mb-6">
-                        <table className="min-w-full text-xs sm:text-sm">
+                        <table className="mobile-table min-w-full text-xs sm:text-sm">
                             <thead className="bg-slate-50 text-left text-slate-600">
                             <tr>
                                 <th className="px-4 py-3">Player</th>
@@ -197,10 +197,10 @@ export default function Dashboard({ defaultTag, showSearchForm = true }) {
                                     className="border-b last:border-none hover:bg-rose-50 cursor-pointer"
                                     onClick={() => setSelected(m.tag)}
                                 >
-                                    <td className="px-4 py-2 font-medium">{m.name}</td>
-                                    <td className="px-4 py-2 text-slate-500">{m.tag}</td>
-                                    <td className="px-4 py-2 text-center">{m.loyalty}</td>
-                                    <td className="px-4 py-2"><RiskBadge score={m.risk_score} /></td>
+                                    <td data-label="Player" className="px-4 py-2 font-medium">{m.name}</td>
+                                    <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
+                                    <td data-label="Loyalty" className="px-4 py-2 text-center">{m.loyalty}</td>
+                                    <td data-label="Score" className="px-4 py-2"><RiskBadge score={m.risk_score} /></td>
                                 </tr>
                             ))}
                             </tbody>
@@ -208,7 +208,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true }) {
                     </div>
                     <h2 className="text-xl font-semibold text-slate-700">All Members</h2>
                     <div className="overflow-x-auto shadow bg-white rounded">
-                        <table className="min-w-full text-xs sm:text-sm" id="membersTable">
+                        <table className="mobile-table min-w-full text-xs sm:text-sm" id="membersTable">
                             <thead className="bg-slate-50 text-left text-slate-600">
                             <tr>
                                 <th className="px-3 py-2">Player</th>
@@ -263,16 +263,16 @@ export default function Dashboard({ defaultTag, showSearchForm = true }) {
                                     className="border-b last:border-none hover:bg-slate-50 cursor-pointer"
                                     onClick={() => setSelected(m.tag)}
                                 >
-                                    <td className="px-3 py-2 font-medium">{m.name}</td>
-                                    <td className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
-                                    <td className="px-3 py-2 text-center">{m.townHallLevel}</td>
-                                    <td className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
-                                    <td className="px-3 py-2 text-center hidden md:table-cell">
+                                    <td data-label="Player" className="px-3 py-2 font-medium">{m.name}</td>
+                                    <td data-label="Role" className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
+                                    <td data-label="TH" className="px-3 py-2 text-center">{m.townHallLevel}</td>
+                                    <td data-label="Trophies" className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
+                                    <td data-label="Don/Rec" className="px-3 py-2 text-center hidden md:table-cell">
                                         {m.donations}/{m.donationsReceived}
                                     </td>
-                                    <td className="px-3 py-2 text-center">{m.last_seen || '\u2014'}</td>
-                                    <td className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
-                                    <td className="px-3 py-2 text-center"><RiskBadge score={m.risk_score} /></td>
+                                    <td data-label="Last Seen" className="px-3 py-2 text-center">{m.last_seen || '\u2014'}</td>
+                                    <td data-label="Loyalty" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
+                                    <td data-label="Risk" className="px-3 py-2 text-center"><RiskBadge score={m.risk_score} /></td>
                                 </tr>
                             ))}
                             </tbody>
