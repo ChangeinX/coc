@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useMemo, Suspense, lazy} from 'react';
 import Loading from './Loading.jsx';
 import {fetchJSONCached} from './api.js';
+import RiskBadge from './RiskBadge.jsx';
 
 const PlayerModal = lazy(() => import('./PlayerModal.jsx'));
 
@@ -183,7 +184,6 @@ export default function Dashboard({ defaultTag }) {
                             <tr>
                                 <th className="px-4 py-3">Player</th>
                                 <th className="px-4 py-3">Tag</th>
-                                <th className="px-4 py-3">Last Seen</th>
                                 <th className="px-4 py-3">Loyalty</th>
                                 <th className="px-4 py-3">Score</th>
                             </tr>
@@ -197,9 +197,8 @@ export default function Dashboard({ defaultTag }) {
                                 >
                                     <td className="px-4 py-2 font-medium">{m.name}</td>
                                     <td className="px-4 py-2 text-slate-500">{m.tag}</td>
-                                    <td className="px-4 py-2">{m.last_seen || '\u2014'}</td>
                                     <td className="px-4 py-2 text-center">{m.loyalty}</td>
-                                    <td className="px-4 py-2">{m.risk_score}</td>
+                                    <td className="px-4 py-2"><RiskBadge score={m.risk_score} /></td>
                                 </tr>
                             ))}
                             </tbody>
@@ -271,7 +270,7 @@ export default function Dashboard({ defaultTag }) {
                                     </td>
                                     <td className="px-3 py-2 text-center">{m.last_seen || '\u2014'}</td>
                                     <td className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
-                                    <td className="px-3 py-2 text-center">{m.risk_score}</td>
+                                    <td className="px-3 py-2 text-center"><RiskBadge score={m.risk_score} /></td>
                                 </tr>
                             ))}
                             </tbody>
