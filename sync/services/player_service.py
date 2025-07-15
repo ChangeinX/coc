@@ -6,7 +6,7 @@ import httpx
 from typing import TYPE_CHECKING
 
 from coclib.extensions import db, cache
-from coclib.models import PlayerSnapshot
+from coclib.models import PlayerSnapshot, Player
 from .coc_client import get_client
 from .player_cache import upsert_player
 from coclib.services.loyalty_service import ensure_membership
@@ -121,6 +121,7 @@ if TYPE_CHECKING:  # pragma: no cover - used for IDE type hints only
         warAttacksUsed: int | None
         last_seen: str
         clanTag: str | None
+        leagueIcon: str | None
         ts: str
 
 
@@ -159,7 +160,14 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         "last_seen": (row.last_seen or row.ts).isoformat(),
         "clanTag": row.clan_tag or None,
         "ts": row.ts.isoformat(),
+        "leagueIcon": None,
     }
+
+    player_row = Player.query.filter_by(tag=norm_tag).first()
+    if player_row and player_row.data:
+        data["leagueIcon"] = (
+            player_row.data.get("league", {}).get("iconUrls", {}).get("tiny")
+        )
 
     cache.set(cache_key, data, timeout=300)
     return data

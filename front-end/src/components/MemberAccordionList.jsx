@@ -19,6 +19,7 @@ function Row({ index, style, data }) {
     <div style={style} className="border-b px-3" onClick={toggle}>
       <div className="flex justify-between items-center py-2">
         <div className="flex items-center gap-2">
+          {m.leagueIcon && <img src={m.leagueIcon} alt="league" className="w-5 h-5" />}
           <span className="font-medium">{m.name}</span>
           {m.role && (
             <span className="text-xs bg-slate-200 rounded px-1">{m.role}</span>
