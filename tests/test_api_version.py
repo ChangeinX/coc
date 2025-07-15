@@ -21,3 +21,16 @@ def test_health_endpoint():
     resp = client.get("/api/v1/health")
     assert resp.status_code == 200
     assert resp.get_json() == {"status": "ok"}
+
+
+def test_user_me_requires_version_prefix_and_auth():
+    app = create_app(TestConfig)
+    client: FlaskClient = app.test_client()
+
+    # Endpoint without the prefix should not exist
+    resp = client.options("/user/me")
+    assert resp.status_code == 404
+
+    # Versioned endpoint exists but requires authentication
+    resp = client.get("/api/v1/user/me")
+    assert resp.status_code == 401
