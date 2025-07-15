@@ -6,9 +6,12 @@ import RiskBadge from './RiskBadge.jsx';
 const PlayerModal = lazy(() => import('./PlayerModal.jsx'));
 
 
-function Stat({icon, label, value}) {
+function Stat({icon, label, value, onClick}) {
     return (
-        <div className="flex items-center gap-3 bg-white shadow rounded p-4">
+        <div
+            className={`flex items-center gap-3 bg-white shadow rounded p-4 ${onClick ? 'cursor-pointer' : ''}`}
+            onClick={onClick}
+        >
             {icon && (
                 <div className="p-3 rounded-full bg-slate-200">
                     <i data-lucide={icon} className="w-7 h-7"/>
@@ -22,7 +25,7 @@ function Stat({icon, label, value}) {
     );
 }
 
-export default function Dashboard({ defaultTag, showSearchForm = true }) {
+export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoaded }) {
     const [tag, setTag] = useState('');
     const [clan, setClan] = useState(null);
     const [topRisk, setTopRisk] = useState([]);
@@ -73,6 +76,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true }) {
             try {
                 const data = JSON.parse(cached);
                 setClan(data.clan);
+                if (onClanLoaded) onClanLoaded(data.clan);
                 setMembers(data.members);
                 setTopRisk(data.topRisk);
             } catch {
@@ -100,6 +104,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true }) {
             }));
             const top = [...merged].sort((a, b) => b.risk_score - a.risk_score).slice(0, 10);
             setClan(clanData);
+            if (onClanLoaded) onClanLoaded(clanData);
             setMembers(merged);
             setTopRisk(top);
             setError('');
@@ -133,7 +138,8 @@ export default function Dashboard({ defaultTag, showSearchForm = true }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const clanTag = tag.trim().toUpperCase();
+        let clanTag = tag.trim().toUpperCase();
+        if (clanTag.startsWith('#')) clanTag = clanTag.slice(1);
         if (clanTag) load(clanTag);
     };
 
@@ -156,7 +162,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true }) {
                 >
                     <input
                         className="flex-1 w-full px-3 py-2 rounded border"
-                        placeholder="Clan tag (without #)"
+                        placeholder="Clan tag"
                         value={tag}
                         onChange={(e) => setTag(e.target.value)}
                     />
@@ -173,7 +179,13 @@ export default function Dashboard({ defaultTag, showSearchForm = true }) {
             {loading && clan && <Loading className="py-4"/>}
             {clan && (
                 <>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <Stat
+                            icon="hash"
+                            label="Tag"
+                            value={`#${clan.tag}`}
+                            onClick={() => navigator.clipboard.writeText(`#${clan.tag}`)}
+                        />
                         <Stat icon="users" label="Members" value={members.length}/>
                         <Stat icon="shield-alert" label="Level" value={clan.clanLevel}/>
                         <Stat icon="sword" label="War Wins" value={clan.warWins || 0}/>
