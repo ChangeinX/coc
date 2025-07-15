@@ -14,7 +14,7 @@ from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot, Clan
 from coclib.utils import normalize_tag
 
 logger = logging.getLogger(__name__)
-SYNC_BASE = os.getenv("SYNC_BASE")
+SYNC_BASE = os.getenv("SYNC_BASE", "http://localhost:8000/sync")
 
 
 async def _trigger_sync(path: str) -> None:
