@@ -115,6 +115,23 @@ export default function App() {
     window.lucide?.createIcons();
   });
 
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    const banner = document.querySelector('.banner');
+    const update = () => {
+      const threshold = banner ? banner.offsetHeight : 0;
+      if (window.scrollY > threshold) {
+        meta.setAttribute('content', '#ffffff');
+      } else {
+        meta.setAttribute('content', '#1e3a8a');
+      }
+    };
+    window.addEventListener('scroll', update);
+    update();
+    return () => window.removeEventListener('scroll', update);
+  }, []);
+
   if (!token) {
     return (
       <>
@@ -156,7 +173,7 @@ export default function App() {
           </button>
         </div>
       </header>
-      <main className="p-2 sm:p-4">
+      <main className="px-2 pt-0 pb-2 sm:px-4 sm:pt-0 sm:pb-4">
         {loadingUser && <Loading className="h-[calc(100vh-4rem)]" />}
         {!loadingUser && !playerTag && (
           <PlayerTagForm
