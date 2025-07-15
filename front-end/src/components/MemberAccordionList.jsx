@@ -3,6 +3,7 @@ import { VariableSizeList as List } from 'react-window';
 import RiskRing from './RiskRing.jsx';
 import DonationRing from './DonationRing.jsx';
 import { timeAgo } from '../lib/time.js';
+import { getTownHallIcon } from '../lib/townhall.js';
 
 function Row({ index, style, data }) {
   const { members, openIndex, setOpenIndex, getSize, listRef } = data;
@@ -19,13 +20,24 @@ function Row({ index, style, data }) {
   return (
     <div style={{ ...style, overflow: 'hidden' }} className="border-b px-3" onClick={toggle}>
       <div className="flex justify-between items-center py-2">
-        <div className="flex items-center gap-2">
-          {m.leagueIcon && <img src={m.leagueIcon} alt="league" className="w-5 h-5" />}
-          <span className="font-medium">{m.name}</span>
-          {m.role && (
-            <span className="text-xs bg-slate-200 rounded px-1">{m.role}</span>
-          )}
-          <span className="text-xs bg-slate-200 rounded px-1">TH{m.townHallLevel}</span>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            {m.leagueIcon && (
+              <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
+            )}
+            <img
+              src={getTownHallIcon(m.townHallLevel)}
+              alt={`TH${m.townHallLevel}`}
+              className="w-5 h-5"
+            />
+            <span className="font-medium">{m.name}</span>
+            {m.role && (
+              <span className="text-xs bg-slate-200 rounded px-1">{m.role}</span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500">
+            {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
+          </p>
         </div>
         {!open && <RiskRing score={m.risk_score} size={32} />}
       </div>
