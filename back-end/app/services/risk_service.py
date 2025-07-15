@@ -103,6 +103,12 @@ def _axes_data(
         cap = _infer_attack_cap(history)
         war_used = war_snap.war_attacks_used
         war_miss_pct = _clamp01((cap - war_used) / cap)
+        if (
+            war_used == 0
+            and datetime.utcnow() - war_snap.ts < timedelta(hours=24)
+        ):
+            # War likely still in progress – don't penalize yet
+            war_miss_pct = 0.0
 
     clan_active = True
     if clan_history_map is not None:
