@@ -14,7 +14,7 @@ export default function DonationRing({ donations, received, size = 60 }) {
     color = 'stroke-yellow-400';
   }
 
-  const display = ratio >= 1 ? '∞' : `${Math.round(ratio * 100)}%`;
+  const display = `${received}/${donations}`;
 
   return (
     <svg width={size} height={size} className="flex-shrink-0">
