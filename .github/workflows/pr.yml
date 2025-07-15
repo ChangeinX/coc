@@ -21,7 +21,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           merge-method: squash
       - name: Merge
-        uses: peter-evans/pull-request-merge@v3
+        uses: peter-evans/merge-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           merge-method: squash
