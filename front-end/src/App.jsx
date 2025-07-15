@@ -48,6 +48,8 @@ export default function App() {
   const [showClanInfo, setShowClanInfo] = useState(false);
   const [loadingUser, setLoadingUser] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = React.useRef(null);
 
   useEffect(() => {
     if (token && isTokenExpired(token)) {
@@ -132,6 +134,16 @@ export default function App() {
   });
 
   useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, []);
+
+  useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
       meta.setAttribute('content', '#1e3a8a');
@@ -169,19 +181,32 @@ export default function App() {
           >
             <i data-lucide="search" className="w-5 h-5" />
           </button>
-          <button
-            title="Sign Out"
-            className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase hover:bg-slate-600"
-            onClick={() => {
-              window.google?.accounts.id.disableAutoSelect();
-              localStorage.removeItem('token');
-              setToken(null);
-              setPlayerTag(null);
-              setClanTag(null);
-            }}
-          >
-            {initials}
-          </button>
+          <div className="relative" ref={menuRef}>
+            <button
+              className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase hover:bg-slate-600"
+              onClick={() => setShowMenu((v) => !v)}
+              aria-expanded={showMenu}
+            >
+              {initials}
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-28 bg-white text-slate-700 rounded shadow-lg z-10">
+                <button
+                  className="block w-full text-left px-3 py-2 hover:bg-slate-100"
+                  onClick={() => {
+                    window.google?.accounts.id.disableAutoSelect();
+                    localStorage.removeItem('token');
+                    setToken(null);
+                    setPlayerTag(null);
+                    setClanTag(null);
+                    setShowMenu(false);
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       <main className="px-2 pt-0 pb-2 sm:px-4 sm:pt-0 sm:pb-4">

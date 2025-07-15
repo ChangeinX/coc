@@ -19,15 +19,16 @@ Each directory contains its own `AGENTS.md` with project specific notes. Check t
 
 ## Testing and checks
 
-There are currently no unit tests. Validate changes using:
+Validate changes using:
 
 ```bash
 # Lint Python sources
 ruff back-end sync coclib db
 
-# Build the React front end
+# Install deps and run front-end tests and build
 cd front-end
 npm install
+npm test
 npm run build
 ```
 
