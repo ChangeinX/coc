@@ -5,7 +5,7 @@ from pathlib import Path
 from flask import Flask, g, request, abort
 from flask_cors import CORS
 
-from .api import register_blueprints
+from .api import register_blueprints, API_PREFIX
 from .models import User
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -37,7 +37,7 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
 
     def require_auth():
         path = request.path.rstrip("/")
-        if request.method == "OPTIONS" or path == "/health":
+        if request.method == "OPTIONS" or path.endswith("/health"):
             return
         auth = request.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
@@ -64,7 +64,8 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
             db.session.commit()
         g.user = user
 
-        if not user.player_tag and not path.startswith("/user"):
+        user_prefix = f"{API_PREFIX}/user"
+        if not user.player_tag and not path.startswith(user_prefix):
             abort(400)
 
     app.before_request(require_auth)
