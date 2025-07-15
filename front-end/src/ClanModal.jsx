@@ -12,7 +12,10 @@ export default function ClanModal({ clan, onClose }) {
             {clan.badgeUrls && (
               <img src={clan.badgeUrls.medium} alt="badge" className="w-12 h-12" />
             )}
-            <h3 className="text-xl font-semibold">{clan.name}</h3>
+            <div>
+              <h3 className="text-xl font-semibold">{clan.name}</h3>
+              <p className="text-sm text-slate-500">#{clan.tag}</p>
+            </div>
           </div>
           {clan.description && (
             <p className="mt-4 whitespace-pre-line text-sm">{clan.description}</p>
