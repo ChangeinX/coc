@@ -2,9 +2,9 @@ import React, {useState, useEffect, useMemo, Suspense, lazy} from 'react';
 import Loading from '../components/Loading.jsx';
 import {fetchJSONCached} from '../lib/api.js';
 import { timeAgo } from '../lib/time.js';
-import RiskBadge from '../components/RiskBadge.jsx';
 import MobileTabs from '../components/MobileTabs.jsx';
 import RiskRing from '../components/RiskRing.jsx';
+import DonationRing from '../components/DonationRing.jsx';
 import MemberAccordionList from '../components/MemberAccordionList.jsx';
 
 const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
@@ -111,6 +111,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
 
                 risk_score: rmap[m.tag.replace('#', '')]?.risk_score || 0,
                 last_seen: rmap[m.tag.replace('#', '')]?.last_seen || null,
+                risk_breakdown: rmap[m.tag.replace('#', '')]?.risk_breakdown || [],
                 loyalty: loyaltyMap[m.tag.replace('#', '')] || 0,
             }));
             const top = [...merged]
@@ -273,7 +274,18 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             </td>
                                             <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
                                             <td data-label="Days in Clan" className="px-4 py-2 text-center">{m.loyalty}</td>
-                                            <td data-label="Score" className="px-4 py-2"><RiskBadge score={m.risk_score} /></td>
+                                            <td data-label="Score" className="px-4 py-2">
+                                                <div className="flex items-center gap-2">
+                                                    <RiskRing score={m.risk_score} size={40} />
+                                                    {m.risk_breakdown && m.risk_breakdown.length > 0 && (
+                                                        <ul className="list-disc list-inside text-xs">
+                                                            {m.risk_breakdown.map((r, i) => (
+                                                                <li key={i}>{r.points} pts – {r.reason}</li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))}
                                     </tbody>
@@ -348,11 +360,16 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             <td data-label="TH" className="px-3 py-2 text-center">{m.townHallLevel}</td>
                                             <td data-label="Trophies" className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
                                             <td data-label="Don/Rec" className="px-3 py-2 text-center hidden md:table-cell">
-                                                {m.donations}/{m.donationsReceived}
+                                                <div className="flex items-center justify-center gap-2">
+                                                    {m.donations}/{m.donationsReceived}
+                                                    <DonationRing donations={m.donations} received={m.donationsReceived} size={36} />
+                                                </div>
                                             </td>
                                             <td data-label="Last Seen" className="px-3 py-2 text-center">{m.last_seen ? timeAgo(m.last_seen) : '\u2014'}</td>
                                             <td data-label="Days in Clan" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
-                                            <td data-label="Risk" className="px-3 py-2 text-center"><RiskBadge score={m.risk_score} /></td>
+                                            <td data-label="Risk" className="px-3 py-2 text-center">
+                                                <RiskRing score={m.risk_score} size={36} />
+                                            </td>
                                         </tr>
                                     ))}
                                     </tbody>
@@ -367,8 +384,11 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                 onChange={setActiveTab}
                             />
                             {activeTab === 'top' && (
-                                <div className="bg-white rounded shadow ring-2 ring-rose-200" style={{ height: listHeight }}>
-                                    <MemberAccordionList members={topRisk} height={listHeight} />
+                                <div
+                                    className="bg-white rounded shadow ring-2 ring-rose-200"
+                                    style={{ height: Math.min(listHeight, topRisk.length * 60) }}
+                                >
+                                    <MemberAccordionList members={topRisk} height={Math.min(listHeight, topRisk.length * 60)} />
                                 </div>
                             )}
                             {activeTab === 'all' && (
