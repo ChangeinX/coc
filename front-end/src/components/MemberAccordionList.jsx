@@ -9,8 +9,12 @@ function Row({ index, style, data }) {
   const m = members[index];
   const open = openIndex === index;
   const toggle = () => {
+    const prev = openIndex;
     setOpenIndex(open ? null : index);
-    listRef.current.resetAfterIndex(index);
+    if (listRef.current) {
+      const start = Math.min(index, prev ?? index);
+      listRef.current.resetAfterIndex(start);
+    }
   };
   return (
     <div style={style} className="border-b px-3" onClick={toggle}>
