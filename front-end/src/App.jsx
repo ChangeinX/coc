@@ -5,6 +5,7 @@ import { fetchJSON } from './api.js';
 
 const Dashboard = lazy(() => import('./Dashboard.jsx'));
 const ClanSearchModal = lazy(() => import('./ClanSearchModal.jsx'));
+const ClanModal = lazy(() => import('./ClanModal.jsx'));
 
 function isTokenExpired(tok) {
   try {
@@ -43,6 +44,8 @@ export default function App() {
   const [initials, setInitials] = useState(() => (token ? getInitials(token) : ''));
   const [playerTag, setPlayerTag] = useState(null);
   const [clanTag, setClanTag] = useState(null);
+  const [clanInfo, setClanInfo] = useState(null);
+  const [showClanInfo, setShowClanInfo] = useState(false);
   const [loadingUser, setLoadingUser] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
@@ -104,6 +107,19 @@ export default function App() {
   }, [playerTag, token]);
 
   useEffect(() => {
+    const loadInfo = async () => {
+      if (!clanTag) return;
+      try {
+        const data = await fetchJSON(`/clan/${encodeURIComponent(clanTag)}`);
+        setClanInfo(data);
+      } catch {
+        /* ignore */
+      }
+    };
+    loadInfo();
+  }, [clanTag]);
+
+  useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
     } else {
@@ -148,7 +164,14 @@ export default function App() {
   return (
     <>
       <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md">
-        <h1 className="text-lg font-semibold">Clan Dashboard</h1>
+        <h1 className="text-lg font-semibold flex items-center gap-2">
+          {clanInfo?.badgeUrls && (
+            <img src={clanInfo.badgeUrls.small} alt="badge" className="w-6 h-6" />
+          )}
+          <button onClick={() => setShowClanInfo(true)} className="hover:underline">
+            {clanInfo?.name || 'Clan Dashboard'}
+          </button>
+        </h1>
         <div className="flex items-center gap-3">
           <button
             className="p-2 rounded hover:bg-slate-700"
@@ -184,13 +207,18 @@ export default function App() {
         )}
         {!loadingUser && playerTag && (
           <Suspense fallback={<Loading className="h-screen" />}>
-            <Dashboard defaultTag={clanTag} showSearchForm={false} />
+            <Dashboard defaultTag={clanTag} showSearchForm={false} onClanLoaded={setClanInfo} />
           </Suspense>
         )}
       </main>
       {showSearch && (
         <Suspense fallback={<Loading className="h-screen" />}>
-          <ClanSearchModal onClose={() => setShowSearch(false)} />
+          <ClanSearchModal onClose={() => setShowSearch(false)} onClanLoaded={setClanInfo} />
+        </Suspense>
+      )}
+      {showClanInfo && (
+        <Suspense fallback={<Loading className="h-screen" />}>
+          <ClanModal clan={clanInfo} onClose={() => setShowClanInfo(false)} />
         </Suspense>
       )}
     </>

@@ -3,7 +3,7 @@ import Loading from './Loading.jsx';
 
 const Dashboard = lazy(() => import('./Dashboard.jsx'));
 
-export default function ClanSearchModal({ onClose }) {
+export default function ClanSearchModal({ onClose, onClanLoaded }) {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose}></div>
@@ -13,7 +13,7 @@ export default function ClanSearchModal({ onClose }) {
             ✕
           </button>
           <Suspense fallback={<Loading className="py-8" />}>
-            <Dashboard showSearchForm={true} />
+            <Dashboard showSearchForm={true} onClanLoaded={(c) => { onClanLoaded?.(c); onClose(); }} />
           </Suspense>
         </div>
       </div>
