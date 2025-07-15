@@ -22,7 +22,7 @@ function Stat({icon, label, value}) {
     );
 }
 
-export default function Dashboard({ defaultTag }) {
+export default function Dashboard({ defaultTag, showSearchForm = true }) {
     const [tag, setTag] = useState('');
     const [clan, setClan] = useState(null);
     const [topRisk, setTopRisk] = useState([]);
@@ -149,23 +149,25 @@ export default function Dashboard({ defaultTag }) {
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
-            <form
-                onSubmit={handleSubmit}
-                className="flex flex-col sm:flex-row gap-2 justify-center"
-            >
-                <input
-                    className="flex-1 w-full px-3 py-2 rounded border"
-                    placeholder="Clan tag (without #)"
-                    value={tag}
-                    onChange={(e) => setTag(e.target.value)}
-                />
-                <button
-                    type="submit"
-                    className="px-4 py-2 rounded bg-slate-800 text-white w-full sm:w-auto"
+            {showSearchForm && (
+                <form
+                    onSubmit={handleSubmit}
+                    className="flex flex-col sm:flex-row gap-2 justify-center"
                 >
-                    Load
-                </button>
-            </form>
+                    <input
+                        className="flex-1 w-full px-3 py-2 rounded border"
+                        placeholder="Clan tag (without #)"
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                    />
+                    <button
+                        type="submit"
+                        className="px-4 py-2 rounded bg-slate-800 text-white w-full sm:w-auto"
+                    >
+                        Load
+                    </button>
+                </form>
+            )}
             {error && <p className="text-center text-red-600 font-medium">{error}</p>}
             {loading && !clan && <Loading className="py-20"/>}
             {loading && clan && <Loading className="py-4"/>}
