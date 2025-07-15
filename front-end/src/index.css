@@ -7,12 +7,12 @@ body {
 }
 
 #root {
-    padding: 0.5rem;
+    padding: 0 0.5rem 0.5rem;
 }
 
 @media (min-width: 640px) {
     #root {
-        padding: 1rem;
+        padding: 0 1rem 1rem;
     }
 }
 
@@ -36,8 +36,10 @@ body {
     display: block;
     border: 1px solid #e2e8f0;
     border-radius: 0.5rem;
-    padding: 0.5rem;
+    padding: 0.75rem;
     margin-bottom: 0.75rem;
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .mobile-table tbody td {
