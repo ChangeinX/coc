@@ -47,8 +47,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     const [activeTab, setActiveTab] = useState('top');
     const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width:640px)').matches);
     const [listHeight, setListHeight] = useState(() => Math.min(500, window.innerHeight - 200));
-    const [pageIndex, setPageIndex] = useState(0);
-    const deckRef = React.useRef(null);
 
     const sortedMembers = useMemo(() => {
         if (!sortField) return members;
@@ -158,12 +156,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
         return () => mq.removeEventListener('change', handler);
     }, []);
 
-    useEffect(() => {
-        setPageIndex(0);
-        if (deckRef.current) {
-            deckRef.current.scrollTo({ left: 0 });
-        }
-    }, [topRisk]);
 
     useEffect(() => {
         const handler = () => setListHeight(Math.min(500, window.innerHeight - 200));
@@ -189,14 +181,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
         }
     };
 
-    const handleScroll = () => {
-        if (!deckRef.current) return;
-        const child = deckRef.current.firstChild;
-        if (!child) return;
-        const cardWidth = child.getBoundingClientRect().width + 16;
-        const index = Math.round(deckRef.current.scrollLeft / cardWidth);
-        setPageIndex(index);
-    };
 
 
     return (
@@ -225,7 +209,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             {loading && clan && <Loading className="py-4"/>}
             {clan && (
                 <>
-                    <div className="flex justify-center">
+                    <div className="flex justify-center mt-6">
                         <Stat
                             icon="flame"
                             iconUrl={clan.badgeUrls?.small}
@@ -268,7 +252,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                     <tr>
                                         <th className="px-4 py-3">Player</th>
                                         <th className="px-4 py-3">Tag</th>
-                                        <th className="px-4 py-3">Loyalty</th>
+                                        <th className="px-4 py-3">Days in Clan</th>
                                         <th className="px-4 py-3">Score</th>
                                     </tr>
                                     </thead>
@@ -288,7 +272,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                 </span>
                                             </td>
                                             <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
-                                            <td data-label="Loyalty" className="px-4 py-2 text-center">{m.loyalty}</td>
+                                            <td data-label="Days in Clan" className="px-4 py-2 text-center">{m.loyalty}</td>
                                             <td data-label="Score" className="px-4 py-2"><RiskBadge score={m.risk_score} /></td>
                                         </tr>
                                     ))}
@@ -335,7 +319,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             className="px-3 py-2 cursor-pointer select-none text-center hidden sm:table-cell"
                                             onClick={() => toggleSort('loyalty')}
                                         >
-                                            Loyalty {sortField === 'loyalty' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                            Days in Clan {sortField === 'loyalty' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                                         </th>
                                         <th
                                             className="px-3 py-2 cursor-pointer select-none text-center"
@@ -367,7 +351,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                 {m.donations}/{m.donationsReceived}
                                             </td>
                                             <td data-label="Last Seen" className="px-3 py-2 text-center">{m.last_seen ? timeAgo(m.last_seen) : '\u2014'}</td>
-                                            <td data-label="Loyalty" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
+                                            <td data-label="Days in Clan" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
                                             <td data-label="Risk" className="px-3 py-2 text-center"><RiskBadge score={m.risk_score} /></td>
                                         </tr>
                                     ))}
@@ -383,48 +367,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                 onChange={setActiveTab}
                             />
                             {activeTab === 'top' && (
-                                <>
-                                    <div
-                                        className={`flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroller ${
-                                            topRisk.length < 5 ? 'justify-center' : ''
-                                        }`}
-                                        ref={deckRef}
-                                        onScroll={handleScroll}
-                                    >
-                                        {topRisk.map((m) => (
-                                            <div
-                                                key={m.tag}
-                                                className={`${
-                                                    topRisk.length < 5 ? 'snap-center' : 'snap-start'
-                                                } shrink-0 w-[80vw] min-h-[70vh] flex flex-col bg-white rounded shadow p-4`}
-                                                onClick={() => setSelected(m.tag)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden">
-                                                        {m.leagueIcon ? (
-                                                            <img src={m.leagueIcon} alt="league" className="w-10 h-10" />
-                                                        ) : (
-                                                            <i data-lucide="user" className="w-6 h-6 text-slate-500" />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                    <p className="font-medium">{m.name}</p>
-                                                    <p className="text-sm text-slate-500">{m.tag}</p>
-                                                </div>
-                                                <RiskRing score={m.risk_score} size={50} />
-                                            </div>
-                                                <p className="text-sm mt-2">Loyalty: {m.loyalty}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {topRisk.length > 1 && (
-                                        <ul className="bullets">
-                                            {topRisk.map((_, i) => (
-                                                <li key={i} className={i === pageIndex ? 'active' : ''} />
-                                            ))}
-                                        </ul>
-                                    )}
-                                </>
+                                <div className="bg-white rounded shadow ring-2 ring-rose-200" style={{ height: listHeight }}>
+                                    <MemberAccordionList members={topRisk} height={listHeight} />
+                                </div>
                             )}
                             {activeTab === 'all' && (
                                 <div className="bg-white rounded shadow" style={{ height: listHeight }}>
