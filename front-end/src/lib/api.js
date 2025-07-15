@@ -13,7 +13,14 @@ if (apiUrl && !/^https?:\/\//i.test(apiUrl)) {
     apiUrl = apiUrl.replace(/^\/*/, '');
     apiUrl = `https://${apiUrl}`;
 }
+// Strip any trailing slash so we can safely append the API prefix
+if (apiUrl.endsWith('/')) {
+    apiUrl = apiUrl.slice(0, -1);
+}
 export const API_URL = apiUrl;
+
+// All API endpoints are versioned under /api/v1 on the backend
+const API_PREFIX = '/api/v1';
 
 export async function fetchJSON(path, options = {}) {
     const token = localStorage.getItem('token');
@@ -21,7 +28,7 @@ export async function fetchJSON(path, options = {}) {
         ...(options.headers || {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
-    const res = await fetch(`${API_URL}${path}`, options);
+    const res = await fetch(`${API_URL}${API_PREFIX}${path}`, options);
     if (res.status === 401) {
         localStorage.removeItem('token');
     }
