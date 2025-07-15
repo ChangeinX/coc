@@ -2,6 +2,9 @@ import React, {useState, useEffect, useMemo, Suspense, lazy} from 'react';
 import Loading from './Loading.jsx';
 import {fetchJSONCached} from './api.js';
 import RiskBadge from './RiskBadge.jsx';
+import MobileTabs from './MobileTabs.jsx';
+import RiskRing from './RiskRing.jsx';
+import MemberAccordionList from './MemberAccordionList.jsx';
 
 const PlayerModal = lazy(() => import('./PlayerModal.jsx'));
 
@@ -36,6 +39,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     const [selected, setSelected] = useState(null);
     const [sortField, setSortField] = useState('');
     const [sortDir, setSortDir] = useState('asc');
+    const [activeTab, setActiveTab] = useState('top');
+    const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width:640px)').matches);
+    const [listHeight, setListHeight] = useState(() => Math.min(500, window.innerHeight - 200));
 
     const sortedMembers = useMemo(() => {
         if (!sortField) return members;
@@ -135,6 +141,21 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
         document.title = clan?.name || 'Clan Dashboard';
     }, [clan]);
 
+    useEffect(() => {
+        const mq = window.matchMedia('(min-width:640px)');
+        const handler = (e) => setIsDesktop(e.matches);
+        mq.addEventListener('change', handler);
+        setIsDesktop(mq.matches);
+        return () => mq.removeEventListener('change', handler);
+    }, []);
+
+    useEffect(() => {
+        const handler = () => setListHeight(Math.min(500, window.innerHeight - 200));
+        window.addEventListener('resize', handler);
+        handler();
+        return () => window.removeEventListener('resize', handler);
+    }, []);
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -185,105 +206,145 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                         <Stat icon="sword" label="War Wins" value={clan.warWins || 0}/>
                         <Stat icon="shield-off" label="War Losses" value={clan.warLosses || 0}/>
                     </div>
-                    <h2 className="text-xl font-semibold text-slate-700">At-Risk Members</h2>
-                    <div className="overflow-x-auto shadow bg-white rounded mb-6">
-                        <table className="mobile-table min-w-full text-xs sm:text-sm">
-                            <thead className="bg-slate-50 text-left text-slate-600">
-                            <tr>
-                                <th className="px-4 py-3">Player</th>
-                                <th className="px-4 py-3">Tag</th>
-                                <th className="px-4 py-3">Loyalty</th>
-                                <th className="px-4 py-3">Score</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {topRisk.map((m) => (
-                                <tr
-                                    key={m.tag}
-                                    className="border-b last:border-none hover:bg-rose-50 cursor-pointer"
-                                    onClick={() => setSelected(m.tag)}
-                                >
-                                    <td data-label="Player" className="px-4 py-2 font-medium">{m.name}</td>
-                                    <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
-                                    <td data-label="Loyalty" className="px-4 py-2 text-center">{m.loyalty}</td>
-                                    <td data-label="Score" className="px-4 py-2"><RiskBadge score={m.risk_score} /></td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <h2 className="text-xl font-semibold text-slate-700">All Members</h2>
-                    <div className="overflow-x-auto shadow bg-white rounded">
-                        <table className="mobile-table min-w-full text-xs sm:text-sm" id="membersTable">
-                            <thead className="bg-slate-50 text-left text-slate-600">
-                            <tr>
-                                <th className="px-3 py-2">Player</th>
-                                <th
-                                    className="px-3 py-2 cursor-pointer select-none hidden sm:table-cell"
-                                    onClick={() => toggleSort('role')}
-                                >
-                                    Role {sortField === 'role' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                </th>
-                                <th
-                                    className="px-3 py-2 cursor-pointer select-none text-center"
-                                    onClick={() => toggleSort('th')}
-                                >
-                                    TH {sortField === 'th' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                </th>
-                                <th
-                                    className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell"
-                                    onClick={() => toggleSort('trophies')}
-                                >
-                                    Trophies {sortField === 'trophies' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                </th>
-                                <th
-                                    className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell"
-                                    onClick={() => toggleSort('donations')}
-                                >
-                                    Don&nbsp;/&nbsp;Rec {sortField === 'donations' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                </th>
-                                <th
-                                    className="px-3 py-2 cursor-pointer select-none text-center"
-                                    onClick={() => toggleSort('last')}
-                                >
-                                    Last Seen {sortField === 'last' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                </th>
-                                <th
-                                    className="px-3 py-2 cursor-pointer select-none text-center hidden sm:table-cell"
-                                    onClick={() => toggleSort('loyalty')}
-                                >
-                                    Loyalty {sortField === 'loyalty' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                </th>
-                                <th
-                                    className="px-3 py-2 cursor-pointer select-none text-center"
-                                    onClick={() => toggleSort('risk')}
-                                >
-                                    Risk {sortField === 'risk' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                </th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {sortedMembers.map((m) => (
-                                <tr
-                                    key={m.tag}
-                                    className="border-b last:border-none hover:bg-slate-50 cursor-pointer"
-                                    onClick={() => setSelected(m.tag)}
-                                >
-                                    <td data-label="Player" className="px-3 py-2 font-medium">{m.name}</td>
-                                    <td data-label="Role" className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
-                                    <td data-label="TH" className="px-3 py-2 text-center">{m.townHallLevel}</td>
-                                    <td data-label="Trophies" className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
-                                    <td data-label="Don/Rec" className="px-3 py-2 text-center hidden md:table-cell">
-                                        {m.donations}/{m.donationsReceived}
-                                    </td>
-                                    <td data-label="Last Seen" className="px-3 py-2 text-center">{m.last_seen || '\u2014'}</td>
-                                    <td data-label="Loyalty" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
-                                    <td data-label="Risk" className="px-3 py-2 text-center"><RiskBadge score={m.risk_score} /></td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    {isDesktop ? (
+                        <>
+                            <h2 className="text-xl font-semibold text-slate-700">At-Risk Members</h2>
+                            <div className="overflow-x-auto shadow bg-white rounded mb-6">
+                                <table className="mobile-table min-w-full text-xs sm:text-sm">
+                                    <thead className="bg-slate-50 text-left text-slate-600">
+                                    <tr>
+                                        <th className="px-4 py-3">Player</th>
+                                        <th className="px-4 py-3">Tag</th>
+                                        <th className="px-4 py-3">Loyalty</th>
+                                        <th className="px-4 py-3">Score</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {topRisk.map((m) => (
+                                        <tr
+                                            key={m.tag}
+                                            className="border-b last:border-none hover:bg-rose-50 cursor-pointer"
+                                            onClick={() => setSelected(m.tag)}
+                                        >
+                                            <td data-label="Player" className="px-4 py-2 font-medium">{m.name}</td>
+                                            <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
+                                            <td data-label="Loyalty" className="px-4 py-2 text-center">{m.loyalty}</td>
+                                            <td data-label="Score" className="px-4 py-2"><RiskBadge score={m.risk_score} /></td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <h2 className="text-xl font-semibold text-slate-700">All Members</h2>
+                            <div className="overflow-x-auto shadow bg-white rounded">
+                                <table className="mobile-table min-w-full text-xs sm:text-sm" id="membersTable">
+                                    <thead className="bg-slate-50 text-left text-slate-600">
+                                    <tr>
+                                        <th className="px-3 py-2">Player</th>
+                                        <th
+                                            className="px-3 py-2 cursor-pointer select-none hidden sm:table-cell"
+                                            onClick={() => toggleSort('role')}
+                                        >
+                                            Role {sortField === 'role' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                        </th>
+                                        <th
+                                            className="px-3 py-2 cursor-pointer select-none text-center"
+                                            onClick={() => toggleSort('th')}
+                                        >
+                                            TH {sortField === 'th' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                        </th>
+                                        <th
+                                            className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell"
+                                            onClick={() => toggleSort('trophies')}
+                                        >
+                                            Trophies {sortField === 'trophies' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                        </th>
+                                        <th
+                                            className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell"
+                                            onClick={() => toggleSort('donations')}
+                                        >
+                                            Don&nbsp;/&nbsp;Rec {sortField === 'donations' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                        </th>
+                                        <th
+                                            className="px-3 py-2 cursor-pointer select-none text-center"
+                                            onClick={() => toggleSort('last')}
+                                        >
+                                            Last Seen {sortField === 'last' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                        </th>
+                                        <th
+                                            className="px-3 py-2 cursor-pointer select-none text-center hidden sm:table-cell"
+                                            onClick={() => toggleSort('loyalty')}
+                                        >
+                                            Loyalty {sortField === 'loyalty' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                        </th>
+                                        <th
+                                            className="px-3 py-2 cursor-pointer select-none text-center"
+                                            onClick={() => toggleSort('risk')}
+                                        >
+                                            Risk {sortField === 'risk' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {sortedMembers.map((m) => (
+                                        <tr
+                                            key={m.tag}
+                                            className="border-b last:border-none hover:bg-slate-50 cursor-pointer"
+                                            onClick={() => setSelected(m.tag)}
+                                        >
+                                            <td data-label="Player" className="px-3 py-2 font-medium">{m.name}</td>
+                                            <td data-label="Role" className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
+                                            <td data-label="TH" className="px-3 py-2 text-center">{m.townHallLevel}</td>
+                                            <td data-label="Trophies" className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
+                                            <td data-label="Don/Rec" className="px-3 py-2 text-center hidden md:table-cell">
+                                                {m.donations}/{m.donationsReceived}
+                                            </td>
+                                            <td data-label="Last Seen" className="px-3 py-2 text-center">{m.last_seen || '\u2014'}</td>
+                                            <td data-label="Loyalty" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
+                                            <td data-label="Risk" className="px-3 py-2 text-center"><RiskBadge score={m.risk_score} /></td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <MobileTabs
+                                tabs={[{ value: 'top', label: 'Top 10 At-Risk' }, { value: 'all', label: 'All Members' }]}
+                                active={activeTab}
+                                onChange={setActiveTab}
+                            />
+                            {activeTab === 'top' && (
+                                <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4">
+                                    {topRisk.map((m) => (
+                                        <div
+                                            key={m.tag}
+                                            className="snap-start shrink-0 w-[80vw] bg-white rounded shadow p-4"
+                                            onClick={() => setSelected(m.tag)}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
+                                                    <i data-lucide="user" className="w-6 h-6 text-slate-500" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="font-medium">{m.name}</p>
+                                                    <p className="text-sm text-slate-500">{m.tag}</p>
+                                                </div>
+                                                <RiskRing score={m.risk_score} size={50} />
+                                            </div>
+                                            <p className="text-sm mt-2">Loyalty: {m.loyalty}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {activeTab === 'all' && (
+                                <div className="bg-white rounded shadow" style={{ height: listHeight }}>
+                                    <MemberAccordionList members={sortedMembers} height={listHeight} />
+                                </div>
+                            )}
+                        </>
+                    )}
                 </>
             )}
             {selected && (
