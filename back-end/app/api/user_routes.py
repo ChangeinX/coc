@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request, g, abort
 from coclib.extensions import db
 from coclib.utils import normalize_tag
+from . import API_PREFIX
 
-bp = Blueprint("user", __name__, url_prefix="/user")
+bp = Blueprint("user", __name__, url_prefix=f"{API_PREFIX}/user")
 
 
 @bp.get("/me")

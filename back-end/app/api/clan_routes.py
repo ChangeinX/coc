@@ -3,8 +3,9 @@ from flask import Blueprint, jsonify
 from ..services.snapshot_service import get_clan as get_clan_snapshot
 from coclib.services.loyalty_service import get_clan_loyalty
 from ..services.risk_service import clan_at_risk
+from . import API_PREFIX
 
-bp = Blueprint("clan", __name__, url_prefix="/clan")
+bp = Blueprint("clan", __name__, url_prefix=f"{API_PREFIX}/clan")
 
 
 @bp.get("/<string:tag>")

@@ -1,4 +1,7 @@
+# ruff: noqa: E402
 from flask import Flask
+
+API_PREFIX = "/api/v1"
 
 from .clan_routes import bp as clan_bp
 from .player_routes import bp as player_bp
