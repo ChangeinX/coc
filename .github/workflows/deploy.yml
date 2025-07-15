@@ -17,6 +17,7 @@ jobs:
       APP_SERVICE: ${{ secrets.APP_SERVICE }}
       WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
       STATIC_SERVICE: ${{ secrets.STATIC_SERVICE }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
       VITE_API_URL: ${{ secrets.VITE_API_URL }}
       VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
@@ -34,6 +35,10 @@ jobs:
               - back-end/**
             static:
               - sync/**
+            db:
+              - db/**
+              - migrations/**
+              - coclib/**
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -100,3 +105,12 @@ jobs:
           jq --arg IMAGE "$ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
           new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
           aws ecs update-service --cluster $CLUSTER --service $STATIC_SERVICE --task-definition "$new_def"
+
+      - name: Apply database migrations
+        if: steps.changes.outputs.db_any_changed == 'true'
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+        run: |
+          python -m pip install -r back-end/requirements.txt
+          cd db
+          flask --app app db upgrade
