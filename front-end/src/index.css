@@ -15,3 +15,64 @@ body {
         padding: 1rem;
     }
 }
+
+.banner {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+}
+
+@media (min-width: 640px) {
+    .banner {
+        margin-left: -1rem;
+        margin-right: -1rem;
+    }
+}
+
+.mobile-table thead {
+    display: none;
+}
+
+.mobile-table tbody tr {
+    display: block;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.mobile-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+    font-size: 0.875rem;
+}
+
+.mobile-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 500;
+    color: #64748b;
+    margin-right: 1rem;
+}
+
+@media (min-width: 640px) {
+    .mobile-table thead {
+        display: table-header-group;
+    }
+    .mobile-table tbody tr {
+        display: table-row;
+        border: none;
+        border-bottom: 1px solid #e5e7eb;
+        border-radius: 0;
+        padding: 0;
+        margin-bottom: 0;
+    }
+    .mobile-table tbody td {
+        display: table-cell;
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
+    .mobile-table tbody td::before {
+        display: none;
+        content: none;
+    }
+}

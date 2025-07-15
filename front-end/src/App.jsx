@@ -118,7 +118,7 @@ export default function App() {
   if (!token) {
     return (
       <>
-        <header className="bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 text-center shadow-md">
+        <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 text-center shadow-md">
           <h1 className="text-lg font-semibold">Clan Dashboard</h1>
         </header>
         <div className="flex justify-center items-center h-[calc(100vh-4rem)] p-2 sm:p-4">
@@ -130,7 +130,7 @@ export default function App() {
 
   return (
     <>
-      <header className="bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md">
+      <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md">
         <h1 className="text-lg font-semibold">Clan Dashboard</h1>
         <div className="flex items-center gap-3">
           <button
