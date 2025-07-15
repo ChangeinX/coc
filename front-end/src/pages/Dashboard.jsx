@@ -386,9 +386,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                             {activeTab === 'top' && (
                                 <div
                                     className="bg-white rounded shadow ring-2 ring-rose-200"
-                                    style={{ height: listHeight }}
+                                    style={{ height: Math.min(listHeight, topRisk.length * 60) }}
                                 >
-                                    <MemberAccordionList members={topRisk} height={listHeight} />
+                                    <MemberAccordionList members={topRisk} height={Math.min(listHeight, topRisk.length * 60)} />
                                 </div>
                             )}
                             {activeTab === 'all' && (
