@@ -179,13 +179,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             {loading && clan && <Loading className="py-4"/>}
             {clan && (
                 <>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <Stat
-                            icon="hash"
-                            label="Tag"
-                            value={`#${clan.tag}`}
-                            onClick={() => navigator.clipboard.writeText(`#${clan.tag}`)}
-                        />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <Stat icon="users" label="Members" value={members.length}/>
                         <Stat icon="shield-alert" label="Level" value={clan.clanLevel}/>
                         <Stat icon="sword" label="War Wins" value={clan.warWins || 0}/>

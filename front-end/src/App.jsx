@@ -133,19 +133,9 @@ export default function App() {
 
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (!meta) return;
-    const banner = document.querySelector('.banner');
-    const update = () => {
-      const threshold = banner ? banner.offsetHeight : 0;
-      if (window.scrollY > threshold) {
-        meta.setAttribute('content', '#ffffff');
-      } else {
-        meta.setAttribute('content', '#1e3a8a');
-      }
-    };
-    window.addEventListener('scroll', update);
-    update();
-    return () => window.removeEventListener('scroll', update);
+    if (meta) {
+      meta.setAttribute('content', '#1e3a8a');
+    }
   }, []);
 
   if (!token) {
@@ -179,11 +169,9 @@ export default function App() {
           >
             <i data-lucide="search" className="w-5 h-5" />
           </button>
-          <span className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase">
-            {initials}
-          </span>
           <button
-            className="px-3 py-1 text-sm rounded bg-slate-700"
+            title="Sign Out"
+            className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase hover:bg-slate-600"
             onClick={() => {
               window.google?.accounts.id.disableAutoSelect();
               localStorage.removeItem('token');
@@ -192,7 +180,7 @@ export default function App() {
               setClanTag(null);
             }}
           >
-            Sign Out
+            {initials}
           </button>
         </div>
       </header>

@@ -1,13 +1,14 @@
+#root {
+    padding: 0 0.5rem 0.5rem;
+    background: linear-gradient(to bottom right, #f1f5f9, #e2e8f0);
+    min-height: 100vh;
+}
+
 body {
     font-family: system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    background: linear-gradient(to bottom right, #f1f5f9, #e2e8f0);
-    min-height: 100vh;
+    background-color: #1e3a8a;
     margin: 0;
-}
-
-#root {
-    padding: 0 0.5rem 0.5rem;
 }
 
 @media (min-width: 640px) {
