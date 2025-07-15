@@ -10,7 +10,7 @@ import httpx
 from sqlalchemy import func
 
 from coclib.extensions import cache, db
-from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot
+from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot, Clan
 from coclib.utils import normalize_tag
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,8 @@ class ClanDict(TypedDict):
     warWins: int
     warLosses: int
     ts: str
+    description: str | None
+    badgeUrls: dict | None
 
 
 class PlayerDict(TypedDict):
@@ -64,6 +66,8 @@ def _clan_row_to_dict(row: ClanSnapshot) -> ClanDict:  # type: ignore[override]
         warWins=row.war_wins,
         warLosses=row.war_losses,
         ts=row.ts.isoformat(),
+        description=None,
+        badgeUrls=None,
     )
 
 
@@ -174,6 +178,10 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
             return None
 
     base = _clan_row_to_dict(row)
+    cdata = Clan.query.filter_by(tag=tag).first()
+    if cdata:
+        base["description"] = (cdata.data or {}).get("description")
+        base["badgeUrls"] = (cdata.data or {}).get("badgeUrls")
     data = await _attach_members(base)
 
     cache.set(cache_key, data, timeout=CACHE_TTL)

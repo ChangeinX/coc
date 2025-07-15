@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 
 
 from coclib.extensions import db, cache
-from coclib.models import ClanSnapshot
+from sqlalchemy.dialects.postgresql import insert
+from coclib.models import ClanSnapshot, Clan
 from .coc_client import get_client
 from .player_cache import upsert_player
 from .player_service import get_player
@@ -31,6 +32,13 @@ async def get_clan(tag: str) -> dict:
     logger.info(f"Data fetched for clan {tag}: {data.get('name', 'Unknown')}")
 
     cache.set(key, data)
+
+    stmt = insert(Clan).values(tag=normalize_tag(tag), data=data)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=[Clan.tag],
+        set_={"data": stmt.excluded.data, "updated_at": db.func.now()},
+    )
+    db.session.execute(stmt)
 
     # Persist minimal snapshot (async context outside of event loop)
     snap = ClanSnapshot(
