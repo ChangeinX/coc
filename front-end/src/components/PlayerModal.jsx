@@ -58,7 +58,7 @@ export default function PlayerModal({ tag, onClose }) {
                   <p className="text-xl font-semibold">{player.donationsReceived}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">Loyalty (days)</p>
+                  <p className="text-sm text-slate-500">Days in Clan</p>
                   <p className="text-xl font-semibold">{player.loyalty}</p>
                 </div>
               </div>
