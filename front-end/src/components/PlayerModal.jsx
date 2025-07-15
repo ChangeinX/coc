@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from '../lib/api.js';
+import { timeAgo } from '../lib/time.js';
 import Loading from './Loading.jsx';
 import RiskBadge from './RiskBadge.jsx';
 
@@ -64,7 +65,7 @@ export default function PlayerModal({ tag, onClose }) {
 
               <p className="mt-4">
                 <span className="font-semibold">Last seen:</span>{' '}
-                {player.last_seen ? new Date(player.last_seen).toLocaleDateString() : '—'}
+                {player.last_seen ? timeAgo(player.last_seen) : '—'}
               </p>
               {player.risk_breakdown && player.risk_breakdown.length > 0 && (
                 <div className="mt-4">

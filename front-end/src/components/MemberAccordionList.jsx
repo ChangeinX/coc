@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { VariableSizeList as List } from 'react-window';
 import RiskBadge, { getRiskClasses } from './RiskBadge.jsx';
+import { timeAgo } from '../lib/time.js';
 
 function RiskDot({ score }) {
   const cls = getRiskClasses(score).split(' ')[0];
@@ -32,7 +33,7 @@ function Row({ index, style, data }) {
         <div className="text-sm space-y-1 pb-2">
           <div className="flex justify-between">
             <span>Trophies: {m.trophies}</span>
-            <span>Last: {m.last_seen || '—'}</span>
+            <span>Last: {m.last_seen ? timeAgo(m.last_seen) : '—'}</span>
           </div>
           <div className="flex justify-between">
             <span>Loyalty: {m.loyalty}</span>
