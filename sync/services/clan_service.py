@@ -27,13 +27,14 @@ async def get_clan(tag: str) -> dict:
     if cached:
         return cached
 
+    norm_tag = normalize_tag(tag)
     data = await fetch_clan(tag)
 
     logger.info(f"Data fetched for clan {tag}: {data.get('name', 'Unknown')}")
 
     cache.set(key, data)
 
-    stmt = insert(Clan).values(tag=normalize_tag(tag), data=data)
+    stmt = insert(Clan).values(tag=norm_tag, data=data)
     stmt = stmt.on_conflict_do_update(
         index_elements=[Clan.tag],
         set_={"data": stmt.excluded.data, "updated_at": db.func.now()},
@@ -41,16 +42,23 @@ async def get_clan(tag: str) -> dict:
     db.session.execute(stmt)
 
     # Persist minimal snapshot (async context outside of event loop)
-    snap = ClanSnapshot(
-        ts=datetime.utcnow(),
-        clan_tag=normalize_tag(tag),
-        name=data["name"],
-        member_count=data["members"],
-        level=data["clanLevel"],
-        war_wins=data.get("warWins", 0),
-        war_losses=data.get("warLosses", 0),
+    last = (
+        ClanSnapshot.query.filter_by(clan_tag=norm_tag)
+        .order_by(ClanSnapshot.ts.desc())
+        .first()
     )
-    db.session.add(snap)
+    if not last or last.data != data:
+        snap = ClanSnapshot(
+            ts=datetime.utcnow(),
+            clan_tag=norm_tag,
+            name=data["name"],
+            member_count=data["members"],
+            level=data["clanLevel"],
+            war_wins=data.get("warWins", 0),
+            war_losses=data.get("warLosses", 0),
+            data=data,
+        )
+        db.session.add(snap)
 
     member_tasks = []
     for member in data.get("memberList", []):
