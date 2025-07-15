@@ -12,6 +12,7 @@ def upsert_player(data: dict):
         town_hall=data["townHallLevel"],
         role=data.get("role"),
         clan_tag=normalize_tag(data.get("clan", {}).get("tag", "")),
+        data=data,
     )
     stmt = stmt.on_conflict_do_update(
         index_elements=[Player.tag],
@@ -20,6 +21,7 @@ def upsert_player(data: dict):
             "town_hall": stmt.excluded.town_hall,
             "role": stmt.excluded.role,
             "clan_tag": stmt.excluded.clan_tag,
+            "data": stmt.excluded.data,
             "updated_at": db.func.now(),
         },
     )

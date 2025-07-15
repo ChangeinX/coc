@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from coclib.extensions import db, cache
 from coclib.models import PlayerSnapshot
 from .coc_client import get_client
+from .player_cache import upsert_player
 from coclib.services.loyalty_service import ensure_membership
 from coclib.utils import normalize_tag
 
@@ -38,6 +39,7 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
         return cached
 
     data = await _fetch_player(tag)
+    upsert_player(data)
 
     now = datetime.utcnow()
     norm_tag = normalize_tag(tag)
@@ -74,21 +76,29 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
         war_attacks_used if war_attacks_used is not None else data.get("warAttacksUsed")
     )
 
-    ps = PlayerSnapshot(
-        ts=now,
-        player_tag=norm_tag,
-        name=data["name"],
-        clan_tag=normalize_tag(data.get("clan", {}).get("tag", "")),
-        role=data.get("role"),
-        town_hall=data["townHallLevel"],
-        trophies=data["trophies"],
-        donations=data.get("donations", 0),
-        donations_received=data.get("donationsReceived", 0),
-        war_attacks_used=attacks_used_val,
-        last_seen=last_seen,
-    )
-    db.session.add(ps)
-    db.session.commit()
+    last = prev_snapshot
+    if (
+        last is None
+        or last.data != data
+        or last.last_seen != last_seen
+        or last.war_attacks_used != attacks_used_val
+    ):
+        ps = PlayerSnapshot(
+            ts=now,
+            player_tag=norm_tag,
+            name=data["name"],
+            clan_tag=normalize_tag(data.get("clan", {}).get("tag", "")),
+            role=data.get("role"),
+            town_hall=data["townHallLevel"],
+            trophies=data["trophies"],
+            donations=data.get("donations", 0),
+            donations_received=data.get("donationsReceived", 0),
+            war_attacks_used=attacks_used_val,
+            last_seen=last_seen,
+            data=data,
+        )
+        db.session.add(ps)
+        db.session.commit()
     ensure_membership(norm_tag, data.get("clan", {}).get("tag"), now)
 
     data["last_seen"] = last_seen.isoformat()

@@ -12,6 +12,7 @@ class ClanSnapshot(db.Model):
     level = db.Column(db.Integer)
     war_wins = db.Column(db.Integer)
     war_losses = db.Column(db.Integer)
+    data = db.Column(db.JSON)
 
     __table_args__ = (db.UniqueConstraint("clan_tag", "ts", name="uq_clan_ts"),)
 
@@ -52,6 +53,7 @@ class PlayerSnapshot(db.Model):
     donations_received = db.Column(db.Integer)
     war_attacks_used = db.Column(db.Integer)
     last_seen = db.Column(db.DateTime, index=True)
+    data = db.Column(db.JSON)
 
     __table_args__ = (db.UniqueConstraint("player_tag", "ts", name="uq_player_ts"),)
 
@@ -63,6 +65,7 @@ class Player(db.Model):
     town_hall = db.Column(db.Integer)
     role = db.Column(db.String(20))
     clan_tag = db.Column(db.String(15), index=True)
+    data = db.Column(db.JSON)
     updated_at = db.Column(
         db.DateTime,
         server_default=db.func.now(),
