@@ -36,7 +36,7 @@ function Row({ index, style, data }) {
             <span>Last: {m.last_seen ? timeAgo(m.last_seen) : '—'}</span>
           </div>
           <div className="flex justify-between">
-            <span>Loyalty: {m.loyalty}</span>
+            <span>Days in Clan: {m.loyalty}</span>
             <span>Risk: <RiskBadge score={m.risk_score} /></span>
           </div>
         </div>
