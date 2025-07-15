@@ -1,5 +1,6 @@
 from coclib.models import (
     ClanSnapshot,
+    Clan,
     WarSnapshot,
     PlayerSnapshot,
     Player,
@@ -9,6 +10,7 @@ from coclib.models import (
 
 __all__ = [
     "ClanSnapshot",
+    "Clan",
     "WarSnapshot",
     "PlayerSnapshot",
     "Player",
