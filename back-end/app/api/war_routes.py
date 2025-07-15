@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify
 from sync.services.war_service import current_war_snapshot
+from . import API_PREFIX
 
-bp = Blueprint("war", __name__, url_prefix="/war")
+bp = Blueprint("war", __name__, url_prefix=f"{API_PREFIX}/war")
 
 
 @bp.get("/<string:clan_tag>/current")

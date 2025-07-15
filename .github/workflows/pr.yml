@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  nox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install nox
+        run: pip install nox
+      - name: Run nox
+        run: nox -s lint tests
+      - name: Enable auto-merge
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          merge-method: squash
+      - name: Merge
+        uses: peter-evans/pull-request-merge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          merge-method: squash
