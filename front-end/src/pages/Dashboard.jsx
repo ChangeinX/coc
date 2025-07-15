@@ -6,6 +6,7 @@ import MobileTabs from '../components/MobileTabs.jsx';
 import RiskRing from '../components/RiskRing.jsx';
 import DonationRing from '../components/DonationRing.jsx';
 import MemberAccordionList from '../components/MemberAccordionList.jsx';
+import ProfileCard from '../components/ProfileCard.jsx';
 
 const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
 
@@ -384,11 +385,14 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                 onChange={setActiveTab}
                             />
                             {activeTab === 'top' && (
-                                <div
-                                    className="bg-white rounded shadow ring-2 ring-rose-200"
-                                    style={{ height: Math.min(listHeight, topRisk.length * 60) }}
-                                >
-                                    <MemberAccordionList members={topRisk} height={Math.min(listHeight, topRisk.length * 60)} />
+                                <div className="flex overflow-x-auto gap-3 pb-2 scroller">
+                                    {topRisk.map((m) => (
+                                        <ProfileCard
+                                            key={m.tag}
+                                            member={m}
+                                            onClick={() => setSelected(m.tag)}
+                                        />
+                                    ))}
                                 </div>
                             )}
                             {activeTab === 'all' && (
