@@ -89,6 +89,19 @@ export default function App() {
   }, [token]);
 
   useEffect(() => {
+    const loadClan = async () => {
+      if (!token || !playerTag) return;
+      try {
+        const player = await fetchJSON(`/player/${encodeURIComponent(playerTag)}`);
+        if (player.clanTag) setClanTag(player.clanTag);
+      } catch {
+        /* ignore */
+      }
+    };
+    loadClan();
+  }, [playerTag, token]);
+
+  useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
     } else {
