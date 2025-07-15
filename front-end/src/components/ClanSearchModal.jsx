@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import Loading from './Loading.jsx';
 
-const Dashboard = lazy(() => import('./Dashboard.jsx'));
+const Dashboard = lazy(() => import('../pages/Dashboard.jsx'));
 
 export default function ClanSearchModal({ onClose, onClanLoaded }) {
   return (
