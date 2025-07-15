@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { fetchJSON } from './api.js';
+import { fetchJSON } from '../lib/api.js';
 import Loading from './Loading.jsx';
 
 export default function PlayerTagForm({ onSaved }) {
