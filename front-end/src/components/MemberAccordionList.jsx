@@ -61,13 +61,7 @@ function Row({ index, style, data }) {
 export default function MemberAccordionList({ members, height }) {
   const listRef = useRef();
   const [openIndex, setOpenIndex] = React.useState(null);
-  const getSize = (index) => {
-    if (openIndex === index) {
-      const extra = (members[index].risk_breakdown?.length || 0) * 20;
-      return 120 + extra;
-    }
-    return 56;
-  };
+  const getSize = (index) => (openIndex === index ? 120 : 56);
 
   return (
     <List
