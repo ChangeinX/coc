@@ -7,6 +7,7 @@ import RiskRing from '../components/RiskRing.jsx';
 import DonationRing from '../components/DonationRing.jsx';
 import MemberAccordionList from '../components/MemberAccordionList.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
+import { getTownHallIcon } from '../lib/townhall.js';
 
 const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
 
@@ -270,6 +271,11 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                     {m.leagueIcon && (
                                                         <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
                                                     )}
+                                                    <img
+                                                        src={getTownHallIcon(m.townHallLevel)}
+                                                        alt={`TH${m.townHallLevel}`}
+                                                        className="w-5 h-5"
+                                                    />
                                                     {m.name}
                                                 </span>
                                             </td>
@@ -323,12 +329,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             Don&nbsp;/&nbsp;Rec {sortField === 'donations' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                                         </th>
                                         <th
-                                            className="px-3 py-2 cursor-pointer select-none text-center"
-                                            onClick={() => toggleSort('last')}
-                                        >
-                                            Last Seen {sortField === 'last' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                        </th>
-                                        <th
                                             className="px-3 py-2 cursor-pointer select-none text-center hidden sm:table-cell"
                                             onClick={() => toggleSort('loyalty')}
                                         >
@@ -350,12 +350,22 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             onClick={() => setSelected(m.tag)}
                                         >
                                             <td data-label="Player" className="px-3 py-2 font-medium">
-                                                <span className="flex items-center gap-2">
-                                                    {m.leagueIcon && (
-                                                        <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
-                                                    )}
-                                                    {m.name}
-                                                </span>
+                                                <div className="flex flex-col">
+                                                    <span className="flex items-center gap-2">
+                                                        {m.leagueIcon && (
+                                                            <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
+                                                        )}
+                                                        <img
+                                                            src={getTownHallIcon(m.townHallLevel)}
+                                                            alt={`TH${m.townHallLevel}`}
+                                                            className="w-5 h-5"
+                                                        />
+                                                        {m.name}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500">
+                                                        {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td data-label="Role" className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
                                             <td data-label="TH" className="px-3 py-2 text-center">{m.townHallLevel}</td>
@@ -366,7 +376,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                     <DonationRing donations={m.donations} received={m.donationsReceived} size={36} />
                                                 </div>
                                             </td>
-                                            <td data-label="Last Seen" className="px-3 py-2 text-center">{m.last_seen ? timeAgo(m.last_seen) : '\u2014'}</td>
                                             <td data-label="Days in Clan" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
                                             <td data-label="Risk" className="px-3 py-2 text-center">
                                                 <RiskRing score={m.risk_score} size={36} />
