@@ -1,3 +1,4 @@
 export function getTownHallIcon(level) {
-  return `https://raw.githubusercontent.com/smlbiobot/coc-assets/master/png/town-hall/town-hall-${level}.png`;
+  const sanitized = String(level).replace('.', '-');
+  return new URL(`../assets/Town_Hall${sanitized}.webp`, import.meta.url).href;
 }
