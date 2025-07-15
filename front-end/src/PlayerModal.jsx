@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from './api.js';
 import Loading from './Loading.jsx';
+import RiskBadge from './RiskBadge.jsx';
 
 export default function PlayerModal({ tag, onClose }) {
   const [player, setPlayer] = useState(null);
@@ -64,7 +65,9 @@ export default function PlayerModal({ tag, onClose }) {
               </p>
               {player.risk_breakdown && player.risk_breakdown.length > 0 && (
                 <div className="mt-4">
-                  <p className="font-semibold">Risk Score: {player.risk_score}</p>
+                  <p className="font-semibold flex items-center gap-2">
+                    Risk Score: <RiskBadge score={player.risk_score} />
+                  </p>
                   <ul className="list-disc list-inside text-sm mt-1">
                     {player.risk_breakdown.map((r, i) => (
                       <li key={i}>
