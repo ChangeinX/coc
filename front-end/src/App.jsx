@@ -1,11 +1,11 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import Loading from './Loading.jsx';
-import PlayerTagForm from './PlayerTagForm.jsx';
-import { fetchJSON } from './api.js';
+import Loading from './components/Loading.jsx';
+import PlayerTagForm from './components/PlayerTagForm.jsx';
+import { fetchJSON } from './lib/api.js';
 
-const Dashboard = lazy(() => import('./Dashboard.jsx'));
-const ClanSearchModal = lazy(() => import('./ClanSearchModal.jsx'));
-const ClanModal = lazy(() => import('./ClanModal.jsx'));
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
+const ClanSearchModal = lazy(() => import('./components/ClanSearchModal.jsx'));
+const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
 
 function isTokenExpired(tok) {
   try {
