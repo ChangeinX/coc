@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useMemo, Suspense, lazy} from 'react';
 import Loading from '../components/Loading.jsx';
 import {fetchJSONCached} from '../lib/api.js';
+import { timeAgo } from '../lib/time.js';
 import RiskBadge from '../components/RiskBadge.jsx';
 import MobileTabs from '../components/MobileTabs.jsx';
 import RiskRing from '../components/RiskRing.jsx';
@@ -336,7 +337,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             <td data-label="Don/Rec" className="px-3 py-2 text-center hidden md:table-cell">
                                                 {m.donations}/{m.donationsReceived}
                                             </td>
-                                            <td data-label="Last Seen" className="px-3 py-2 text-center">{m.last_seen || '\u2014'}</td>
+                                            <td data-label="Last Seen" className="px-3 py-2 text-center">{m.last_seen ? timeAgo(m.last_seen) : '\u2014'}</td>
                                             <td data-label="Loyalty" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
                                             <td data-label="Risk" className="px-3 py-2 text-center"><RiskBadge score={m.risk_score} /></td>
                                         </tr>
