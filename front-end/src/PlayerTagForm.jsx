@@ -9,8 +9,9 @@ export default function PlayerTagForm({ onSaved }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const trimmed = tag.trim();
+    let trimmed = tag.trim();
     if (!trimmed) return;
+    if (trimmed.startsWith('#')) trimmed = trimmed.slice(1);
     setLoading(true);
     setError('');
     try {
@@ -32,7 +33,7 @@ export default function PlayerTagForm({ onSaved }) {
         <p className="font-medium text-slate-700">Enter your player tag</p>
         <input
           className="w-full px-3 py-2 rounded border"
-          placeholder="Tag (without #)"
+          placeholder="Player tag (e.g. #ABC123)"
           value={tag}
           onChange={(e) => setTag(e.target.value)}
         />
