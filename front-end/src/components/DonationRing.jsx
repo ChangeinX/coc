@@ -14,6 +14,8 @@ export default function DonationRing({ donations, received, size = 60 }) {
     color = 'stroke-yellow-400';
   }
 
+  const display = ratio >= 1 ? '∞' : `${Math.round(ratio * 100)}%`;
+
   return (
     <svg width={size} height={size} className="flex-shrink-0">
       <circle
@@ -42,7 +44,7 @@ export default function DonationRing({ donations, received, size = 60 }) {
         textAnchor="middle"
         className="text-xs font-semibold"
       >
-        {(ratio * 100).toFixed(0)}%
+        {display}
       </text>
     </svg>
   );
