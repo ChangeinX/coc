@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchJSONCached } from './api.js';
+import { fetchJSONCached } from '../lib/api.js';
 import Loading from './Loading.jsx';
 import RiskBadge from './RiskBadge.jsx';
 

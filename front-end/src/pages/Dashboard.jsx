@@ -1,12 +1,12 @@
 import React, {useState, useEffect, useMemo, Suspense, lazy} from 'react';
-import Loading from './Loading.jsx';
-import {fetchJSONCached} from './api.js';
-import RiskBadge from './RiskBadge.jsx';
-import MobileTabs from './MobileTabs.jsx';
-import RiskRing from './RiskRing.jsx';
-import MemberAccordionList from './MemberAccordionList.jsx';
+import Loading from '../components/Loading.jsx';
+import {fetchJSONCached} from '../lib/api.js';
+import RiskBadge from '../components/RiskBadge.jsx';
+import MobileTabs from '../components/MobileTabs.jsx';
+import RiskRing from '../components/RiskRing.jsx';
+import MemberAccordionList from '../components/MemberAccordionList.jsx';
 
-const PlayerModal = lazy(() => import('./PlayerModal.jsx'));
+const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
 
 
 function Stat({icon, label, value, onClick}) {
