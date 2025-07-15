@@ -42,6 +42,8 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     const [activeTab, setActiveTab] = useState('top');
     const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width:640px)').matches);
     const [listHeight, setListHeight] = useState(() => Math.min(500, window.innerHeight - 200));
+    const [pageIndex, setPageIndex] = useState(0);
+    const deckRef = React.useRef(null);
 
     const sortedMembers = useMemo(() => {
         if (!sortField) return members;
@@ -84,7 +86,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                 setClan(data.clan);
                 if (onClanLoaded) onClanLoaded(data.clan);
                 setMembers(data.members);
-                setTopRisk(data.topRisk);
+                setTopRisk(data.topRisk.slice(0, 5));
             } catch {
                 localStorage.removeItem(cacheKey);
             }
@@ -108,7 +110,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                 last_seen: rmap[m.tag.replace('#', '')]?.last_seen || null,
                 loyalty: loyaltyMap[m.tag.replace('#', '')] || 0,
             }));
-            const top = [...merged].sort((a, b) => b.risk_score - a.risk_score).slice(0, 10);
+            const top = [...merged]
+                .sort((a, b) => b.risk_score - a.risk_score)
+                .slice(0, 5);
             setClan(clanData);
             if (onClanLoaded) onClanLoaded(clanData);
             setMembers(merged);
@@ -150,6 +154,13 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     }, []);
 
     useEffect(() => {
+        setPageIndex(0);
+        if (deckRef.current) {
+            deckRef.current.scrollTo({ left: 0 });
+        }
+    }, [topRisk]);
+
+    useEffect(() => {
         const handler = () => setListHeight(Math.min(500, window.innerHeight - 200));
         window.addEventListener('resize', handler);
         handler();
@@ -171,6 +182,15 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             setSortField(field);
             setSortDir('asc');
         }
+    };
+
+    const handleScroll = () => {
+        if (!deckRef.current) return;
+        const child = deckRef.current.firstChild;
+        if (!child) return;
+        const cardWidth = child.getBoundingClientRect().width + 16;
+        const index = Math.round(deckRef.current.scrollLeft / cardWidth);
+        setPageIndex(index);
     };
 
 
@@ -311,32 +331,49 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                     ) : (
                         <>
                             <MobileTabs
-                                tabs={[{ value: 'top', label: 'Top 10 At-Risk' }, { value: 'all', label: 'All Members' }]}
+                                tabs={[{ value: 'top', label: 'Top 5 At-Risk' }, { value: 'all', label: 'All Members' }]}
                                 active={activeTab}
                                 onChange={setActiveTab}
                             />
                             {activeTab === 'top' && (
-                                <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4">
-                                    {topRisk.map((m) => (
-                                        <div
-                                            key={m.tag}
-                                            className="snap-start shrink-0 w-[80vw] bg-white rounded shadow p-4"
-                                            onClick={() => setSelected(m.tag)}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
-                                                    <i data-lucide="user" className="w-6 h-6 text-slate-500" />
-                                                </div>
-                                                <div className="flex-1">
+                                <>
+                                    <div
+                                        className={`flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroller ${
+                                            topRisk.length < 5 ? 'justify-center' : ''
+                                        }`}
+                                        ref={deckRef}
+                                        onScroll={handleScroll}
+                                    >
+                                        {topRisk.map((m) => (
+                                            <div
+                                                key={m.tag}
+                                                className={`${
+                                                    topRisk.length < 5 ? 'snap-center' : 'snap-start'
+                                                } shrink-0 w-[80vw] min-h-[70vh] flex flex-col bg-white rounded shadow p-4`}
+                                                onClick={() => setSelected(m.tag)}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
+                                                        <i data-lucide="user" className="w-6 h-6 text-slate-500" />
+                                                    </div>
+                                                    <div className="flex-1">
                                                     <p className="font-medium">{m.name}</p>
                                                     <p className="text-sm text-slate-500">{m.tag}</p>
                                                 </div>
                                                 <RiskRing score={m.risk_score} size={50} />
                                             </div>
-                                            <p className="text-sm mt-2">Loyalty: {m.loyalty}</p>
-                                        </div>
-                                    ))}
-                                </div>
+                                                <p className="text-sm mt-2">Loyalty: {m.loyalty}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {topRisk.length > 1 && (
+                                        <ul className="bullets">
+                                            {topRisk.map((_, i) => (
+                                                <li key={i} className={i === pageIndex ? 'active' : ''} />
+                                            ))}
+                                        </ul>
+                                    )}
+                                </>
                             )}
                             {activeTab === 'all' && (
                                 <div className="bg-white rounded shadow" style={{ height: listHeight }}>
