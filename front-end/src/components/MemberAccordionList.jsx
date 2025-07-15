@@ -17,7 +17,7 @@ function Row({ index, style, data }) {
     }
   };
   return (
-    <div style={style} className="border-b px-3" onClick={toggle}>
+    <div style={{ ...style, overflow: 'hidden' }} className="border-b px-3" onClick={toggle}>
       <div className="flex justify-between items-center py-2">
         <div className="flex items-center gap-2">
           {m.leagueIcon && <img src={m.leagueIcon} alt="league" className="w-5 h-5" />}
@@ -27,7 +27,7 @@ function Row({ index, style, data }) {
           )}
           <span className="text-xs bg-slate-200 rounded px-1">TH{m.townHallLevel}</span>
         </div>
-        <RiskRing score={m.risk_score} size={32} />
+        {!open && <RiskRing score={m.risk_score} size={32} />}
       </div>
       {open && (
         <div className="text-sm space-y-1 pb-2">
@@ -61,7 +61,13 @@ function Row({ index, style, data }) {
 export default function MemberAccordionList({ members, height }) {
   const listRef = useRef();
   const [openIndex, setOpenIndex] = React.useState(null);
-  const getSize = (index) => (openIndex === index ? 120 : 56);
+  const getSize = (index) => {
+    const m = members[index];
+    const base = 56;
+    if (openIndex !== index) return base;
+    const lines = (m.risk_breakdown?.length || 0) + 3; // three base rows
+    return base + 24 + lines * 20;
+  };
 
   return (
     <List
