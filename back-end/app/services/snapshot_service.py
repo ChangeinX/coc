@@ -10,7 +10,7 @@ import httpx
 from sqlalchemy import func
 
 from coclib.extensions import cache, db
-from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot, Clan
+from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot, Clan, Player
 from coclib.utils import normalize_tag
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ class ClanDict(TypedDict):
     clanLevel: int
     warWins: int
     warLosses: int
+    warWinStreak: int | None
     ts: str
     description: str | None
     badgeUrls: dict | None
@@ -54,6 +55,7 @@ class PlayerDict(TypedDict):
     warAttacksUsed: int | None
     last_seen: str
     clanTag: str | None
+    leagueIcon: str | None
     ts: str
 
 
@@ -65,6 +67,7 @@ def _clan_row_to_dict(row: ClanSnapshot) -> ClanDict:  # type: ignore[override]
         clanLevel=row.level,
         warWins=row.war_wins,
         warLosses=row.war_losses,
+        warWinStreak=(row.data or {}).get("warWinStreak"),
         ts=row.ts.isoformat(),
         description=None,
         badgeUrls=None,
@@ -83,6 +86,7 @@ def _player_row_to_dict(row: PlayerSnapshot) -> PlayerDict:  # type: ignore[over
         warAttacksUsed=row.war_attacks_used,
         last_seen=(row.last_seen or row.ts).isoformat(),
         clanTag=row.clan_tag or None,
+        leagueIcon=(row.data or {}).get("league", {}).get("iconUrls", {}).get("tiny"),
         ts=row.ts.isoformat(),
     )
 
@@ -114,28 +118,30 @@ def _latest_members_sync(clan_tag: str) -> list[dict]:
     )
 
     rows = (
-        db.session.query(PlayerSnapshot)
+        db.session.query(PlayerSnapshot, Player.data)
         .join(
             max_ts_subq,
             (PlayerSnapshot.player_tag == max_ts_subq.c.player_tag)
             & (PlayerSnapshot.ts == max_ts_subq.c.latest_ts),
         )
+        .outerjoin(Player, Player.tag == PlayerSnapshot.player_tag)
         .all()
     )
 
     return [
         {
-            "tag": r.player_tag,
-            "name": r.name,
-            "role": r.role,
-            "townHallLevel": r.town_hall,
-            "trophies": r.trophies,
-            "donations": r.donations,
-            "donationsReceived": r.donations_received,
-            "warAttacksUsed": r.war_attacks_used,
-            "last_seen": (r.last_seen or r.ts).isoformat(),
+            "tag": ps.player_tag,
+            "name": ps.name,
+            "role": ps.role,
+            "townHallLevel": ps.town_hall,
+            "trophies": ps.trophies,
+            "donations": ps.donations,
+            "donationsReceived": ps.donations_received,
+            "warAttacksUsed": ps.war_attacks_used,
+            "last_seen": (ps.last_seen or ps.ts).isoformat(),
+            "leagueIcon": (pdata or {}).get("league", {}).get("iconUrls", {}).get("tiny"),
         }
-        for r in rows
+        for ps, pdata in rows
     ]
 
 
@@ -182,6 +188,8 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
     if cdata:
         base["description"] = (cdata.data or {}).get("description")
         base["badgeUrls"] = (cdata.data or {}).get("badgeUrls")
+        if base.get("warWinStreak") is None:
+            base["warWinStreak"] = (cdata.data or {}).get("warWinStreak")
     data = await _attach_members(base)
 
     cache.set(cache_key, data, timeout=CACHE_TTL)

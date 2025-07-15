@@ -220,6 +220,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             {loading && clan && <Loading className="py-4"/>}
             {clan && (
                 <>
+                    <div className="flex justify-center">
+                        <Stat icon="flame" label="Win Streak" value={clan.warWinStreak || 0} />
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <Stat icon="users" label="Members" value={members.length}/>
                         <Stat icon="shield-alert" label="Level" value={clan.clanLevel}/>
@@ -246,7 +249,14 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             className="border-b last:border-none hover:bg-rose-50 cursor-pointer"
                                             onClick={() => setSelected(m.tag)}
                                         >
-                                            <td data-label="Player" className="px-4 py-2 font-medium">{m.name}</td>
+                                            <td data-label="Player" className="px-4 py-2 font-medium">
+                                                <span className="flex items-center gap-2">
+                                                    {m.leagueIcon && (
+                                                        <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
+                                                    )}
+                                                    {m.name}
+                                                </span>
+                                            </td>
                                             <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
                                             <td data-label="Loyalty" className="px-4 py-2 text-center">{m.loyalty}</td>
                                             <td data-label="Score" className="px-4 py-2"><RiskBadge score={m.risk_score} /></td>
@@ -312,7 +322,14 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             className="border-b last:border-none hover:bg-slate-50 cursor-pointer"
                                             onClick={() => setSelected(m.tag)}
                                         >
-                                            <td data-label="Player" className="px-3 py-2 font-medium">{m.name}</td>
+                                            <td data-label="Player" className="px-3 py-2 font-medium">
+                                                <span className="flex items-center gap-2">
+                                                    {m.leagueIcon && (
+                                                        <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
+                                                    )}
+                                                    {m.name}
+                                                </span>
+                                            </td>
                                             <td data-label="Role" className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
                                             <td data-label="TH" className="px-3 py-2 text-center">{m.townHallLevel}</td>
                                             <td data-label="Trophies" className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
@@ -353,8 +370,12 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                 onClick={() => setSelected(m.tag)}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
-                                                        <i data-lucide="user" className="w-6 h-6 text-slate-500" />
+                                                    <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden">
+                                                        {m.leagueIcon ? (
+                                                            <img src={m.leagueIcon} alt="league" className="w-10 h-10" />
+                                                        ) : (
+                                                            <i data-lucide="user" className="w-6 h-6 text-slate-500" />
+                                                        )}
                                                     </div>
                                                     <div className="flex-1">
                                                     <p className="font-medium">{m.name}</p>

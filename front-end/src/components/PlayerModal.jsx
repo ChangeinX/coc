@@ -33,6 +33,9 @@ export default function PlayerModal({ tag, onClose }) {
           {player && (
             <>
               <h3 className="text-xl font-semibold text-slate-800 flex flex-wrap items-center gap-2">
+                {player.leagueIcon && (
+                  <img src={player.leagueIcon} alt="league" className="w-6 h-6" />
+                )}
                 <span>{player.name}</span>
                 <span className="text-sm font-normal text-slate-500">{player.tag}</span>
               </h3>
