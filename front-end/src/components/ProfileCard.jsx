@@ -25,14 +25,13 @@ export default function ProfileCard({ member, onClick }) {
       <RiskRing score={member.risk_score} size={48} />
       <div className="mt-2 text-center space-y-1 w-full">
         <p>TH{member.townHallLevel}</p>
-        <p className="flex justify-between">
-          <span>{member.donations}/{member.donationsReceived}</span>
+        <div className="flex justify-end">
           <DonationRing
             donations={member.donations}
             received={member.donationsReceived}
             size={32}
           />
-        </p>
+        </div>
         <p className="text-xs text-slate-500">
           {member.last_seen ? timeAgo(member.last_seen) : '\u2014'}
         </p>

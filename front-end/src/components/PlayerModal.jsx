@@ -3,6 +3,8 @@ import { fetchJSONCached } from '../lib/api.js';
 import { timeAgo } from '../lib/time.js';
 import Loading from './Loading.jsx';
 import RiskBadge from './RiskBadge.jsx';
+import RiskRing from './RiskRing.jsx';
+import DonationRing from './DonationRing.jsx';
 
 export default function PlayerModal({ tag, onClose }) {
   const [player, setPlayer] = useState(null);
@@ -60,6 +62,18 @@ export default function PlayerModal({ tag, onClose }) {
                 <div>
                   <p className="text-sm text-slate-500">Days in Clan</p>
                   <p className="text-xl font-semibold">{player.loyalty}</p>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <p className="font-semibold mb-2">Member Health</p>
+                <div className="flex justify-center gap-6">
+                  <RiskRing score={player.risk_score} size={64} />
+                  <DonationRing
+                    donations={player.donations}
+                    received={player.donationsReceived}
+                    size={64}
+                  />
                 </div>
               </div>
 
