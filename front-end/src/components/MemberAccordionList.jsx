@@ -1,44 +1,69 @@
 import React, { useRef } from 'react';
 import { VariableSizeList as List } from 'react-window';
-import RiskBadge, { getRiskClasses } from './RiskBadge.jsx';
+import RiskRing from './RiskRing.jsx';
+import DonationRing from './DonationRing.jsx';
 import { timeAgo } from '../lib/time.js';
-
-function RiskDot({ score }) {
-  const cls = getRiskClasses(score).split(' ')[0];
-  return <span className={`inline-block w-3 h-3 rounded-full ${cls}`}></span>;
-}
+import { getTownHallIcon } from '../lib/townhall.js';
 
 function Row({ index, style, data }) {
   const { members, openIndex, setOpenIndex, getSize, listRef } = data;
   const m = members[index];
   const open = openIndex === index;
   const toggle = () => {
+    const prev = openIndex;
     setOpenIndex(open ? null : index);
-    listRef.current.resetAfterIndex(index);
+    if (listRef.current) {
+      const start = Math.min(index, prev ?? index);
+      listRef.current.resetAfterIndex(start);
+    }
   };
   return (
-    <div style={style} className="border-b px-3" onClick={toggle}>
+    <div style={{ ...style, overflow: 'hidden' }} className="border-b px-3" onClick={toggle}>
       <div className="flex justify-between items-center py-2">
-        <div className="flex items-center gap-2">
-          {m.leagueIcon && <img src={m.leagueIcon} alt="league" className="w-5 h-5" />}
-          <span className="font-medium">{m.name}</span>
-          {m.role && (
-            <span className="text-xs bg-slate-200 rounded px-1">{m.role}</span>
-          )}
-          <span className="text-xs bg-slate-200 rounded px-1">TH{m.townHallLevel}</span>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            {m.leagueIcon && (
+              <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
+            )}
+            <img
+              src={getTownHallIcon(m.townHallLevel)}
+              alt={`TH${m.townHallLevel}`}
+              className="w-5 h-5"
+            />
+            <span className="font-medium">{m.name}</span>
+            {m.role && (
+              <span className="text-xs bg-slate-200 rounded px-1">{m.role}</span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500">
+            {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
+          </p>
         </div>
-        <RiskDot score={m.risk_score} />
+        {!open && <RiskRing score={m.risk_score} size={32} />}
       </div>
       {open && (
         <div className="text-sm space-y-1 pb-2">
           <div className="flex justify-between">
             <span>Trophies: {m.trophies}</span>
-            <span>Last: {m.last_seen ? timeAgo(m.last_seen) : '—'}</span>
+            <span>Last Seen: {m.last_seen ? timeAgo(m.last_seen) : '—'}</span>
           </div>
-          <div className="flex justify-between">
-            <span>Loyalty: {m.loyalty}</span>
-            <span>Risk: <RiskBadge score={m.risk_score} /></span>
+          <div className="flex justify-between items-center">
+            <span>Don/Rec: {m.donations}/{m.donationsReceived}</span>
+            <DonationRing donations={m.donations} received={m.donationsReceived} size={32} />
           </div>
+          <div className="flex justify-between items-center">
+            <span>Days in Clan: {m.loyalty}</span>
+            <RiskRing score={m.risk_score} size={32} />
+          </div>
+          {m.risk_breakdown && m.risk_breakdown.length > 0 && (
+            <ul className="list-disc list-inside text-xs pt-1">
+              {m.risk_breakdown.map((r, i) => (
+                <li key={i}>
+                  {r.points} pts – {r.reason}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>
@@ -48,7 +73,13 @@ function Row({ index, style, data }) {
 export default function MemberAccordionList({ members, height }) {
   const listRef = useRef();
   const [openIndex, setOpenIndex] = React.useState(null);
-  const getSize = (index) => (openIndex === index ? 120 : 56);
+  const getSize = (index) => {
+    const m = members[index];
+    const base = 56;
+    if (openIndex !== index) return base;
+    const lines = (m.risk_breakdown?.length || 0) + 3; // three base rows
+    return base + 24 + lines * 20;
+  };
 
   return (
     <List

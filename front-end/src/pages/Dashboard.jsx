@@ -2,23 +2,29 @@ import React, {useState, useEffect, useMemo, Suspense, lazy} from 'react';
 import Loading from '../components/Loading.jsx';
 import {fetchJSONCached} from '../lib/api.js';
 import { timeAgo } from '../lib/time.js';
-import RiskBadge from '../components/RiskBadge.jsx';
 import MobileTabs from '../components/MobileTabs.jsx';
 import RiskRing from '../components/RiskRing.jsx';
+import DonationRing from '../components/DonationRing.jsx';
 import MemberAccordionList from '../components/MemberAccordionList.jsx';
+import ProfileCard from '../components/ProfileCard.jsx';
+import { getTownHallIcon } from '../lib/townhall.js';
 
 const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
 
 
-function Stat({icon, label, value, onClick}) {
+function Stat({icon, iconUrl, label, value, onClick}) {
     return (
         <div
             className={`flex items-center gap-3 bg-white shadow rounded p-4 ${onClick ? 'cursor-pointer' : ''}`}
             onClick={onClick}
         >
-            {icon && (
+            {(iconUrl || icon) && (
                 <div className="p-3 rounded-full bg-slate-200">
-                    <i data-lucide={icon} className="w-7 h-7"/>
+                    {iconUrl ? (
+                        <img src={iconUrl} alt="icon" className="w-7 h-7" />
+                    ) : (
+                        <i data-lucide={icon} className="w-7 h-7"/>
+                    )}
                 </div>
             )}
             <div>
@@ -43,8 +49,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     const [activeTab, setActiveTab] = useState('top');
     const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width:640px)').matches);
     const [listHeight, setListHeight] = useState(() => Math.min(500, window.innerHeight - 200));
-    const [pageIndex, setPageIndex] = useState(0);
-    const deckRef = React.useRef(null);
 
     const sortedMembers = useMemo(() => {
         if (!sortField) return members;
@@ -109,6 +113,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
 
                 risk_score: rmap[m.tag.replace('#', '')]?.risk_score || 0,
                 last_seen: rmap[m.tag.replace('#', '')]?.last_seen || null,
+                risk_breakdown: rmap[m.tag.replace('#', '')]?.risk_breakdown || [],
                 loyalty: loyaltyMap[m.tag.replace('#', '')] || 0,
             }));
             const top = [...merged]
@@ -154,12 +159,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
         return () => mq.removeEventListener('change', handler);
     }, []);
 
-    useEffect(() => {
-        setPageIndex(0);
-        if (deckRef.current) {
-            deckRef.current.scrollTo({ left: 0 });
-        }
-    }, [topRisk]);
 
     useEffect(() => {
         const handler = () => setListHeight(Math.min(500, window.innerHeight - 200));
@@ -185,14 +184,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
         }
     };
 
-    const handleScroll = () => {
-        if (!deckRef.current) return;
-        const child = deckRef.current.firstChild;
-        if (!child) return;
-        const cardWidth = child.getBoundingClientRect().width + 16;
-        const index = Math.round(deckRef.current.scrollLeft / cardWidth);
-        setPageIndex(index);
-    };
 
 
     return (
@@ -221,14 +212,39 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             {loading && clan && <Loading className="py-4"/>}
             {clan && (
                 <>
-                    <div className="flex justify-center">
-                        <Stat icon="flame" label="Win Streak" value={clan.warWinStreak || 0} />
+                    <div className="flex justify-center mt-6">
+                        <Stat
+                            icon="flame"
+                            iconUrl={clan.badgeUrls?.small}
+                            label="Win Streak"
+                            value={clan.warWinStreak || 0}
+                        />
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Stat icon="users" label="Members" value={members.length}/>
-                        <Stat icon="shield-alert" label="Level" value={clan.clanLevel}/>
-                        <Stat icon="sword" label="War Wins" value={clan.warWins || 0}/>
-                        <Stat icon="shield-off" label="War Losses" value={clan.warLosses || 0}/>
+                        <Stat
+                            icon="users"
+                            iconUrl={clan.badgeUrls?.small}
+                            label="Members"
+                            value={members.length}
+                        />
+                        <Stat
+                            icon="shield-alert"
+                            iconUrl={clan.badgeUrls?.small}
+                            label="Level"
+                            value={clan.clanLevel}
+                        />
+                        <Stat
+                            icon="sword"
+                            iconUrl={clan.warLeague?.iconUrls?.small}
+                            label="War Wins"
+                            value={clan.warWins || 0}
+                        />
+                        <Stat
+                            icon="shield-off"
+                            iconUrl={clan.warLeague?.iconUrls?.small}
+                            label="War Losses"
+                            value={clan.warLosses || 0}
+                        />
                     </div>
                     {isDesktop ? (
                         <>
@@ -239,7 +255,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                     <tr>
                                         <th className="px-4 py-3">Player</th>
                                         <th className="px-4 py-3">Tag</th>
-                                        <th className="px-4 py-3">Loyalty</th>
+                                        <th className="px-4 py-3">Days in Clan</th>
                                         <th className="px-4 py-3">Score</th>
                                     </tr>
                                     </thead>
@@ -255,12 +271,28 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                     {m.leagueIcon && (
                                                         <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
                                                     )}
+                                                    <img
+                                                        src={getTownHallIcon(m.townHallLevel)}
+                                                        alt={`TH${m.townHallLevel}`}
+                                                        className="w-5 h-5"
+                                                    />
                                                     {m.name}
                                                 </span>
                                             </td>
                                             <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
-                                            <td data-label="Loyalty" className="px-4 py-2 text-center">{m.loyalty}</td>
-                                            <td data-label="Score" className="px-4 py-2"><RiskBadge score={m.risk_score} /></td>
+                                            <td data-label="Days in Clan" className="px-4 py-2 text-center">{m.loyalty}</td>
+                                            <td data-label="Score" className="px-4 py-2">
+                                                <div className="flex items-center gap-2">
+                                                    <RiskRing score={m.risk_score} size={40} />
+                                                    {m.risk_breakdown && m.risk_breakdown.length > 0 && (
+                                                        <ul className="list-disc list-inside text-xs">
+                                                            {m.risk_breakdown.map((r, i) => (
+                                                                <li key={i}>{r.points} pts – {r.reason}</li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))}
                                     </tbody>
@@ -297,16 +329,10 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             Don&nbsp;/&nbsp;Rec {sortField === 'donations' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                                         </th>
                                         <th
-                                            className="px-3 py-2 cursor-pointer select-none text-center"
-                                            onClick={() => toggleSort('last')}
-                                        >
-                                            Last Seen {sortField === 'last' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                        </th>
-                                        <th
                                             className="px-3 py-2 cursor-pointer select-none text-center hidden sm:table-cell"
                                             onClick={() => toggleSort('loyalty')}
                                         >
-                                            Loyalty {sortField === 'loyalty' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                            Days in Clan {sortField === 'loyalty' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                                         </th>
                                         <th
                                             className="px-3 py-2 cursor-pointer select-none text-center"
@@ -324,22 +350,36 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             onClick={() => setSelected(m.tag)}
                                         >
                                             <td data-label="Player" className="px-3 py-2 font-medium">
-                                                <span className="flex items-center gap-2">
-                                                    {m.leagueIcon && (
-                                                        <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
-                                                    )}
-                                                    {m.name}
-                                                </span>
+                                                <div className="flex flex-col">
+                                                    <span className="flex items-center gap-2">
+                                                        {m.leagueIcon && (
+                                                            <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
+                                                        )}
+                                                        <img
+                                                            src={getTownHallIcon(m.townHallLevel)}
+                                                            alt={`TH${m.townHallLevel}`}
+                                                            className="w-5 h-5"
+                                                        />
+                                                        {m.name}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500">
+                                                        {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td data-label="Role" className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
                                             <td data-label="TH" className="px-3 py-2 text-center">{m.townHallLevel}</td>
                                             <td data-label="Trophies" className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
                                             <td data-label="Don/Rec" className="px-3 py-2 text-center hidden md:table-cell">
-                                                {m.donations}/{m.donationsReceived}
+                                                <div className="flex items-center justify-center gap-2">
+                                                    {m.donations}/{m.donationsReceived}
+                                                    <DonationRing donations={m.donations} received={m.donationsReceived} size={36} />
+                                                </div>
                                             </td>
-                                            <td data-label="Last Seen" className="px-3 py-2 text-center">{m.last_seen ? timeAgo(m.last_seen) : '\u2014'}</td>
-                                            <td data-label="Loyalty" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
-                                            <td data-label="Risk" className="px-3 py-2 text-center"><RiskBadge score={m.risk_score} /></td>
+                                            <td data-label="Days in Clan" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
+                                            <td data-label="Risk" className="px-3 py-2 text-center">
+                                                <RiskRing score={m.risk_score} size={36} />
+                                            </td>
                                         </tr>
                                     ))}
                                     </tbody>
@@ -354,48 +394,15 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                 onChange={setActiveTab}
                             />
                             {activeTab === 'top' && (
-                                <>
-                                    <div
-                                        className={`flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroller ${
-                                            topRisk.length < 5 ? 'justify-center' : ''
-                                        }`}
-                                        ref={deckRef}
-                                        onScroll={handleScroll}
-                                    >
-                                        {topRisk.map((m) => (
-                                            <div
-                                                key={m.tag}
-                                                className={`${
-                                                    topRisk.length < 5 ? 'snap-center' : 'snap-start'
-                                                } shrink-0 w-[80vw] min-h-[70vh] flex flex-col bg-white rounded shadow p-4`}
-                                                onClick={() => setSelected(m.tag)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden">
-                                                        {m.leagueIcon ? (
-                                                            <img src={m.leagueIcon} alt="league" className="w-10 h-10" />
-                                                        ) : (
-                                                            <i data-lucide="user" className="w-6 h-6 text-slate-500" />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                    <p className="font-medium">{m.name}</p>
-                                                    <p className="text-sm text-slate-500">{m.tag}</p>
-                                                </div>
-                                                <RiskRing score={m.risk_score} size={50} />
-                                            </div>
-                                                <p className="text-sm mt-2">Loyalty: {m.loyalty}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {topRisk.length > 1 && (
-                                        <ul className="bullets">
-                                            {topRisk.map((_, i) => (
-                                                <li key={i} className={i === pageIndex ? 'active' : ''} />
-                                            ))}
-                                        </ul>
-                                    )}
-                                </>
+                                <div className="flex overflow-x-auto gap-3 pb-2 scroller">
+                                    {topRisk.map((m) => (
+                                        <ProfileCard
+                                            key={m.tag}
+                                            member={m}
+                                            onClick={() => setSelected(m.tag)}
+                                        />
+                                    ))}
+                                </div>
                             )}
                             {activeTab === 'all' && (
                                 <div className="bg-white rounded shadow" style={{ height: listHeight }}>
