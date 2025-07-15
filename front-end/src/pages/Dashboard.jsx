@@ -10,15 +10,19 @@ import MemberAccordionList from '../components/MemberAccordionList.jsx';
 const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
 
 
-function Stat({icon, label, value, onClick}) {
+function Stat({icon, iconUrl, label, value, onClick}) {
     return (
         <div
             className={`flex items-center gap-3 bg-white shadow rounded p-4 ${onClick ? 'cursor-pointer' : ''}`}
             onClick={onClick}
         >
-            {icon && (
+            {(iconUrl || icon) && (
                 <div className="p-3 rounded-full bg-slate-200">
-                    <i data-lucide={icon} className="w-7 h-7"/>
+                    {iconUrl ? (
+                        <img src={iconUrl} alt="icon" className="w-7 h-7" />
+                    ) : (
+                        <i data-lucide={icon} className="w-7 h-7"/>
+                    )}
                 </div>
             )}
             <div>
@@ -222,13 +226,38 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             {clan && (
                 <>
                     <div className="flex justify-center">
-                        <Stat icon="flame" label="Win Streak" value={clan.warWinStreak || 0} />
+                        <Stat
+                            icon="flame"
+                            iconUrl={clan.badgeUrls?.small}
+                            label="Win Streak"
+                            value={clan.warWinStreak || 0}
+                        />
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Stat icon="users" label="Members" value={members.length}/>
-                        <Stat icon="shield-alert" label="Level" value={clan.clanLevel}/>
-                        <Stat icon="sword" label="War Wins" value={clan.warWins || 0}/>
-                        <Stat icon="shield-off" label="War Losses" value={clan.warLosses || 0}/>
+                        <Stat
+                            icon="users"
+                            iconUrl={clan.badgeUrls?.small}
+                            label="Members"
+                            value={members.length}
+                        />
+                        <Stat
+                            icon="shield-alert"
+                            iconUrl={clan.badgeUrls?.small}
+                            label="Level"
+                            value={clan.clanLevel}
+                        />
+                        <Stat
+                            icon="sword"
+                            iconUrl={clan.warLeague?.iconUrls?.small}
+                            label="War Wins"
+                            value={clan.warWins || 0}
+                        />
+                        <Stat
+                            icon="shield-off"
+                            iconUrl={clan.warLeague?.iconUrls?.small}
+                            label="War Losses"
+                            value={clan.warLosses || 0}
+                        />
                     </div>
                     {isDesktop ? (
                         <>
