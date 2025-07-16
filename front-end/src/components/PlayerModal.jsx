@@ -5,7 +5,7 @@ import Loading from './Loading.jsx';
 import RiskRing from './RiskRing.jsx';
 import DonationRing from './DonationRing.jsx';
 import PresenceDot from './PresenceDot.jsx';
-import LoyaltyRing from './LoyaltyRing.jsx';
+import LoyaltyBadge from './LoyaltyBadge.jsx';
 
 export default function PlayerModal({ tag, onClose }) {
   const [player, setPlayer] = useState(null);
@@ -15,6 +15,7 @@ export default function PlayerModal({ tag, onClose }) {
     const load = async () => {
       try {
         const data = await fetchJSONCached(`/player/${encodeURIComponent(tag)}`);
+        if (data.last_seen) console.log('player last_seen raw', data.last_seen);
         setPlayer(data);
       } catch (err) {
         setError(err.message);
@@ -43,27 +44,19 @@ export default function PlayerModal({ tag, onClose }) {
                 <span>{player.name}</span>
                 <span className="text-sm font-normal text-slate-500">{player.tag}</span>
               </h3>
-              <div className="space-y-2 mt-4">
-                <div className="flex justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-slate-500">Town Hall</p>
-                    <p className="text-xl font-semibold">{player.townHallLevel}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500">Trophies</p>
-                    <p className="text-xl font-semibold">{player.trophies}</p>
-                  </div>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-slate-500">Donations</p>
-                    <p className="text-xl font-semibold">{player.donations}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500">Received</p>
-                    <p className="text-xl font-semibold">{player.donationsReceived}</p>
-                  </div>
-                </div>
+              <div className="flex flex-wrap justify-center gap-2 mt-4">
+                <span className="px-3 py-1 rounded-full bg-slate-100 text-sm font-medium">
+                  TH{player.townHallLevel}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-slate-100 text-sm font-medium">
+                  {player.trophies}&#160;🏆
+                </span>
+                <span className="px-3 py-1 rounded-full bg-slate-100 text-sm font-medium">
+                  Don&nbsp;{player.donations}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-slate-100 text-sm font-medium">
+                  Rec&nbsp;{player.donationsReceived}
+                </span>
               </div>
 
                 <div className="mt-4">
@@ -86,7 +79,7 @@ export default function PlayerModal({ tag, onClose }) {
                       <p className="text-xs text-slate-500 mt-1">Seen</p>
                     </div>
                     <div className="flex flex-col items-center">
-                      <LoyaltyRing days={player.loyalty} size={64} />
+                      <LoyaltyBadge days={player.loyalty} size={64} />
                       <p className="text-xs text-slate-500 mt-1">In Clan</p>
                     </div>
                   </div>

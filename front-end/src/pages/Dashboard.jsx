@@ -108,14 +108,17 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                 `/clan/${encodeURIComponent(clanTag)}/members/loyalty`
             );
             const rmap = Object.fromEntries(riskData.map((r) => [r.player_tag, r]));
-            const merged = clanData.memberList.map((m) => ({
-                ...m,
-
-                risk_score: rmap[m.tag.replace('#', '')]?.risk_score || 0,
-                last_seen: rmap[m.tag.replace('#', '')]?.last_seen || null,
-                risk_breakdown: rmap[m.tag.replace('#', '')]?.risk_breakdown || [],
-                loyalty: loyaltyMap[m.tag.replace('#', '')] || 0,
-            }));
+            const merged = clanData.memberList.map((m) => {
+                const raw = rmap[m.tag.replace('#', '')]?.last_seen || null;
+                if (raw) console.log('risk last_seen raw', m.tag, raw);
+                return {
+                    ...m,
+                    risk_score: rmap[m.tag.replace('#', '')]?.risk_score || 0,
+                    last_seen: raw,
+                    risk_breakdown: rmap[m.tag.replace('#', '')]?.risk_breakdown || [],
+                    loyalty: loyaltyMap[m.tag.replace('#', '')] || 0,
+                };
+            });
             const top = [...merged]
                 .sort((a, b) => b.risk_score - a.risk_score)
                 .slice(0, 5);
