@@ -11,10 +11,14 @@ function Row({ index, style, data }) {
   const open = openIndex === index;
   const toggle = () => {
     const prev = openIndex;
-    setOpenIndex(open ? null : index);
+    const next = open ? null : index;
+    setOpenIndex(next);
     if (listRef.current) {
       const start = Math.min(index, prev ?? index);
       listRef.current.resetAfterIndex(start);
+      if (next !== null) {
+        requestAnimationFrame(() => listRef.current?.scrollToItem(next));
+      }
     }
   };
   return (
