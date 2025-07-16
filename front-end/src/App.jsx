@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';
 import { fetchJSON } from './lib/api.js';
+import { proxyImageUrl } from './lib/assets.js';
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanSearchModal = lazy(() => import('./components/ClanSearchModal.jsx'));
@@ -177,7 +178,7 @@ export default function App() {
       <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md">
         <h1 className="text-lg font-semibold flex items-center gap-2">
           {clanInfo?.badgeUrls && (
-            <img src={clanInfo.badgeUrls.small} alt="badge" className="w-6 h-6" />
+            <img src={proxyImageUrl(clanInfo.badgeUrls.small)} alt="badge" className="w-6 h-6" />
           )}
           <button onClick={() => setShowClanInfo(true)} className="hover:underline">
             {clanInfo?.name || 'Clan Dashboard'}

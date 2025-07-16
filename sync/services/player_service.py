@@ -1,4 +1,4 @@
-from asyncio import to_thread
+from coclib.utils import safe_to_thread
 from datetime import datetime, timedelta
 import logging
 import os
@@ -119,7 +119,7 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
         db.session.commit()
     ensure_membership(norm_tag, data.get("clan", {}).get("tag"), now)
 
-    data["last_seen"] = last_seen.isoformat()
+    data["last_seen"] = last_seen.isoformat().replace(" ", "T") + "Z"
 
     cache.set(cache_key, data, timeout=300)
     return data
@@ -147,7 +147,7 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
     norm_tag = normalize_tag(tag)
     cache_key = f"snapshot:player:{norm_tag}"
     if (cached := cache.get(cache_key)) is not None:
-        cached_ts = datetime.fromisoformat(cached["ts"])
+        cached_ts = datetime.fromisoformat(cached["ts"]).replace(tzinfo=None)
         if datetime.utcnow() - cached_ts <= STALE_AFTER:
             return cached
 
@@ -158,11 +158,11 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
             .first()
         )
 
-    row = await to_thread(_latest)
+    row = await safe_to_thread(_latest)
     needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
     if needs_refresh:
         await _trigger_sync(norm_tag)
-        row = await to_thread(_latest)
+        row = await safe_to_thread(_latest)
         if row is None:
             return None
 
@@ -175,9 +175,9 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         "donations": row.donations,
         "donationsReceived": row.donations_received,
         "warAttacksUsed": row.war_attacks_used,
-        "last_seen": (row.last_seen or row.ts).isoformat(),
+        "last_seen": (row.last_seen or row.ts).isoformat().replace(" ", "T") + "Z",
         "clanTag": row.clan_tag or None,
-        "ts": row.ts.isoformat(),
+        "ts": row.ts.isoformat().replace(" ", "T") + "Z",
         "leagueIcon": None,
     }
 

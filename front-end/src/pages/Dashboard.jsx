@@ -8,6 +8,12 @@ import DonationRing from '../components/DonationRing.jsx';
 import MemberAccordionList from '../components/MemberAccordionList.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
 import { getTownHallIcon } from '../lib/townhall.js';
+import { proxyImageUrl } from '../lib/assets.js';
+
+const winStreakIcon = new URL('../assets/win-streak.svg', import.meta.url).href;
+const levelIcon = new URL('../assets/level.svg', import.meta.url).href;
+const warWinsIcon = new URL('../assets/war-wins.svg', import.meta.url).href;
+const warLossesIcon = new URL('../assets/war-losses.svg', import.meta.url).href;
 
 const winStreakIcon = new URL('../assets/win-streak.svg', import.meta.url).href;
 const levelIcon = new URL('../assets/level.svg', import.meta.url).href;
@@ -26,7 +32,7 @@ function Stat({icon, iconUrl, label, value, onClick}) {
             {(iconUrl || icon) && (
                 <div className="p-3 rounded-full bg-slate-200">
                     {iconUrl ? (
-                        <img src={iconUrl} alt="icon" className="w-7 h-7" />
+                        <img src={proxyImageUrl(iconUrl)} alt="icon" className="w-7 h-7" />
                     ) : (
                         <i data-lucide={icon} className="w-7 h-7"/>
                     )}
@@ -273,7 +279,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             <td data-label="Player" className="px-4 py-2 font-medium">
                                                 <span className="flex items-center gap-2">
                                                     {m.leagueIcon && (
-                                                        <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
+                                                        <img src={proxyImageUrl(m.leagueIcon)} alt="league" className="w-5 h-5" />
                                                     )}
                                                     <img
                                                         src={getTownHallIcon(m.townHallLevel)}
@@ -357,7 +363,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                 <div className="flex flex-col">
                                                     <span className="flex items-center gap-2">
                                                         {m.leagueIcon && (
-                                                            <img src={m.leagueIcon} alt="league" className="w-5 h-5" />
+                                                            <img src={proxyImageUrl(m.leagueIcon)} alt="league" className="w-5 h-5" />
                                                         )}
                                                         <img
                                                             src={getTownHallIcon(m.townHallLevel)}
