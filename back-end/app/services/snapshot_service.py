@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, TypedDict
 
-from asyncio import to_thread
+from coclib.utils import safe_to_thread
 import httpx
 from sqlalchemy import func
 
@@ -150,7 +150,7 @@ def _latest_members_sync(clan_tag: str) -> list[dict]:
 async def _attach_members(clan_dict: dict) -> dict:
     """Return a copy of *clan_dict* with memberList included."""
     clan_tag = normalize_tag(clan_dict["tag"])
-    members = await to_thread(_latest_members_sync, clan_tag)
+    members = await safe_to_thread(_latest_members_sync, clan_tag)
     enriched = clan_dict.copy()
     enriched["memberList"] = members
     enriched["members"] = len(members)  # keep count accurate
