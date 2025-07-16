@@ -1,4 +1,4 @@
-from asyncio import to_thread
+from coclib.utils import safe_to_thread
 from datetime import datetime, timedelta
 import logging
 import os
@@ -63,11 +63,11 @@ async def current_war_snapshot(clan_tag: str) -> "dict | None":
     cache_key = f"snapshot:war:{clan_tag}"
     if (cached := cache.get(cache_key)) is not None:
         return cached
-    row = await to_thread(_last_war_sync, clan_tag)
+    row = await safe_to_thread(_last_war_sync, clan_tag)
     needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
     if needs_refresh:
         await _trigger_sync(clan_tag)
-        row = await to_thread(_last_war_sync, clan_tag)
+        row = await safe_to_thread(_last_war_sync, clan_tag)
         if row is None:
             return None
     data = row.data
