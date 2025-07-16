@@ -41,12 +41,16 @@ const CACHE_TTL = 60 * 1000; // 1 minute
 
 async function requestWithETag(path, options = {}, etag) {
     const token = localStorage.getItem('token');
+    const cleanOptions = { ...options };
+    if (!cleanOptions.method || cleanOptions.method.toUpperCase() === 'GET') {
+        delete cleanOptions.body;
+    }
     const headers = {
-        ...(options.headers || {}),
+        ...(cleanOptions.headers || {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(etag ? { 'If-None-Match': etag } : {}),
     };
-    const res = await fetch(`${API_URL}${API_PREFIX}${path}`, { ...options, headers });
+    const res = await fetch(`${API_URL}${API_PREFIX}${path}`, { ...cleanOptions, headers });
     if (res.status === 401) {
         localStorage.removeItem('token');
     }
