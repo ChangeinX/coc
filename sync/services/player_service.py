@@ -158,6 +158,17 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
             .first()
         )
 
+    def _latest_with_war() -> PlayerSnapshot | None:
+        return (
+            PlayerSnapshot.query
+            .filter(
+                PlayerSnapshot.player_tag == norm_tag,
+                PlayerSnapshot.war_attacks_used.isnot(None),
+            )
+            .order_by(PlayerSnapshot.ts.desc())
+            .first()
+        )
+
     row = await safe_to_thread(_latest)
     needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
     if needs_refresh:
@@ -165,6 +176,12 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         row = await safe_to_thread(_latest)
         if row is None:
             return None
+
+    war_used = row.war_attacks_used
+    if war_used is None:
+        older = await safe_to_thread(_latest_with_war)
+        if older is not None and (row.ts - older.ts) <= timedelta(days=7):
+            war_used = older.war_attacks_used
 
     data: PlayerDict = {
         "tag": row.player_tag,
@@ -174,7 +191,7 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         "trophies": row.trophies,
         "donations": row.donations,
         "donationsReceived": row.donations_received,
-        "warAttacksUsed": row.war_attacks_used,
+        "warAttacksUsed": war_used,
         "last_seen": (row.last_seen or row.ts).isoformat().replace(" ", "T") + "Z",
         "clanTag": row.clan_tag or None,
         "ts": row.ts.isoformat().replace(" ", "T") + "Z",

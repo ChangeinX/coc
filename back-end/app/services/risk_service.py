@@ -40,11 +40,11 @@ def _clamp01(x: float) -> float:
 
 
 def _latest_war_snapshot(history: List[PlayerSnapshot]) -> Optional[PlayerSnapshot]:
-    """Newest snapshot that still contains war info (player was in the roster)."""
-    for snap in reversed(history):          # newest → oldest
-        if snap.war_attacks_used is not None:
-            return snap
-    return None
+    """Snapshot with the most war attacks used (latest if tied)."""
+    war_snaps = [s for s in history if s.war_attacks_used is not None]
+    if not war_snaps:
+        return None
+    return max(war_snaps, key=lambda s: (s.war_attacks_used, s.ts))
 
 def _infer_attack_cap(history: List[PlayerSnapshot]) -> int:
     """Best-guess the max attacks available in the observed war."""
@@ -53,7 +53,7 @@ def _infer_attack_cap(history: List[PlayerSnapshot]) -> int:
         for snap in history
         if snap.war_attacks_used is not None
     )
-    return cap or _WAR_ATTACKS_TOTAL
+    return max(cap, _WAR_ATTACKS_TOTAL)
 
 
 def _clan_has_war(history_map: dict[str, list]) -> bool:

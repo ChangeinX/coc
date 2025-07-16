@@ -38,6 +38,6 @@ def test_latest_war_snapshot_and_cap():
         Snap(now, war_attacks_used=0),
     ]
     war_snap = risk_service._latest_war_snapshot(history)
-    assert war_snap is history[-1]
+    assert war_snap is history[1]
     cap = risk_service._infer_attack_cap(history)
-    assert cap in {1, 2}
+    assert cap == 2
