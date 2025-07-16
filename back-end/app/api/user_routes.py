@@ -2,9 +2,23 @@ from flask import Blueprint, jsonify, request, g, abort
 from coclib.extensions import db
 from coclib.utils import normalize_tag
 from coclib.models import UserProfile
+import os
+import httpx
 from . import API_PREFIX
 
+SYNC_BASE = os.getenv("SYNC_BASE", "http://localhost:8000/sync")
+
 bp = Blueprint("user", __name__, url_prefix=f"{API_PREFIX}/user")
+
+
+async def _verify_player_token(tag: str, token: str) -> dict:
+    if not SYNC_BASE:
+        raise RuntimeError("SYNC_BASE not configured")
+    url = f"{SYNC_BASE.rstrip('/')}/verify/{tag}"
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.post(url, json={"token": token})
+    resp.raise_for_status()
+    return resp.json()
 
 
 @bp.get("/me")
@@ -14,6 +28,7 @@ def me():
             "email": g.user.email,
             "name": g.user.name,
             "player_tag": g.user.player_tag,
+            "verified": g.user.is_verified,
         }
     )
 
@@ -23,6 +38,8 @@ def set_player_tag():
     data = request.get_json(silent=True) or {}
     tag = data.get("player_tag", "").strip()
     if not tag:
+        abort(400)
+    if g.user.is_verified:
         abort(400)
     g.user.player_tag = normalize_tag(tag)
     db.session.add(g.user)
@@ -44,6 +61,7 @@ def get_profile():
             "risk_weight_don_deficit": prof.risk_weight_don_deficit,
             "risk_weight_don_drop": prof.risk_weight_don_drop,
             "is_leader": prof.is_leader,
+            "verified": g.user.is_verified,
         }
     )
 
@@ -60,3 +78,21 @@ def update_profile():
     db.session.add(prof)
     db.session.commit()
     return jsonify({"status": "ok"})
+
+
+@bp.post("/verify")
+async def verify_player():
+    data = request.get_json(silent=True) or {}
+    token = data.get("token", "").strip()
+    if not token or not g.user.player_tag:
+        abort(400)
+    if g.user.is_verified:
+        abort(400)
+    result = await _verify_player_token(g.user.player_tag, token)
+    if result.get("status") != "ok":
+        abort(400)
+    g.user.player_tag = normalize_tag(result.get("tag", g.user.player_tag))
+    g.user.is_verified = True
+    db.session.add(g.user)
+    db.session.commit()
+    return jsonify({"status": "ok", "player_tag": g.user.player_tag})

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request, abort
 
 from sync.services import clan_service, player_service, war_service
 
@@ -21,4 +21,14 @@ async def fetch_clan(tag: str):
 async def fetch_war(tag: str):
     data = await war_service.current_war(tag.upper())
     return jsonify(data)
+
+
+@bp.post("/verify/<string:tag>")
+async def verify(tag: str):
+    data = request.get_json(silent=True) or {}
+    token = data.get("token", "")
+    if not token:
+        abort(400)
+    result = await player_service.verify_token(tag.upper(), token)
+    return jsonify(result)
 
