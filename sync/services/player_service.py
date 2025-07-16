@@ -119,7 +119,7 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
         db.session.commit()
     ensure_membership(norm_tag, data.get("clan", {}).get("tag"), now)
 
-    data["last_seen"] = last_seen.isoformat()
+    data["last_seen"] = last_seen.isoformat().replace(" ", "T") + "Z"
 
     cache.set(cache_key, data, timeout=300)
     return data
@@ -175,9 +175,9 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         "donations": row.donations,
         "donationsReceived": row.donations_received,
         "warAttacksUsed": row.war_attacks_used,
-        "last_seen": (row.last_seen or row.ts).isoformat(),
+        "last_seen": (row.last_seen or row.ts).isoformat().replace(" ", "T") + "Z",
         "clanTag": row.clan_tag or None,
-        "ts": row.ts.isoformat(),
+        "ts": row.ts.isoformat().replace(" ", "T") + "Z",
         "leagueIcon": None,
     }
 
