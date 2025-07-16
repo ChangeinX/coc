@@ -293,7 +293,11 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             <td data-label="Days in Clan" className="px-4 py-2 text-center">{m.loyalty}</td>
                                             <td data-label="Score" className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
-                                                    <RiskRing score={m.risk_score} size={40} />
+                                                    {refreshing && !loading ? (
+                                                        <Loading size={40} />
+                                                    ) : (
+                                                        <RiskRing score={m.risk_score} size={40} />
+                                                    )}
                                                     {m.risk_breakdown && m.risk_breakdown.length > 0 && (
                                                         <ul className="list-disc list-inside text-xs">
                                                             {m.risk_breakdown.map((r, i) => (
@@ -391,7 +395,11 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             </td>
                                             <td data-label="Days in Clan" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
                                             <td data-label="Risk" className="px-3 py-2 text-center">
-                                                <RiskRing score={m.risk_score} size={36} />
+                                                {refreshing && !loading ? (
+                                                    <Loading size={36} />
+                                                ) : (
+                                                    <RiskRing score={m.risk_score} size={36} />
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
