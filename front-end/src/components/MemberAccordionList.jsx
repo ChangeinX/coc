@@ -1,13 +1,14 @@
 import React, { useRef } from 'react';
 import { VariableSizeList as List } from 'react-window';
 import RiskRing from './RiskRing.jsx';
+import Loading from './Loading.jsx';
 import DonationRing from './DonationRing.jsx';
 import { timeAgo } from '../lib/time.js';
 import { getTownHallIcon } from '../lib/townhall.js';
 import { proxyImageUrl } from '../lib/assets.js';
 
 function Row({ index, style, data }) {
-  const { members, openIndex, setOpenIndex, getSize, listRef } = data;
+  const { members, openIndex, setOpenIndex, getSize, listRef, refreshing } = data;
   const m = members[index];
   const open = openIndex === index;
   const toggle = () => {
@@ -35,7 +36,10 @@ function Row({ index, style, data }) {
               alt={`TH${m.townHallLevel}`}
               className="w-5 h-5"
             />
-            <span className="font-medium">{m.name}</span>
+            <span className="font-medium">
+              {m.name}
+              {refreshing && <Loading size={16} className="ml-2 inline-block" />}
+            </span>
             {m.role && (
               <span className="text-xs bg-slate-200 rounded px-1">{m.role}</span>
             )}
@@ -75,7 +79,7 @@ function Row({ index, style, data }) {
   );
 }
 
-export default function MemberAccordionList({ members, height }) {
+export default function MemberAccordionList({ members, height, refreshing = false }) {
   const listRef = useRef();
   const [openIndex, setOpenIndex] = React.useState(null);
   const getSize = (index) => {
@@ -92,7 +96,7 @@ export default function MemberAccordionList({ members, height }) {
       itemCount={members.length}
       itemSize={getSize}
       width="100%"
-      itemData={{ members, openIndex, setOpenIndex, getSize, listRef }}
+      itemData={{ members, openIndex, setOpenIndex, getSize, listRef, refreshing }}
       ref={listRef}
     >
       {Row}
