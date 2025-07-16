@@ -9,6 +9,11 @@ import MemberAccordionList from '../components/MemberAccordionList.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
 import { getTownHallIcon } from '../lib/townhall.js';
 
+const winStreakIcon = new URL('../assets/win-streak.svg', import.meta.url).href;
+const levelIcon = new URL('../assets/level.svg', import.meta.url).href;
+const warWinsIcon = new URL('../assets/war-wins.svg', import.meta.url).href;
+const warLossesIcon = new URL('../assets/war-losses.svg', import.meta.url).href;
+
 const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
 
 
@@ -217,8 +222,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                 <>
                     <div className="flex justify-center mt-6">
                         <Stat
-                            icon="flame"
-                            iconUrl={clan.badgeUrls?.small}
+                            iconUrl={winStreakIcon}
                             label="Win Streak"
                             value={clan.warWinStreak || 0}
                         />
@@ -231,20 +235,17 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                             value={members.length}
                         />
                         <Stat
-                            icon="shield-alert"
-                            iconUrl={clan.badgeUrls?.small}
+                            iconUrl={levelIcon}
                             label="Level"
                             value={clan.clanLevel}
                         />
                         <Stat
-                            icon="sword"
-                            iconUrl={clan.warLeague?.iconUrls?.small}
+                            iconUrl={warWinsIcon}
                             label="War Wins"
                             value={clan.warWins || 0}
                         />
                         <Stat
-                            icon="shield-off"
-                            iconUrl={clan.warLeague?.iconUrls?.small}
+                            iconUrl={warLossesIcon}
                             label="War Losses"
                             value={clan.warLosses || 0}
                         />
