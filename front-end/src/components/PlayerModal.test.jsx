@@ -35,4 +35,13 @@ describe('PlayerModal', () => {
     expect(screen.queryByText(/Don\u00a0/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Rec\u00a0/)).not.toBeInTheDocument();
   });
+
+  it('keeps badges on a single row with horizontal scrolling', async () => {
+    fetchJSONCached.mockResolvedValue(samplePlayer);
+    render(<PlayerModal tag="AAA" onClose={() => {}} />);
+    await waitFor(() => expect(fetchJSONCached).toHaveBeenCalled());
+    const row = screen.getByText('TH12').parentElement.parentElement;
+    expect(row).toHaveClass('flex-nowrap');
+    expect(row).toHaveClass('overflow-x-auto');
+  });
 });
