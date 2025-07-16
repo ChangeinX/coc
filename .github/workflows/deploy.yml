@@ -78,6 +78,18 @@ jobs:
           new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
           aws ecs update-service --cluster $CLUSTER --service $APP_SERVICE --task-definition "$new_def"
 
+      - name: Prep Front End for S3
+        if: steps.changes.outputs.app_any_changed == 'true'
+        run: |
+          npm ci --prefix front-end
+          VITE_API_URL=$VITE_API_URL \
+          VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
+          npm run --prefix front-end build
+
+      - name: Sync front-end to S3
+        if: steps.changes.outputs.app_any_changed == 'true'
+        run: aws s3 sync front-end/dist s3://$FRONTEND_BUCKET --delete
+
       - name: Build and push worker image
         if: steps.changes.outputs.worker_any_changed == 'true'
         run: |
