@@ -246,7 +246,7 @@ export default function App() {
           />
         )}
         {!loadingUser && playerTag && (
-          <Suspense fallback={<Loading className="h-screen" />}>
+          <Suspense fallback={<Loading className="py-20" />}>
             <Dashboard defaultTag={clanTag} showSearchForm={false} onClanLoaded={setClanInfo} />
           </Suspense>
         )}

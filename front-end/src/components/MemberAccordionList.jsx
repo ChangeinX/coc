@@ -48,7 +48,11 @@ function Row({ index, style, data }) {
             {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
           </p>
         </div>
-        {!open && <RiskRing score={m.risk_score} size={32} />}
+        {!open && (refreshing ? (
+          <Loading size={32} />
+        ) : (
+          <RiskRing score={m.risk_score} size={32} />
+        ))}
       </div>
       {open && (
         <div className="text-sm space-y-1 pb-2">
@@ -62,7 +66,11 @@ function Row({ index, style, data }) {
           </div>
           <div className="flex justify-between items-center">
             <span>Days in Clan: {m.loyalty}</span>
-            <RiskRing score={m.risk_score} size={32} />
+            {refreshing ? (
+              <Loading size={32} />
+            ) : (
+              <RiskRing score={m.risk_score} size={32} />
+            )}
           </div>
           {m.risk_breakdown && m.risk_breakdown.length > 0 && (
             <ul className="list-disc list-inside text-xs pt-1">
