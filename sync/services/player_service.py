@@ -147,7 +147,7 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
     norm_tag = normalize_tag(tag)
     cache_key = f"snapshot:player:{norm_tag}"
     if (cached := cache.get(cache_key)) is not None:
-        cached_ts = datetime.fromisoformat(cached["ts"])
+        cached_ts = datetime.fromisoformat(cached["ts"]).replace(tzinfo=None)
         if datetime.utcnow() - cached_ts <= STALE_AFTER:
             return cached
 
