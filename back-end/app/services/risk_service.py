@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import logging
 from typing import List, Optional, Tuple, Dict, Any
 
 from sqlalchemy import select, desc
@@ -18,6 +19,8 @@ _WAR_ATTACKS_TOTAL = 2
 _DEFICIT_CEIL = 0.50
 _DROP_CEIL = 0.30
 _CLAN_WAR_WINDOW = 42
+
+logger = logging.getLogger(__name__)
 
 
 # Idle buckets → percentage contribution on the idle axis
@@ -226,12 +229,14 @@ async def clan_at_risk(clan_tag: str) -> list[dict]:
     for p in players:
         hist = await get_history(p.player_tag, 30)
         score_val, last_seen_ts, breakdown = score_breakdown(hist)
+        iso_val = last_seen_ts.isoformat()
+        logger.debug("last_seen raw for %s: %s", p.player_tag, iso_val)
         results.append(
             {
                 "player_tag": p.player_tag,
                 "name": p.name,
                 "risk_score": score_val,
-                "last_seen": last_seen_ts.date().isoformat(),
+                "last_seen": iso_val,
                 "risk_breakdown": breakdown,
             }
         )
