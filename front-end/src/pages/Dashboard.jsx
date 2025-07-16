@@ -407,7 +407,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                 onChange={setActiveTab}
                             />
                             {activeTab === 'top' && (
-                                <div className="flex overflow-x-auto gap-3 pb-2 scroller">
+                                <div className="flex overflow-x-auto gap-3 px-4 py-3 scroller">
                                     {topRisk.map((m) => (
                                         <ProfileCard
                                             key={m.tag}
