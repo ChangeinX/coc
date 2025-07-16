@@ -43,6 +43,7 @@ export default function App() {
   });
   const [initials, setInitials] = useState(() => (token ? getInitials(token) : ''));
   const [playerTag, setPlayerTag] = useState(null);
+  const [homeClanTag, setHomeClanTag] = useState(null);
   const [clanTag, setClanTag] = useState(null);
   const [clanInfo, setClanInfo] = useState(null);
   const [showClanInfo, setShowClanInfo] = useState(false);
@@ -85,7 +86,10 @@ export default function App() {
         setPlayerTag(me.player_tag);
         if (me.player_tag) {
           const player = await fetchJSON(`/player/${encodeURIComponent(me.player_tag)}`);
-          if (player.clanTag) setClanTag(player.clanTag);
+          if (player.clanTag) {
+            setClanTag(player.clanTag);
+            setHomeClanTag(player.clanTag);
+          }
         }
       } catch {
         setToken(null);
@@ -100,7 +104,10 @@ export default function App() {
       if (!token || !playerTag) return;
       try {
         const player = await fetchJSON(`/player/${encodeURIComponent(playerTag)}`);
-        if (player.clanTag) setClanTag(player.clanTag);
+        if (player.clanTag) {
+          setClanTag(player.clanTag);
+          if (!homeClanTag) setHomeClanTag(player.clanTag);
+        }
       } catch {
         /* ignore */
       }
@@ -175,6 +182,14 @@ export default function App() {
           </button>
         </h1>
         <div className="flex items-center gap-3">
+          {homeClanTag && clanTag !== homeClanTag && (
+            <button
+              className="p-2 rounded hover:bg-slate-700"
+              onClick={() => setClanTag(homeClanTag)}
+            >
+              <i data-lucide="arrow-left" className="w-5 h-5" />
+            </button>
+          )}
           <button
             className="p-2 rounded hover:bg-slate-700"
             onClick={() => setShowSearch(true)}
@@ -226,7 +241,13 @@ export default function App() {
       </main>
       {showSearch && (
         <Suspense fallback={<Loading className="h-screen" />}>
-          <ClanSearchModal onClose={() => setShowSearch(false)} onClanLoaded={setClanInfo} />
+          <ClanSearchModal
+            onClose={() => setShowSearch(false)}
+            onClanLoaded={(c) => {
+              setClanTag(c.tag);
+              setShowSearch(false);
+            }}
+          />
         </Suspense>
       )}
       {showClanInfo && (
