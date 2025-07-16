@@ -74,6 +74,11 @@ jobs:
         if: steps.changes.outputs.app_any_changed == 'true'
         run: aws s3 sync front-end/dist s3://$FRONTEND_BUCKET --delete
 
+      - name: Invalidate CloudFront cache
+        if: steps.changes.outputs.app_any_changed == 'true'
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.DISTRIBUTION_ID }} --paths "/*"
+
       - name: Build and push worker image
         if: steps.changes.outputs.worker_any_changed == 'true'
         run: |
