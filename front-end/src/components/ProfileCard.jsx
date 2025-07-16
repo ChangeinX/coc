@@ -1,6 +1,5 @@
 import React from 'react';
 import RiskRing from './RiskRing.jsx';
-import DonationRing from './DonationRing.jsx';
 import { timeAgo } from '../lib/time.js';
 import { getTownHallIcon } from '../lib/townhall.js';
 
@@ -25,13 +24,6 @@ export default function ProfileCard({ member, onClick }) {
       <RiskRing score={member.risk_score} size={48} />
       <div className="mt-2 text-center space-y-1 w-full">
         <p>TH{member.townHallLevel}</p>
-        <div className="flex justify-end">
-          <DonationRing
-            donations={member.donations}
-            received={member.donationsReceived}
-            size={32}
-          />
-        </div>
         <p className="text-xs text-slate-500">
           {member.last_seen ? timeAgo(member.last_seen) : '\u2014'}
         </p>
