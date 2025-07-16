@@ -15,10 +15,11 @@ jobs:
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+      APP_REPOSITORY: ${{ secrets.APP_REPOSITORY }}
       WORKER_REPOSITORY: ${{ secrets.WORKER_REPOSITORY }}
       STATIC_REPOSITORY: ${{ secrets.STATIC_REPOSITORY }}
-      FRONTEND_BUCKET: ${{ secrets.FRONTEND_BUCKET }}
       CLUSTER: ${{ secrets.CLUSTER }}
+      APP_SERVICE: ${{ secrets.APP_SERVICE }}
       WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
       STATIC_SERVICE: ${{ secrets.STATIC_SERVICE }}
       VITE_API_URL: ${{ secrets.VITE_API_URL }}
@@ -60,7 +61,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build front-end
+      - name: Build and push app image
         if: steps.changes.outputs.app_any_changed == 'true'
         run: |
           docker buildx build \
@@ -76,10 +77,6 @@ jobs:
           jq --arg IMAGE "$ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
           new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
           aws ecs update-service --cluster $CLUSTER --service $APP_SERVICE --task-definition "$new_def"
-
-      - name: Sync front-end to S3
-        if: steps.changes.outputs.app_any_changed == 'true'
-        run: aws s3 sync front-end/dist s3://$FRONTEND_BUCKET --delete
 
       - name: Build and push worker image
         if: steps.changes.outputs.worker_any_changed == 'true'
