@@ -22,10 +22,7 @@ export default function ProfileCard({ member, onClick, refreshing = false }) {
           className="w-6 h-6"
         />
       </div>
-      <p className="font-medium text-center mb-1">
-        {member.name}
-        {refreshing && <Loading size={16} className="ml-2 inline-block" />}
-      </p>
+      <p className="font-medium text-center mb-1">{member.name}</p>
       {refreshing ? (
         <Loading size={48} />
       ) : (
