@@ -37,6 +37,7 @@ export async function fetchJSON(path, options = {}) {
 }
 
 const CACHE_PREFIX = 'cache:';
+const CACHE_TTL = 60 * 1000; // 1 minute
 
 export async function fetchJSONCached(path, options = {}) {
     const key = `${CACHE_PREFIX}${path}`;
@@ -44,26 +45,31 @@ export async function fetchJSONCached(path, options = {}) {
     if (cached) {
         try {
             const parsed = JSON.parse(cached);
-            // Refresh cache in background
-            fetchJSON(path, options)
-                .then((data) => {
-                    try {
-                        localStorage.setItem(key, JSON.stringify(data));
-                    } catch {
-                        /* ignore */
-                    }
-                })
-                .catch(() => {});
-            return parsed;
+            const hasMeta = Object.prototype.hasOwnProperty.call(parsed, 'ts');
+            const ts = hasMeta ? parsed.ts : 0;
+            const data = hasMeta ? parsed.data : parsed;
+            const age = Date.now() - ts;
+            if (hasMeta && age < CACHE_TTL) {
+                fetchJSON(path, options)
+                    .then((fresh) => {
+                        try {
+                            localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: fresh }));
+                        } catch {
+                            /* ignore */
+                        }
+                    })
+                    .catch(() => {});
+                return data;
+            }
         } catch {
             localStorage.removeItem(key);
         }
     }
-    const data = await fetchJSON(path, options);
+    const fresh = await fetchJSON(path, options);
     try {
-        localStorage.setItem(key, JSON.stringify(data));
+        localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: fresh }));
     } catch {
         /* ignore */
     }
-    return data;
+    return fresh;
 }
