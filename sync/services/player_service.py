@@ -32,6 +32,39 @@ async def _fetch_player(tag: str) -> dict:
     return await get_client().player(tag)
 
 
+def _resolve_last_seen(
+    *,
+    data: dict,
+    prev_snapshot: PlayerSnapshot | None,
+    attacks_used: int | None,
+    now: datetime,
+) -> datetime:
+    """Compute the player's last seen timestamp."""
+
+    if prev_snapshot is None:
+        changed = True
+        prev_seen = None
+    else:
+        prev_seen = prev_snapshot.last_seen
+        changed = (
+            data.get("trophies") != prev_snapshot.trophies
+            or data.get("donations", 0) != prev_snapshot.donations
+            or data.get("donationsReceived", 0) != prev_snapshot.donations_received
+            or attacks_used != prev_snapshot.war_attacks_used
+        )
+
+    last_seen = prev_seen
+
+    if changed:
+        if last_seen is None or now > last_seen:
+            last_seen = now
+
+    if last_seen is None:
+        last_seen = now
+
+    return last_seen
+
+
 async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
     tag = tag.upper()
     cache_key = f"player:{tag}"
@@ -49,31 +82,16 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
         .first()
     )
 
-    last_seen_api: datetime | None = None
-    if (ls := data.get("lastSeen")):
-        try:
-            last_seen_api = datetime.strptime(ls, "%Y%m%dT%H%M%S.%fZ")
-        except ValueError:
-            logger.warning("Invalid lastSeen %s for %s", ls, tag)
-
-    if prev_snapshot:
-        prev_seen = prev_snapshot.last_seen
-        if last_seen_api is None:
-            last_seen = prev_seen
-        else:
-            last_seen = (
-                max(last_seen_api, prev_seen)
-                if prev_seen is not None
-                else last_seen_api
-            )
-    else:
-        last_seen = last_seen_api or now
-
-    if last_seen is None:
-        last_seen = now
 
     attacks_used_val = (
         war_attacks_used if war_attacks_used is not None else data.get("warAttacksUsed")
+    )
+
+    last_seen = _resolve_last_seen(
+        data=data,
+        prev_snapshot=prev_snapshot,
+        attacks_used=attacks_used_val,
+        now=now,
     )
 
     last = prev_snapshot
