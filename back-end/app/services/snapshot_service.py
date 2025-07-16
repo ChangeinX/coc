@@ -161,7 +161,7 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
     tag = normalize_tag(tag)
     cache_key = f"snapshot:clan:{tag}"
     if (cached := cache.get(cache_key)) is not None:
-        cached_ts = datetime.fromisoformat(cached["ts"])
+        cached_ts = datetime.fromisoformat(cached["ts"]).replace(tzinfo=None)
         if datetime.utcnow() - cached_ts <= STALE_AFTER:
             return cached
 
@@ -202,7 +202,7 @@ async def get_player(tag: str) -> Optional[PlayerDict]:
     tag = normalize_tag(tag)
     cache_key = f"snapshot:player:{tag}"
     if (cached := cache.get(cache_key)) is not None:
-        cached_ts = datetime.fromisoformat(cached["ts"])
+        cached_ts = datetime.fromisoformat(cached["ts"]).replace(tzinfo=None)
         if datetime.utcnow() - cached_ts <= STALE_AFTER:
             return cached  # pragma: no cover
 
