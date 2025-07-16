@@ -63,10 +63,6 @@ jobs:
       - name: Build front-end
         if: steps.changes.outputs.app_any_changed == 'true'
         run: |
-          npm ci --prefix front-end
-          VITE_API_URL=$VITE_API_URL \
-          VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
-          npm run --prefix front-end build
           docker buildx build \
             --platform linux/arm64 \
             -f front-end/Dockerfile \
