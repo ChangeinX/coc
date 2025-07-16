@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from '../lib/api.js';
-import { timeAgo } from '../lib/time.js';
+
 import Loading from './Loading.jsx';
 import RiskRing from './RiskRing.jsx';
 import DonationRing from './DonationRing.jsx';
@@ -81,11 +81,8 @@ export default function PlayerModal({ tag, onClose }) {
                       <p className="text-xs text-slate-500 mt-1">Donations</p>
                     </div>
                     <div className="flex flex-col items-center">
-                      <PresenceDot lastSeen={player.last_seen} />
+                      <PresenceDot lastSeen={player.last_seen} size={64} />
                       <p className="text-xs text-slate-500 mt-1">Seen</p>
-                      <p className="text-xs text-slate-500">
-                        {player.last_seen ? timeAgo(player.last_seen) : '—'}
-                      </p>
                     </div>
                   </div>
                 </div>
