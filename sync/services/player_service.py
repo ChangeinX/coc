@@ -1,4 +1,4 @@
-from asyncio import to_thread
+from coclib.utils import safe_to_thread
 from datetime import datetime, timedelta
 import logging
 import os
@@ -158,11 +158,11 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
             .first()
         )
 
-    row = await to_thread(_latest)
+    row = await safe_to_thread(_latest)
     needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
     if needs_refresh:
         await _trigger_sync(norm_tag)
-        row = await to_thread(_latest)
+        row = await safe_to_thread(_latest)
         if row is None:
             return None
 
