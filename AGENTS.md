@@ -42,3 +42,29 @@ Any lint errors or build failures should fail the PR.
 - Keep shared logic in `coclib` rather than duplicating it in other projects.
 - Dockerfiles expect Python 3.11 and Node 18+.
 - Follow Ruff's default style rules for Python code.
+
+## Issue creation script
+
+Use `create_issues.py` to open or view GitHub issues. The script reads the
+`CODEX_ISSUES_COC` token and defaults to the `ChangeinX/coc` repository.
+Commands include `create`, `list`, and `show`. For creation you must select the
+`bug` or `feature` template and supply the relevant fields:
+
+```bash
+# Bug report
+python create_issues.py create bug --title "Spinner covers page" \
+    --summary "Full-page spinner" \
+    --steps "1. Open page" \
+    --expected "Only modals should spin"
+
+# Feature request
+python create_issues.py create feature --title "Dark mode" \
+    --problem "Hard to read" \
+    --solution "Provide toggle"
+
+# List and view issues
+python create_issues.py list --limit 5
+python create_issues.py show 12
+```
+
+Specify `--repo <owner/repo>` to target a different repository.
