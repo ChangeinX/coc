@@ -240,7 +240,7 @@ export default function App() {
       </header>
       <main className="px-2 pt-0 pb-2 sm:px-4 sm:pt-0 sm:pb-4">
         {loadingUser && <Loading className="h-[calc(100vh-4rem)]" />}
-        {!loadingUser && !verified && (
+        {!loadingUser && !playerTag && (
           <PlayerTagForm
             onSaved={(tag) => {
               setPlayerTag(tag);
