@@ -118,7 +118,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             const rmap = Object.fromEntries(riskData.map((r) => [r.player_tag, r]));
             const merged = clanData.memberList.map((m) => {
                 const raw = rmap[m.tag.replace('#', '')]?.last_seen || null;
-                if (raw) console.log('risk last_seen raw', m.tag, raw);
                 return {
                     ...m,
                     risk_score: rmap[m.tag.replace('#', '')]?.risk_score || 0,
