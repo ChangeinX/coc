@@ -188,3 +188,5 @@ fabric.properties
 .idea
 /db/.env
 !front-end/src/lib/
+
+.DS_Store
