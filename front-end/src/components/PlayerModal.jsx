@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from '../lib/api.js';
 import { timeAgo } from '../lib/time.js';
 import Loading from './Loading.jsx';
-import RiskBadge from './RiskBadge.jsx';
 import RiskRing from './RiskRing.jsx';
 import DonationRing from './DonationRing.jsx';
+import PresenceDot from './PresenceDot.jsx';
 
 export default function PlayerModal({ tag, onClose }) {
   const [player, setPlayer] = useState(null);
@@ -65,36 +65,42 @@ export default function PlayerModal({ tag, onClose }) {
                 </div>
               </div>
 
-              <div className="mt-4">
-                <p className="font-semibold mb-2">Member Health</p>
-                <div className="flex justify-center gap-6">
-                  <RiskRing score={player.risk_score} size={64} />
-                  <DonationRing
-                    donations={player.donations}
-                    received={player.donationsReceived}
-                    size={64}
-                  />
-                </div>
-              </div>
-
-              <p className="mt-4">
-                <span className="font-semibold">Last seen:</span>{' '}
-                {player.last_seen ? timeAgo(player.last_seen) : '—'}
-              </p>
-              {player.risk_breakdown && player.risk_breakdown.length > 0 && (
                 <div className="mt-4">
-                  <p className="font-semibold flex items-center gap-2">
-                    Risk Score: <RiskBadge score={player.risk_score} />
-                  </p>
-                  <ul className="list-disc list-inside text-sm mt-1">
-                    {player.risk_breakdown.map((r, i) => (
-                      <li key={i}>
-                        {r.points} pts – {r.reason}
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="font-semibold mb-2">Member Health</p>
+                  <div className="flex justify-center gap-6">
+                    <div className="flex flex-col items-center">
+                      <RiskRing score={player.risk_score} size={64} />
+                      <p className="text-xs text-slate-500 mt-1">Risk</p>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <DonationRing
+                        donations={player.donations}
+                        received={player.donationsReceived}
+                        size={64}
+                      />
+                      <p className="text-xs text-slate-500 mt-1">Donations</p>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <PresenceDot lastSeen={player.last_seen} />
+                      <p className="text-xs text-slate-500 mt-1">Seen</p>
+                      <p className="text-xs text-slate-500">
+                        {player.last_seen ? timeAgo(player.last_seen) : '—'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              )}
+
+                {player.risk_breakdown && player.risk_breakdown.length > 0 && (
+                  <div className="mt-4">
+                    <ul className="list-disc list-inside text-sm mt-1">
+                      {player.risk_breakdown.map((r, i) => (
+                        <li key={i}>
+                          {r.points} pts – {r.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
             </>
           )}
         </div>
