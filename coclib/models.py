@@ -103,3 +103,17 @@ class User(db.Model):
     name = db.Column(db.String(255))
     player_tag = db.Column(db.String(15), index=True)
 
+
+class UserProfile(db.Model):
+    __tablename__ = "user_profiles"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), unique=True, nullable=False)
+    risk_weight_war = db.Column(db.Float, nullable=False, default=0.40)
+    risk_weight_idle = db.Column(db.Float, nullable=False, default=0.35)
+    risk_weight_don_deficit = db.Column(db.Float, nullable=False, default=0.15)
+    risk_weight_don_drop = db.Column(db.Float, nullable=False, default=0.10)
+    is_leader = db.Column(db.Boolean, nullable=False, default=False)
+
+    user = db.relationship("User", backref=db.backref("profile", uselist=False))
+
