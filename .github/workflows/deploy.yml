@@ -63,6 +63,10 @@ jobs:
       - name: Build front-end
         if: steps.changes.outputs.app_any_changed == 'true'
         run: |
+          npm ci --prefix front-end
+          VITE_API_URL=$VITE_API_URL \
+          VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
+          npm run --prefix front-end build
           docker buildx build \
             --platform linux/arm64 \
             -f front-end/Dockerfile \
@@ -76,10 +80,6 @@ jobs:
           jq --arg IMAGE "$ECR_REGISTRY/$APP_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
           new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
           aws ecs update-service --cluster $CLUSTER --service $APP_SERVICE --task-definition "$new_def"
-          npm ci --prefix front-end
-          VITE_API_URL=$VITE_API_URL \
-          VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
-          npm run --prefix front-end build
 
       - name: Sync front-end to S3
         if: steps.changes.outputs.app_any_changed == 'true'
