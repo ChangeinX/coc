@@ -200,9 +200,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
 
     return (
         <div className="max-w-5xl mx-auto space-y-6 relative">
-            {refreshing && !loading && (
-                <Loading className="absolute top-2 right-2" size={16} />
-            )}
             {showSearchForm && (
                 <form
                     onSubmit={handleSubmit}
@@ -288,6 +285,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                         className="w-5 h-5"
                                                     />
                                                     {m.name}
+                                                    {refreshing && !loading && (
+                                                        <Loading size={16} className="ml-2 inline-block" />
+                                                    )}
                                                 </span>
                                             </td>
                                             <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
@@ -372,6 +372,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                             className="w-5 h-5"
                                                         />
                                                         {m.name}
+                                                        {refreshing && !loading && (
+                                                            <Loading size={16} className="ml-2 inline-block" />
+                                                        )}
                                                     </span>
                                                     <span className="text-xs text-slate-500">
                                                         {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
@@ -410,6 +413,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                         <ProfileCard
                                             key={m.tag}
                                             member={m}
+                                            refreshing={refreshing && !loading}
                                             onClick={() => setSelected(m.tag)}
                                         />
                                     ))}
@@ -417,7 +421,11 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                             )}
                             {activeTab === 'all' && (
                                 <div className="bg-white rounded shadow" style={{ height: listHeight }}>
-                                    <MemberAccordionList members={sortedMembers} height={listHeight} />
+                                    <MemberAccordionList
+                                        members={sortedMembers}
+                                        height={listHeight}
+                                        refreshing={refreshing && !loading}
+                                    />
                                 </div>
                             )}
                         </>
@@ -426,7 +434,11 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             )}
             {selected && (
                 <Suspense fallback={<Loading className="py-8"/>}>
-                    <PlayerModal tag={selected} onClose={() => setSelected(null)}/>
+                    <PlayerModal
+                        tag={selected}
+                        onClose={() => setSelected(null)}
+                        refreshing={refreshing && !loading}
+                    />
                 </Suspense>
             )}
         </div>
