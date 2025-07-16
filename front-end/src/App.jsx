@@ -6,6 +6,7 @@ import { fetchJSON } from './lib/api.js';
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanSearchModal = lazy(() => import('./components/ClanSearchModal.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
+const ProfileModal = lazy(() => import('./components/ProfileModal.jsx'));
 
 function isTokenExpired(tok) {
   try {
@@ -50,6 +51,7 @@ export default function App() {
   const [loadingUser, setLoadingUser] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const menuRef = React.useRef(null);
 
   useEffect(() => {
@@ -209,6 +211,15 @@ export default function App() {
                 <button
                   className="block w-full text-left px-3 py-2 hover:bg-slate-100"
                   onClick={() => {
+                    setShowMenu(false);
+                    setShowProfile(true);
+                  }}
+                >
+                  Profile
+                </button>
+                <button
+                  className="block w-full text-left px-3 py-2 hover:bg-slate-100"
+                  onClick={() => {
                     window.google?.accounts.id.disableAutoSelect();
                     localStorage.removeItem('token');
                     setToken(null);
@@ -253,6 +264,11 @@ export default function App() {
       {showClanInfo && (
         <Suspense fallback={<Loading className="h-screen" />}>
           <ClanModal clan={clanInfo} onClose={() => setShowClanInfo(false)} />
+        </Suspense>
+      )}
+      {showProfile && (
+        <Suspense fallback={<Loading className="h-screen" />}>
+          <ProfileModal onClose={() => setShowProfile(false)} />
         </Suspense>
       )}
     </>
