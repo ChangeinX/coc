@@ -36,10 +36,7 @@ function Row({ index, style, data }) {
               alt={`TH${m.townHallLevel}`}
               className="w-5 h-5"
             />
-            <span className="font-medium">
-              {m.name}
-              {refreshing && <Loading size={16} className="ml-2 inline-block" />}
-            </span>
+            <span className="font-medium">{m.name}</span>
             {m.role && (
               <span className="text-xs bg-slate-200 rounded px-1">{m.role}</span>
             )}
