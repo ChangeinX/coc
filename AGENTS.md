@@ -22,7 +22,10 @@ Each directory contains its own `AGENTS.md` with project specific notes. Check t
 Validate changes using:
 
 ```bash
-# Lint Python sources
+# Lint and run tests with Nox
+nox -s lint tests
+
+# Lint Python sources manually if needed
 ruff back-end sync coclib db
 
 # Install deps and run front-end tests and build
