@@ -1,20 +1,11 @@
-"""GitHub issue helper to create and read issues.
+"""GitHub issue helper.
 
-This script interacts with the GitHub API using a token stored in the
-``CODEX_ISSUES_COC`` environment variable. By default it targets the
-``ChangeinX/coc`` repository, but any ``owner/repo`` slug can be supplied.
+Looks for a personal-access token in **GH_TOKEN**
 
-Example usages::
+Example:
 
-    # Create a bug report
     python create_issues.py create bug --title "Login spinner" \
         --summary "Full-page spinner" --steps "1. Open" --expected "Modal only"
-
-    # List open issues
-    python create_issues.py list
-
-    # Show a single issue
-    python create_issues.py show 12
 """
 
 from __future__ import annotations
@@ -27,9 +18,9 @@ from typing import Any
 import requests
 
 
-TOKEN = os.getenv("CODEX_ISSUES_COC")
+TOKEN = os.getenv("GH_TOKEN")
 if not TOKEN:
-    print("CODEX_ISSUES_COC environment variable is not set", file=sys.stderr)
+    print("GH_TOKEN environment variable is not set", file=sys.stderr)
     sys.exit(1)
 
 HEADERS = {
@@ -63,6 +54,7 @@ def create_issue(args: argparse.Namespace) -> None:
         f"https://api.github.com/repos/{args.repo}/issues",
         json=payload,
         headers=HEADERS,
+        timeout=30,
     )
     if resp.status_code == 201:
         print(f"Created issue: {resp.json().get('html_url')}")
@@ -79,6 +71,7 @@ def list_issues(args: argparse.Namespace) -> None:
         f"https://api.github.com/repos/{args.repo}/issues",
         headers=HEADERS,
         params=params,
+        timeout=30,
     )
     if resp.ok:
         for issue in resp.json():
@@ -94,6 +87,7 @@ def show_issue(args: argparse.Namespace) -> None:
     resp = requests.get(
         f"https://api.github.com/repos/{args.repo}/issues/{args.number}",
         headers=HEADERS,
+        timeout=30,
     )
     if resp.ok:
         issue = resp.json()
