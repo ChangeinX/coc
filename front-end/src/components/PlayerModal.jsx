@@ -16,7 +16,6 @@ export default function PlayerModal({ tag, onClose, refreshing = false }) {
     const load = async () => {
       try {
         const data = await fetchJSONCached(`/player/${encodeURIComponent(tag)}`);
-        if (data.last_seen) console.log('player last_seen raw', data.last_seen);
         setPlayer(data);
       } catch (err) {
         setError(err.message);
