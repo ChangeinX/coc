@@ -5,7 +5,7 @@ import Loading from './Loading.jsx';
 import RiskRing from './RiskRing.jsx';
 import DonationRing from './DonationRing.jsx';
 import PresenceDot from './PresenceDot.jsx';
-import LoyaltyBadge from './LoyaltyBadge.jsx';
+import { timeAgo } from '../lib/time.js';
 
 export default function PlayerModal({ tag, onClose }) {
   const [player, setPlayer] = useState(null);
@@ -79,8 +79,10 @@ export default function PlayerModal({ tag, onClose }) {
                       <p className="text-xs text-slate-500 mt-1">Seen</p>
                     </div>
                     <div className="flex flex-col items-center">
-                      <LoyaltyBadge days={player.loyalty} size={64} />
-                      <p className="text-xs text-slate-500 mt-1">In Clan</p>
+                      <span className="text-lg font-semibold">
+                        {player.last_seen ? timeAgo(player.last_seen) : '—'}
+                      </span>
+                      <p className="text-xs text-slate-500 mt-1">Last Seen</p>
                     </div>
                   </div>
                 </div>

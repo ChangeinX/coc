@@ -151,32 +151,47 @@ def _axes_data(
     )
 
 
+def _merge_weights(custom: dict | None) -> dict:
+    weights = _WEIGHTS.copy()
+    if custom:
+        for k in weights:
+            if k in custom and isinstance(custom[k], (int, float)):
+                weights[k] = float(custom[k])
+    return weights
+
+
 def score(
-    history: List[PlayerSnapshot], clan_history_map: dict | None = None
+    history: List[PlayerSnapshot],
+    clan_history_map: dict | None = None,
+    weights: dict | None = None,
 ) -> tuple[int, datetime]:
     """Compute the 0-100 risk score for a single member."""
     axes, activity_ts = _axes_data(history, clan_history_map)
 
+    w = _merge_weights(weights)
     raw = (
-        _WEIGHTS["war"] * axes["war"]
-        + _WEIGHTS["idle"] * axes["idle"]
-        + _WEIGHTS["don_deficit"] * axes["deficit"]
-        + _WEIGHTS["don_drop"] * axes["drop"]
+        w["war"] * axes["war"]
+        + w["idle"] * axes["idle"]
+        + w["don_deficit"] * axes["deficit"]
+        + w["don_drop"] * axes["drop"]
     )
 
     return int(round(raw * _MAX)), activity_ts
 
 
 def score_breakdown(
-    history: List[PlayerSnapshot], clan_history_map: dict | None = None
+    history: List[PlayerSnapshot],
+    clan_history_map: dict | None = None,
+    weights: dict | None = None,
 ) -> Tuple[int, datetime, List[Dict[str, Any]]]:
     """Return risk score along with per-axis point breakdown."""
     axes, activity_ts = _axes_data(history, clan_history_map)
 
-    war_pts = int(round(_WEIGHTS["war"] * axes["war"] * _MAX))
-    idle_pts = int(round(_WEIGHTS["idle"] * axes["idle"] * _MAX))
-    deficit_pts = int(round(_WEIGHTS["don_deficit"] * axes["deficit"] * _MAX))
-    drop_pts = int(round(_WEIGHTS["don_drop"] * axes["drop"] * _MAX))
+    w = _merge_weights(weights)
+    war_pts = int(round(w["war"] * axes["war"] * _MAX))
+    idle_pts = int(round(w["idle"] * axes["idle"] * _MAX))
+    deficit_pts = int(round(w["don_deficit"] * axes["deficit"] * _MAX))
+    drop_pts = int(round(w["don_drop"] * axes["drop"] * _MAX))
 
     breakdown: List[Dict[str, Any]] = []
     if war_pts:
@@ -200,7 +215,7 @@ def score_breakdown(
     return total, activity_ts, breakdown
 
 
-async def clan_at_risk(clan_tag: str) -> list[dict]:
+async def clan_at_risk(clan_tag: str, weights: dict | None = None) -> list[dict]:
     """Return sorted risk breakdown for every member in *clan_tag*.
 
     The latest clan snapshot is fetched first so member data stays fresh.
@@ -228,8 +243,8 @@ async def clan_at_risk(clan_tag: str) -> list[dict]:
     results = []
     for p in players:
         hist = await get_history(p.player_tag, 30)
-        score_val, last_seen_ts, breakdown = score_breakdown(hist)
-        iso_val = last_seen_ts.isoformat()
+        score_val, last_seen_ts, breakdown = score_breakdown(hist, weights=weights)
+        iso_val = last_seen_ts.isoformat().replace(" ", "T") + "Z"
         logger.debug("last_seen raw for %s: %s", p.player_tag, iso_val)
         results.append(
             {
