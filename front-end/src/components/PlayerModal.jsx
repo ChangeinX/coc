@@ -5,6 +5,7 @@ import Loading from './Loading.jsx';
 import RiskRing from './RiskRing.jsx';
 import DonationRing from './DonationRing.jsx';
 import PresenceDot from './PresenceDot.jsx';
+import LoyaltyRing from './LoyaltyRing.jsx';
 
 export default function PlayerModal({ tag, onClose }) {
   const [player, setPlayer] = useState(null);
@@ -28,7 +29,7 @@ export default function PlayerModal({ tag, onClose }) {
     <>
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose}></div>
       <div className="fixed inset-0 flex items-center justify-center z-50">
-        <div className="bg-white w-full max-w-lg rounded-xl shadow-xl p-6 relative">
+        <div className="bg-white w-full max-w-md rounded-xl shadow-xl p-6 relative">
           <button className="absolute top-3 right-3 text-slate-400" onClick={onClose}>✕</button>
           {!player && !error && <p className="text-center py-8">Loading…</p>}
           {!player && !error && <Loading className="py-8" />}
@@ -42,26 +43,26 @@ export default function PlayerModal({ tag, onClose }) {
                 <span>{player.name}</span>
                 <span className="text-sm font-normal text-slate-500">{player.tag}</span>
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <p className="text-sm text-slate-500">Town Hall</p>
-                  <p className="text-xl font-semibold">{player.townHallLevel}</p>
+              <div className="space-y-2 mt-4">
+                <div className="flex justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-slate-500">Town Hall</p>
+                    <p className="text-xl font-semibold">{player.townHallLevel}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Trophies</p>
+                    <p className="text-xl font-semibold">{player.trophies}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-slate-500">Trophies</p>
-                  <p className="text-xl font-semibold">{player.trophies}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Donations</p>
-                  <p className="text-xl font-semibold">{player.donations}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Received</p>
-                  <p className="text-xl font-semibold">{player.donationsReceived}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Days in Clan</p>
-                  <p className="text-xl font-semibold">{player.loyalty}</p>
+                <div className="flex justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-slate-500">Donations</p>
+                    <p className="text-xl font-semibold">{player.donations}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Received</p>
+                    <p className="text-xl font-semibold">{player.donationsReceived}</p>
+                  </div>
                 </div>
               </div>
 
@@ -83,6 +84,10 @@ export default function PlayerModal({ tag, onClose }) {
                     <div className="flex flex-col items-center">
                       <PresenceDot lastSeen={player.last_seen} size={64} />
                       <p className="text-xs text-slate-500 mt-1">Seen</p>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <LoyaltyRing days={player.loyalty} size={64} />
+                      <p className="text-xs text-slate-500 mt-1">In Clan</p>
                     </div>
                   </div>
                 </div>
