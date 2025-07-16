@@ -2,6 +2,7 @@ import React from 'react';
 import RiskRing from './RiskRing.jsx';
 import { timeAgo } from '../lib/time.js';
 import { getTownHallIcon } from '../lib/townhall.js';
+import { proxyImageUrl } from '../lib/assets.js';
 
 export default function ProfileCard({ member, onClick }) {
   if (!member) return null;
@@ -12,7 +13,7 @@ export default function ProfileCard({ member, onClick }) {
     >
       <div className="flex gap-1 mb-1">
         {member.leagueIcon && (
-          <img src={member.leagueIcon} alt="league" className="w-6 h-6" />
+          <img src={proxyImageUrl(member.leagueIcon)} alt="league" className="w-6 h-6" />
         )}
         <img
           src={getTownHallIcon(member.townHallLevel)}
