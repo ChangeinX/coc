@@ -45,7 +45,7 @@ Any lint errors or build failures should fail the PR.
 
 ### Issue-creation helper
 
-`create_issues.py` is pre-configured for you. Reference issues in commit for tracking. 
+`create_issues.py` is pre-configured for you. Reference issues in commit message and **not** the PR title for tracking. 
 At runtime the container already has:
 
 | Variable | Purpose | Set by |
