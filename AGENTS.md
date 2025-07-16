@@ -43,28 +43,32 @@ Any lint errors or build failures should fail the PR.
 - Dockerfiles expect Python 3.11 and Node 18+.
 - Follow Ruff's default style rules for Python code.
 
-## Issue creation script
+### Issue-creation helper
 
-Use `create_issues.py` to open or view GitHub issues. The script reads the
-`CODEX_ISSUES_COC` token and defaults to the `ChangeinX/coc` repository.
-Commands include `create`, `list`, and `show`. For creation you must select the
-`bug` or `feature` template and supply the relevant fields:
+`create_issues.py` is pre-configured for you. Reference issues in commit for tracking. 
+At runtime the container already has:
+
+| Variable | Purpose | Set by |
+|----------|---------|--------|
+| `CODEX_ISSUES_COC` | Fine-grained PAT with **contents:read** + **issues:write** | start-up script (see below) |
+| `DEFAULT_REPO` | Default `<owner>/<repo>` slug for all commands | start-up script |
+
+**Typical calls**
 
 ```bash
-# Bug report
-python create_issues.py create bug --title "Spinner covers page" \
-    --summary "Full-page spinner" \
-    --steps "1. Open page" \
-    --expected "Only modals should spin"
+# Bug report 
+python create_issues.py create bug \
+  --title "Spinner covers page" \
+  --summary "Full-page spinner" \
+  --steps "1. Open page" \
+  --expected "Only modals should spin"
 
 # Feature request
-python create_issues.py create feature --title "Dark mode" \
-    --problem "Hard to read" \
-    --solution "Provide toggle"
+python create_issues.py create feature \
+  --title "Dark mode" \
+  --problem "Hard to read" \
+  --solution "Provide toggle"
 
-# List and view issues
+# List / show issues
 python create_issues.py list --limit 5
 python create_issues.py show 12
-```
-
-Specify `--repo <owner/repo>` to target a different repository.
