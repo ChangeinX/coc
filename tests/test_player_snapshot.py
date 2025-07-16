@@ -102,3 +102,35 @@ def test_war_attacks_reset_after_grace():
 
         result = asyncio.run(get_player_snapshot("XYZ"))
         assert result["warAttacksUsed"] is None
+
+
+# Regression test for issue #117
+def test_labels_returned_from_player_data():
+    app = create_app(TestConfig)
+    with app.app_context():
+        db.create_all()
+        now = datetime.utcnow()
+        labels = [
+            {"id": 1, "name": "Veteran", "iconUrls": {"small": "http://example.com/icon.png"}}
+        ]
+        player = Player(tag="LAB", name="Tester", data={"labels": labels})
+        ps = PlayerSnapshot(
+            id=5,
+            ts=now,
+            player_tag="LAB",
+            name="Tester",
+            clan_tag="CLAN",
+            role="member",
+            town_hall=15,
+            trophies=0,
+            donations=0,
+            donations_received=0,
+            war_attacks_used=None,
+            last_seen=now,
+            data={},
+        )
+        db.session.add_all([player, ps])
+        db.session.commit()
+
+        result = asyncio.run(get_player_snapshot("LAB"))
+        assert result["labels"] == labels
