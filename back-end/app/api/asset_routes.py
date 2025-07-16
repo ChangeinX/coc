@@ -10,7 +10,7 @@ bp = Blueprint("assets", __name__, url_prefix=f"{API_PREFIX}/assets")
 ALLOWED_HOST = "api-assets.clashofclans.com"
 
 
-@bp.get("/")
+@bp.get("/", strict_slashes=False)
 def proxy_asset():
     url = request.args.get("url", "")
     if not url:

@@ -37,7 +37,12 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
 
     def require_auth():
         path = request.path.rstrip("/")
-        if request.method == "OPTIONS" or path.endswith("/health"):
+        asset_prefix = f"{API_PREFIX}/assets"
+        if (
+            request.method == "OPTIONS"
+            or path.endswith("/health")
+            or path.startswith(asset_prefix)
+        ):
             return
         auth = request.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
