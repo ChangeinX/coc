@@ -68,7 +68,7 @@ def _clan_row_to_dict(row: ClanSnapshot) -> ClanDict:  # type: ignore[override]
         warWins=row.war_wins,
         warLosses=row.war_losses,
         warWinStreak=(row.data or {}).get("warWinStreak"),
-        ts=row.ts.isoformat(),
+        ts=row.ts.isoformat().replace(" ", "T") + "Z",
         description=None,
         badgeUrls=None,
     )
@@ -84,10 +84,10 @@ def _player_row_to_dict(row: PlayerSnapshot) -> PlayerDict:  # type: ignore[over
         donations=row.donations,
         donationsReceived=row.donations_received,
         warAttacksUsed=row.war_attacks_used,
-        last_seen=(row.last_seen or row.ts).isoformat(),
+        last_seen=(row.last_seen or row.ts).isoformat().replace(" ", "T") + "Z",
         clanTag=row.clan_tag or None,
         leagueIcon=(row.data or {}).get("league", {}).get("iconUrls", {}).get("tiny"),
-        ts=row.ts.isoformat(),
+        ts=row.ts.isoformat().replace(" ", "T") + "Z",
     )
 
 
@@ -138,7 +138,7 @@ def _latest_members_sync(clan_tag: str) -> list[dict]:
             "donations": ps.donations,
             "donationsReceived": ps.donations_received,
             "warAttacksUsed": ps.war_attacks_used,
-            "last_seen": (ps.last_seen or ps.ts).isoformat(),
+            "last_seen": (ps.last_seen or ps.ts).isoformat().replace(" ", "T") + "Z",
             "leagueIcon": (pdata or {}).get("league", {}).get("iconUrls", {}).get("tiny"),
         }
         for ps, pdata in rows
