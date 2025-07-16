@@ -56,6 +56,7 @@ class PlayerDict(TypedDict):
     last_seen: str
     clanTag: str | None
     leagueIcon: str | None
+    labels: list | None
     ts: str
 
 
@@ -87,6 +88,7 @@ def _player_row_to_dict(row: PlayerSnapshot) -> PlayerDict:  # type: ignore[over
         last_seen=(row.last_seen or row.ts).isoformat().replace(" ", "T") + "Z",
         clanTag=row.clan_tag or None,
         leagueIcon=(row.data or {}).get("league", {}).get("iconUrls", {}).get("tiny"),
+        labels=(row.data or {}).get("labels", []),
         ts=row.ts.isoformat().replace(" ", "T") + "Z",
     )
 
@@ -140,6 +142,7 @@ def _latest_members_sync(clan_tag: str) -> list[dict]:
             "warAttacksUsed": ps.war_attacks_used,
             "last_seen": (ps.last_seen or ps.ts).isoformat().replace(" ", "T") + "Z",
             "leagueIcon": (pdata or {}).get("league", {}).get("iconUrls", {}).get("tiny"),
+            "labels": (pdata or {}).get("labels", []),
         }
         for ps, pdata in rows
     ]
