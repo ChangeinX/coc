@@ -6,5 +6,6 @@ This directory holds the background worker responsible for synchronizing data wi
 - Shared database models and utilities come from the top-level `coclib` package.
 - API blueprints are defined under `sync/api` if needed.
 - Database migrations are stored in the root `migrations/` directory.
+- Add a relevant test case for any changes made to this service.
 
 Run `ruff sync` before submitting a pull request.
