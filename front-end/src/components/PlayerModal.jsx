@@ -42,7 +42,6 @@ export default function PlayerModal({ tag, onClose, refreshing = false }) {
                   <img src={proxyImageUrl(player.leagueIcon)} alt="league" className="w-6 h-6" />
                 )}
                 <span>{player.name}</span>
-                {refreshing && <Loading size={16} className="ml-2 inline-block" />}
                 <span className="text-sm font-normal text-slate-500">{player.tag}</span>
               </h3>
               <div className="flex flex-wrap justify-center gap-2 mt-4">
