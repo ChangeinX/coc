@@ -102,6 +102,7 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.String(255))
     player_tag = db.Column(db.String(15), index=True)
+    is_verified = db.Column(db.Boolean, nullable=False, default=False)
 
 
 class UserProfile(db.Model):
