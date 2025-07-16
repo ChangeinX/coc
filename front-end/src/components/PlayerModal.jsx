@@ -45,7 +45,8 @@ export default function PlayerModal({ tag, onClose, refreshing = false }) {
                 <span>{player.name}</span>
                 <span className="text-sm font-normal text-slate-500">{player.tag}</span>
               </h3>
-              <div className="flex flex-wrap justify-center gap-4 mt-4">
+              {/* Keep badges from wrapping onto a second row (#120) */}
+              <div className="flex flex-nowrap overflow-x-auto gap-4 mt-4 justify-center scroller">
                 <div className="flex flex-col items-center w-16">
                   <img
                     src={getTownHallIcon(player.townHallLevel)}
