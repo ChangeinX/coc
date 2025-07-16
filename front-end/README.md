@@ -41,11 +41,3 @@ docker build \
   -t dashboard .
 ```
 
-### Cache invalidation
-
-API responses are cached in `localStorage` along with the `ETag` header returned
-by CloudFront. When a cached entry is used, the last seen `ETag` is sent with
-`If-None-Match` so unchanged content results in a `304` response and the
-timestamp is refreshed. When the content changes, the new payload and `ETag`
-replace the cached version, ensuring users always see the latest data.
-

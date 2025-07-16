@@ -39,73 +39,37 @@ export async function fetchJSON(path, options = {}) {
 const CACHE_PREFIX = 'cache:';
 const CACHE_TTL = 60 * 1000; // 1 minute
 
-async function requestWithETag(path, options = {}, etag) {
-    const token = localStorage.getItem('token');
-    const headers = {
-        ...(options.headers || {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(etag ? { 'If-None-Match': etag } : {}),
-    };
-    const res = await fetch(`${API_URL}${API_PREFIX}${path}`, { ...options, headers });
-    if (res.status === 401) {
-        localStorage.removeItem('token');
-    }
-    if (res.status === 304) {
-        return { notModified: true, etag: res.headers.get('ETag') || etag, data: null };
-    }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return { notModified: false, etag: res.headers.get('ETag') || etag, data };
-}
-
 export async function fetchJSONCached(path, options = {}) {
     const key = `${CACHE_PREFIX}${path}`;
-    let parsed;
     const cached = localStorage.getItem(key);
     if (cached) {
         try {
-            parsed = JSON.parse(cached);
+            const parsed = JSON.parse(cached);
+            const hasMeta = Object.prototype.hasOwnProperty.call(parsed, 'ts');
+            const ts = hasMeta ? parsed.ts : 0;
+            const data = hasMeta ? parsed.data : parsed;
+            const age = Date.now() - ts;
+            if (hasMeta && age < CACHE_TTL) {
+                fetchJSON(path, options)
+                    .then((fresh) => {
+                        try {
+                            localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: fresh }));
+                        } catch {
+                            /* ignore */
+                        }
+                    })
+                    .catch(() => {});
+                return data;
+            }
         } catch {
             localStorage.removeItem(key);
         }
     }
-
-    const hasMeta = parsed && Object.prototype.hasOwnProperty.call(parsed, 'ts');
-    const ts = hasMeta ? parsed.ts : 0;
-    const data = hasMeta ? parsed.data : parsed;
-    const etag = hasMeta ? parsed.etag : null;
-    const age = Date.now() - ts;
-
-    if (hasMeta && age < CACHE_TTL) {
-        requestWithETag(path, options, etag)
-            .then((res) => {
-                try {
-                    if (res.notModified) {
-                        localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data, etag: res.etag }));
-                    } else {
-                        localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: res.data, etag: res.etag }));
-                    }
-                } catch {
-                    /* ignore */
-                }
-            })
-            .catch(() => {});
-        return data;
-    }
-
-    const res = await requestWithETag(path, options, etag);
-    if (res.notModified) {
-        try {
-            localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data, etag: res.etag }));
-        } catch {
-            /* ignore */
-        }
-        return data;
-    }
+    const fresh = await fetchJSON(path, options);
     try {
-        localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: res.data, etag: res.etag }));
+        localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: fresh }));
     } catch {
         /* ignore */
     }
-    return res.data;
+    return fresh;
 }
