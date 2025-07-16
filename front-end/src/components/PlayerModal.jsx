@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from '../lib/api.js';
 import { proxyImageUrl } from '../lib/assets.js';
+import { getTownHallIcon } from '../lib/townhall.js';
 
 import Loading from './Loading.jsx';
 import RiskRing from './RiskRing.jsx';
@@ -42,22 +43,31 @@ export default function PlayerModal({ tag, onClose, refreshing = false }) {
                   <img src={proxyImageUrl(player.leagueIcon)} alt="league" className="w-6 h-6" />
                 )}
                 <span>{player.name}</span>
-                {refreshing && <Loading size={16} className="ml-2 inline-block" />}
                 <span className="text-sm font-normal text-slate-500">{player.tag}</span>
               </h3>
-              <div className="flex flex-wrap justify-center gap-2 mt-4">
-                <span className="px-3 py-1 rounded-full bg-slate-100 text-sm font-medium">
-                  TH{player.townHallLevel}
-                </span>
-                <span className="px-3 py-1 rounded-full bg-slate-100 text-sm font-medium">
-                  {player.trophies}&#160;🏆
-                </span>
-                <span className="px-3 py-1 rounded-full bg-slate-100 text-sm font-medium">
-                  Don&nbsp;{player.donations}
-                </span>
-                <span className="px-3 py-1 rounded-full bg-slate-100 text-sm font-medium">
-                  Rec&nbsp;{player.donationsReceived}
-                </span>
+              <div className="flex flex-wrap justify-center gap-6 mt-4">
+                <div className="flex flex-col items-center">
+                  <img
+                    src={getTownHallIcon(player.townHallLevel)}
+                    alt={`TH${player.townHallLevel}`}
+                    className="w-8 h-8"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">TH{player.townHallLevel}</p>
+                </div>
+                {player.labels?.map((l) => (
+                  <div className="flex flex-col items-center" key={l.id || l.name}>
+                    <img
+                      src={proxyImageUrl(l.iconUrls.small || l.iconUrls.medium)}
+                      alt={l.name}
+                      className="w-8 h-8"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">{l.name}</p>
+                  </div>
+                ))}
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl leading-none">🏆</span>
+                  <p className="text-xs text-slate-500 mt-1">{player.trophies}</p>
+                </div>
               </div>
 
                 <div className="mt-4">
