@@ -45,6 +45,7 @@ export default function App() {
   });
   const [initials, setInitials] = useState(() => (token ? getInitials(token) : ''));
   const [playerTag, setPlayerTag] = useState(null);
+  const [verified, setVerified] = useState(false);
   const [homeClanTag, setHomeClanTag] = useState(null);
   const [clanTag, setClanTag] = useState(null);
   const [clanInfo, setClanInfo] = useState(null);
@@ -87,6 +88,7 @@ export default function App() {
       try {
         const me = await fetchJSON('/user/me');
         setPlayerTag(me.player_tag);
+        setVerified(me.verified);
         if (me.player_tag) {
           const player = await fetchJSON(`/player/${encodeURIComponent(me.player_tag)}`);
           if (player.clanTag) {
@@ -238,7 +240,7 @@ export default function App() {
       </header>
       <main className="px-2 pt-0 pb-2 sm:px-4 sm:pt-0 sm:pb-4">
         {loadingUser && <Loading className="h-[calc(100vh-4rem)]" />}
-        {!loadingUser && !playerTag && (
+        {!loadingUser && !verified && (
           <PlayerTagForm
             onSaved={(tag) => {
               setPlayerTag(tag);
@@ -269,7 +271,7 @@ export default function App() {
       )}
       {showProfile && (
         <Suspense fallback={<Loading className="h-screen" />}>
-          <ProfileModal onClose={() => setShowProfile(false)} />
+          <ProfileModal onClose={() => setShowProfile(false)} onVerified={() => setVerified(true)} />
         </Suspense>
       )}
     </>

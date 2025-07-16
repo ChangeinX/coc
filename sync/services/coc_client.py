@@ -2,15 +2,13 @@ import asyncio
 import logging
 from functools import wraps
 from datetime import datetime, timedelta
-import httpx
 import os
+import httpx
 
 from coclib.utils import encode_tag
 
-
 logger = logging.getLogger(__name__)
 
-# rudimentary in-process rate gate
 _last_reset = datetime.utcnow()
 _req_count = 0
 _lock = asyncio.Lock()
@@ -40,31 +38,32 @@ class CoCClient:
     def __init__(self, base: str, token: str):
         self.base = base
         self.headers = {"Authorization": f"Bearer {token}"}
-        self.client = httpx.AsyncClient(base_url=base, headers=self.headers, timeout=10)
 
-    async def get(self, path: str):
+    async def request(self, method: str, path: str, **kwargs):
         async with httpx.AsyncClient(
             base_url=self.base,
             headers=self.headers,
             timeout=10,
-            http2=True,  # re-uses TCP/TLS inside *this* context
+            http2=True,
         ) as client:
-            resp = await client.get(path)
+            resp = await client.request(method, path, **kwargs)
 
-            if resp.status_code in (403, 404):
+            if resp.status_code in (403, 404) and method == "GET":
                 try:
                     payload = resp.json()
                     reason = payload.get("reason", "")
                 except ValueError:
                     reason = ""
                 if resp.status_code == 403 and reason.startswith("accessDenied"):
-                    logger.warning(f"Access denied for {path}: {reason}")
+                    logger.warning("Access denied for %s: %s", path, reason)
                     return {"state": "accessDenied"}
-                return {"state": "notInWar"}  # 404 or unknown 403 reason
+                return {"state": "notInWar"}
 
-            # Anything else that’s 4xx / 5xx is a real error
             resp.raise_for_status()
             return resp.json()
+
+    async def get(self, path: str):
+        return await self.request("GET", path)
 
     @rate_limited
     async def clan(self, tag: str):
@@ -85,6 +84,11 @@ class CoCClient:
     @rate_limited
     async def capital_raid_seasons(self, tag: str):
         return await self.get(f"/clans/{encode_tag(tag)}/capitalraidseasons")
+
+    @rate_limited
+    async def verify_token(self, tag: str, token: str):
+        data = {"token": token}
+        return await self.request("POST", f"/players/{encode_tag(tag)}/verifytoken", json=data)
 
 
 _client: CoCClient | None = None

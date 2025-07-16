@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { fetchJSON } from '../lib/api.js';
 import Loading from './Loading.jsx';
+import VerifiedBadge from './VerifiedBadge.jsx';
 
-export default function ProfileModal({ onClose }) {
+export default function ProfileModal({ onClose, onVerified }) {
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [token, setToken] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -50,7 +52,10 @@ export default function ProfileModal({ onClose }) {
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <form className="bg-white w-full max-w-md rounded-xl shadow-xl p-6 relative space-y-4" onSubmit={handleSubmit}>
           <button type="button" className="absolute top-3 right-3 text-slate-400" onClick={onClose}>✕</button>
-          <h3 className="text-xl font-semibold">Profile</h3>
+          <h3 className="text-xl font-semibold flex items-center gap-2">
+            Profile
+            {profile.verified && <VerifiedBadge />}
+          </h3>
           <label className="block">
             <span className="text-sm">War Weight</span>
             <input type="number" step="0.01" value={profile.risk_weight_war ?? 0} onChange={(e) => handleChange('risk_weight_war', parseFloat(e.target.value))} className="mt-1 w-full border px-2 py-1 rounded" />
@@ -67,6 +72,31 @@ export default function ProfileModal({ onClose }) {
             <span className="text-sm">Drop Weight</span>
             <input type="number" step="0.01" value={profile.risk_weight_don_drop ?? 0} onChange={(e) => handleChange('risk_weight_don_drop', parseFloat(e.target.value))} className="mt-1 w-full border px-2 py-1 rounded" />
           </label>
+          {!profile.verified && (
+            <>
+              <label className="block">
+                <span className="text-sm">API Token</span>
+                <input value={token} onChange={(e) => setToken(e.target.value)} className="mt-1 w-full border px-2 py-1 rounded" />
+              </label>
+              <button type="button" onClick={async () => {
+                setSaving(true);
+                try {
+                  await fetchJSON('/user/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token }),
+                  });
+                  setProfile((p) => ({ ...p, verified: true }));
+                  onVerified && onVerified();
+                } catch {
+                  /* ignore */
+                }
+                setSaving(false);
+              }} className="px-4 py-2 rounded bg-slate-800 text-white w-full">
+                {saving ? 'Verifying…' : 'Verify'}
+              </button>
+            </>
+          )}
           <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white w-full">{saving ? 'Saving…' : 'Save'}</button>
         </form>
       </div>

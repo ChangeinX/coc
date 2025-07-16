@@ -32,6 +32,12 @@ async def _fetch_player(tag: str) -> dict:
     return await get_client().player(tag)
 
 
+async def verify_token(tag: str, token: str) -> dict:
+    """Verify a player's API token via the Clash of Clans API."""
+    client = get_client()
+    return await client.verify_token(tag, token)
+
+
 def _resolve_last_seen(
     *,
     data: dict,
@@ -210,4 +216,4 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
     return data
 
 
-__all__ = [*globals().get("__all__", []), "get_player_snapshot"]
+__all__ = [*globals().get("__all__", []), "get_player_snapshot", "verify_token"]
