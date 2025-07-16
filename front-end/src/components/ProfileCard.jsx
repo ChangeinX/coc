@@ -26,7 +26,11 @@ export default function ProfileCard({ member, onClick, refreshing = false }) {
         {member.name}
         {refreshing && <Loading size={16} className="ml-2 inline-block" />}
       </p>
-      <RiskRing score={member.risk_score} size={48} />
+      {refreshing ? (
+        <Loading size={48} />
+      ) : (
+        <RiskRing score={member.risk_score} size={48} />
+      )}
       <div className="mt-2 text-center space-y-1 w-full">
         <p>TH{member.townHallLevel}</p>
         <p className="text-xs text-slate-500">
