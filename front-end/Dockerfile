@@ -13,6 +13,7 @@ ENV \
     VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
     VITE_BASE_PATH=$VITE_BASE_PATH
 
+
 RUN npm run build
 
 # Production stage
