@@ -203,6 +203,8 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         data["leagueIcon"] = (
             player_row.data.get("league", {}).get("iconUrls", {}).get("tiny")
         )
+        # Include player labels for badge icons (refs #117)
+        data["labels"] = player_row.data.get("labels", [])
 
     cache.set(cache_key, data, timeout=300)
     return data
