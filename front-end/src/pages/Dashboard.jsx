@@ -15,11 +15,6 @@ const levelIcon = new URL('../assets/level.svg', import.meta.url).href;
 const warWinsIcon = new URL('../assets/war-wins.svg', import.meta.url).href;
 const warLossesIcon = new URL('../assets/war-losses.svg', import.meta.url).href;
 
-const winStreakIcon = new URL('../assets/win-streak.svg', import.meta.url).href;
-const levelIcon = new URL('../assets/level.svg', import.meta.url).href;
-const warWinsIcon = new URL('../assets/war-wins.svg', import.meta.url).href;
-const warLossesIcon = new URL('../assets/war-losses.svg', import.meta.url).href;
-
 const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
 
 
