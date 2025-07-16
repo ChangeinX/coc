@@ -48,6 +48,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     const [members, setMembers] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     const [selected, setSelected] = useState(null);
     const [sortField, setSortField] = useState('');
@@ -104,6 +105,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
         } else {
             setLoading(true);
         }
+        setRefreshing(true);
 
         try {
             const clanData = await fetchJSONCached(`/clan/${encodeURIComponent(clanTag)}`);
@@ -142,6 +144,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             if (!clan) setError(err.message);
         }
         setLoading(false);
+        setRefreshing(false);
     };
 
     useEffect(() => {
@@ -196,7 +199,10 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
 
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="max-w-5xl mx-auto space-y-6 relative">
+            {refreshing && !loading && (
+                <Loading className="absolute top-2 right-2" size={16} />
+            )}
             {showSearchForm && (
                 <form
                     onSubmit={handleSubmit}
