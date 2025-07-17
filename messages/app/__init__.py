@@ -5,7 +5,7 @@ from flask_cors import CORS
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
-from coclib.config import Config
+from coclib.config import MessagesConfig
 from coclib.extensions import db, cache, migrate, scheduler
 from coclib.logging_config import configure_logging
 from coclib.models import User
@@ -15,7 +15,7 @@ from .api import bp as messages_bp, API_PREFIX
 logger = logging.getLogger(__name__)
 
 
-def create_app(cfg_cls: type[Config] = Config) -> Flask:
+def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
     configure_logging(level=cfg_cls.LOG_LEVEL)
     app = Flask(__name__)
     app.config.from_object(cfg_cls)

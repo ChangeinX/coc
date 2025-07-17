@@ -40,6 +40,8 @@ class Config:
     ).split(",")
 
 
+
+
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = False
@@ -55,4 +57,28 @@ env_configs = {
     "development": DevelopmentConfig,
     "production": Config,
     "testing": TestConfig,
+}
+
+
+class MessagesConfig(Config):
+    """Configuration values specific to the messages service."""
+
+    AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+    MESSAGES_TABLE = os.getenv("MESSAGES_TABLE", "chat_messages")
+    APPSYNC_EVENTS_URL = os.getenv("APPSYNC_EVENTS_URL")
+    PORT = int(os.getenv("PORT", str(Config.PORT)))
+
+
+class MessagesDevelopmentConfig(MessagesConfig, DevelopmentConfig):
+    """Development settings for the messages service."""
+
+
+class MessagesTestConfig(MessagesConfig, TestConfig):
+    """Testing settings for the messages service."""
+
+
+messages_env_configs = {
+    "development": MessagesDevelopmentConfig,
+    "production": MessagesConfig,
+    "testing": MessagesTestConfig,
 }
