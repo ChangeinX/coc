@@ -14,6 +14,7 @@ COPY migrations/ ./migrations
 
 ENV PYTHONPATH=/opt/app
 
+
 EXPOSE 8010
 
 CMD ["sh", "-c", "uvicorn messages.run:asgi_app --host 0.0.0.0 --port ${PORT:-80} --workers 1"]
