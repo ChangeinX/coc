@@ -11,7 +11,8 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-window": "^1.8.8"
+    "react-window": "^1.8.8",
+    "@aws-amplify/pubsub": "^5.0.8"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
