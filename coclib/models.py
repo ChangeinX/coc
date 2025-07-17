@@ -139,3 +139,21 @@ class FeatureFlag(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)
 
 
+
+
+class ChatGroup(db.Model):
+    __tablename__ = "chat_groups"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    name = db.Column(db.String(100))
+
+
+class ChatGroupMember(db.Model):
+    __tablename__ = "chat_group_members"
+
+    group_id = db.Column(db.BigInteger, db.ForeignKey("chat_groups.id"), primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), primary_key=True)
+
+    group = db.relationship("ChatGroup", backref=db.backref("members", lazy="dynamic"))
+    user = db.relationship("User", backref=db.backref("chat_groups", lazy="dynamic"))
+
