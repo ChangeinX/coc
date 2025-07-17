@@ -10,6 +10,7 @@ const ClanSearchModal = lazy(() => import('./components/ClanSearchModal.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
 const ProfileModal = lazy(() => import('./components/ProfileModal.jsx'));
 const ChatDrawer = lazy(() => import('./components/ChatDrawer.jsx'));
+const ChatPanel = lazy(() => import('./components/ChatPanel.jsx'));
 
 function isTokenExpired(tok) {
   try {
@@ -302,7 +303,11 @@ export default function App() {
       {chatAllowed && showChat && (
         <Suspense fallback={<Loading className="h-screen" />}>
           <ChatDrawer open={showChat} onClose={() => setShowChat(false)}>
-            <div className="p-4 h-full overflow-y-auto">Chat coming soon…</div>
+            {verified ? (
+              <ChatPanel />
+            ) : (
+              <div className="p-4 h-full overflow-y-auto">Verify your account to chat.</div>
+            )}
           </ChatDrawer>
         </Suspense>
       )}
