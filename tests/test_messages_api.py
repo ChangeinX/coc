@@ -3,13 +3,13 @@ from datetime import datetime
 from flask.testing import FlaskClient
 
 from messages.app import create_app  # type: ignore
-from coclib.config import Config
+from coclib.config import MessagesConfig
 from coclib.extensions import db
 from coclib.models import User, ChatGroup, ChatGroupMember
 from messages import models
 
 
-class TestConfig(Config):
+class TestConfig(MessagesConfig):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     GOOGLE_CLIENT_ID = "dummy"
