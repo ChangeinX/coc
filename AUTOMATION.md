@@ -28,14 +28,16 @@ access AWS resources:
 - `ECR_REGISTRY` – registry domain, e.g. `123456789012.dkr.ecr.us-east-1.amazonaws.com`.
 - `WORKER_REPOSITORY` – repository for the worker service image.
 - `STATIC_REPOSITORY` – repository for the static sync image.
+- `MESSAGES_REPOSITORY` – repository for the messages service image.
 - `FRONTEND_BUCKET` – S3 bucket used to host the front-end.
 - `CLUSTER` – name of the ECS cluster.
 - `WORKER_SERVICE` – service name for the worker.
 - `STATIC_SERVICE` – service name for the static sync job.
+- `MESSAGES_SERVICE` – service name for the messages API.
 
 ## First‑time setup
 
-1. Create the worker and static ECR repositories as well as the S3 bucket for
+1. Create the worker, static and messages ECR repositories as well as the S3 bucket for
    the front-end.
 2. Grant the IAM user or role used by the workflow permissions to push to ECR,
    sync files to S3 and update ECS services.
