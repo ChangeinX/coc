@@ -10,15 +10,23 @@ export default function useFeatures(token) {
       return;
     }
     let cancelled = false;
-    fetchJSON('/user/features')
-      .then((res) => {
-        if (!cancelled) setData(res);
-      })
-      .catch(() => {
-        if (!cancelled) setData(null);
-      });
+    const load = () => {
+      fetchJSON('/user/features')
+        .then((res) => {
+          if (!cancelled) setData(res);
+        })
+        .catch(() => {
+          if (!cancelled) setData(null);
+        });
+    };
+    load();
+    const handler = () => {
+      if (!cancelled) load();
+    };
+    window.addEventListener('features-updated', handler);
     return () => {
       cancelled = true;
+      window.removeEventListener('features-updated', handler);
     };
   }, [token]);
 
