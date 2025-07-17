@@ -25,6 +25,7 @@ def _publish_to_appsync(channel: str, payload: dict) -> None:
     if not url:
         logger.info("APPSYNC_EVENTS_URL not configured, skipping publish")
         return
+    logger.info("Publishing to AppSync URL: %s", url)
     region = current_app.config.get("AWS_REGION", "us-east-1")
     session = boto3.Session(region_name=region)
     request = AWSRequest("POST", url, data=json.dumps({"channels": [channel], "message": payload}))
