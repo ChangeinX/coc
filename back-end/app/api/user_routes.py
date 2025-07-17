@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, g, abort
 from coclib.extensions import db
 from coclib.utils import normalize_tag
-from coclib.models import UserProfile
+from coclib.models import UserProfile, FeatureFlag
 import os
 import httpx
 from . import API_PREFIX
@@ -96,3 +96,29 @@ async def verify_player():
     db.session.add(g.user)
     db.session.commit()
     return jsonify({"status": "ok", "player_tag": g.user.player_tag})
+
+
+@bp.get("/features")
+def get_features():
+    prof = g.user.profile
+    if not prof:
+        prof = UserProfile(user_id=g.user.id)
+        db.session.add(prof)
+        db.session.commit()
+    names = [f.name for f in prof.features]
+    return jsonify({"all": prof.all_features, "features": names})
+
+
+@bp.post("/features")
+def update_features():
+    data = request.get_json(silent=True) or {}
+    prof = g.user.profile or UserProfile(user_id=g.user.id)
+    prof.all_features = bool(data.get("all", prof.all_features))
+    names = data.get("features", [])
+    if prof.all_features:
+        prof.features = FeatureFlag.query.all()
+    else:
+        prof.features = FeatureFlag.query.filter(FeatureFlag.name.in_(names)).all()
+    db.session.add(prof)
+    db.session.commit()
+    return jsonify({"status": "ok"})
