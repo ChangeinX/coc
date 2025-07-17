@@ -2,17 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { fetchJSON } from '../lib/api.js';
 import Loading from './Loading.jsx';
 import VerifiedBadge from './VerifiedBadge.jsx';
+import ChatBadge from './ChatBadge.jsx';
 
 export default function ProfileModal({ onClose, onVerified }) {
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [token, setToken] = useState('');
+  const [chatEnabled, setChatEnabled] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
         const data = await fetchJSON('/user/profile');
         setProfile(data);
+        const features = await fetchJSON('/user/features');
+        setChatEnabled(features.all || features.features.includes('chat'));
       } catch {
         setProfile({});
       }
@@ -32,6 +36,11 @@ export default function ProfileModal({ onClose, onVerified }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile),
+      });
+      await fetchJSON('/user/features', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features: chatEnabled ? ['chat'] : [], all: false }),
       });
       onClose();
     } catch {
@@ -55,6 +64,7 @@ export default function ProfileModal({ onClose, onVerified }) {
           <h3 className="text-xl font-semibold flex items-center gap-2">
             Profile
             {profile.verified && <VerifiedBadge />}
+            {chatEnabled && <ChatBadge />}
           </h3>
           <label className="block">
             <span className="text-sm">War Weight</span>
@@ -71,6 +81,10 @@ export default function ProfileModal({ onClose, onVerified }) {
           <label className="block">
             <span className="text-sm">Drop Weight</span>
             <input type="number" step="0.01" value={profile.risk_weight_don_drop ?? 0} onChange={(e) => handleChange('risk_weight_don_drop', parseFloat(e.target.value))} className="mt-1 w-full border px-2 py-1 rounded" />
+          </label>
+          <label className="inline-flex items-center gap-2">
+            <input type="checkbox" checked={chatEnabled} onChange={(e) => setChatEnabled(e.target.checked)} />
+            <span className="text-sm">Enable Chat</span>
           </label>
           {!profile.verified && (
             <>
