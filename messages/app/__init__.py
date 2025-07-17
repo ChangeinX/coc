@@ -11,6 +11,7 @@ from coclib.logging_config import configure_logging
 from coclib.models import User
 
 from .api import bp as messages_bp, API_PREFIX
+from .api.health import bp as health_bp
 
 logger = logging.getLogger(__name__)
 
@@ -58,5 +59,6 @@ def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
     app.before_request(require_auth)
 
     app.register_blueprint(messages_bp)
+    app.register_blueprint(health_bp)
 
     return app
