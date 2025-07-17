@@ -115,6 +115,27 @@ class UserProfile(db.Model):
     risk_weight_don_deficit = db.Column(db.Float, nullable=False, default=0.15)
     risk_weight_don_drop = db.Column(db.Float, nullable=False, default=0.10)
     is_leader = db.Column(db.Boolean, nullable=False, default=False)
+    all_features = db.Column(db.Boolean, nullable=False, default=False)
 
     user = db.relationship("User", backref=db.backref("profile", uselist=False))
+    features = db.relationship(
+        "FeatureFlag",
+        secondary="user_profile_features",
+        backref="profiles",
+    )
+
+
+user_profile_features = db.Table(
+    "user_profile_features",
+    db.Column("profile_id", db.BigInteger, db.ForeignKey("user_profiles.id"), primary_key=True),
+    db.Column("feature_id", db.BigInteger, db.ForeignKey("feature_flags.id"), primary_key=True),
+)
+
+
+class FeatureFlag(db.Model):
+    __tablename__ = "feature_flags"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+
 
