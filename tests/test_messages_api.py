@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from flask.testing import FlaskClient
 
 from messages.app import create_app  # type: ignore
 from coclib.config import Config
 from coclib.extensions import db
-from coclib.models import User
+from coclib.models import User, ChatGroup, ChatGroupMember
+from messages import models
 
 
 class TestConfig(Config):
@@ -35,3 +38,30 @@ def test_publish_requires_membership(monkeypatch):
     hdrs = {"Authorization": "Bearer t"}
     resp = client.post("/api/v1/chat/publish", json={"groupId": "1", "text": "hi"}, headers=hdrs)
     assert resp.status_code == 403
+
+
+def test_publish_ok(monkeypatch):
+    _mock_verify(monkeypatch)
+    called = {}
+    def fake_publish(*args, **kwargs):
+        called["args"] = args
+        called["kwargs"] = kwargs
+        return models.ChatMessage(group_id="1", user_id=1, text="hi", ts=datetime.utcnow())
+
+    monkeypatch.setattr("messages.app.api.publish_message", fake_publish)
+    app = create_app(TestConfig)
+    client: FlaskClient = app.test_client()
+    with app.app_context():
+        db.create_all()
+        db.session.add_all([
+            User(id=1, sub="abc", email="u@example.com", name="U"),
+            ChatGroup(id=1, name="g"),
+            ChatGroupMember(group_id=1, user_id=1),
+        ])
+        db.session.commit()
+
+    hdrs = {"Authorization": "Bearer t"}
+    resp = client.post("/api/v1/chat/publish", json={"groupId": "1", "text": "hi"}, headers=hdrs)
+    assert resp.status_code == 200
+    assert called["args"][0] == "1"
+
