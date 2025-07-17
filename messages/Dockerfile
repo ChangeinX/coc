@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 # Build this image from within the root directory:
-#   docker build -f messages/Dockerfile -t clan-boards/messages-service .
+#   docker build -f messages/Dockerfile -t clan-boards/message-service .
 
 WORKDIR /opt/app
 
