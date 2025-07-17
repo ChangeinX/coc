@@ -32,9 +32,9 @@ def _publish_to_appsync(channel: str, payload: dict) -> None:
     httpx.post(url, content=request.body, headers=dict(request.headers))
 
 
-def publish_message(group_id: str, text: str, user_id: int) -> models.ChatMessage:
+def publish_message(channel: str, content: str, user_id: int) -> models.ChatMessage:
     ts = datetime.utcnow()
-    msg = models.ChatMessage(group_id=group_id, user_id=user_id, text=text, ts=ts)
+    msg = models.ChatMessage(channel=channel, user_id=user_id, content=content, ts=ts)
     logger.info("Publishing message: %s", msg)
     region = current_app.config.get("AWS_REGION", "us-east-1")
     session = boto3.Session(region_name=region)
@@ -43,11 +43,11 @@ def publish_message(group_id: str, text: str, user_id: int) -> models.ChatMessag
     table = dynamodb.Table(table_name)
     table.put_item(
         Item={
-            "group_id": group_id,
+            "channel": channel,
             "ts": ts.isoformat(),
-            "user_id": str(user_id),
-            "text": text,
+            "userId": str(user_id),
+            "content": content,
         }
     )
-    _publish_to_appsync(f"/groups/{group_id}", {"text": text, "userId": user_id, "ts": ts.isoformat()})
+    _publish_to_appsync(f"/groups/{channel}", {"content": content, "userId": user_id, "ts": ts.isoformat()})
     return msg

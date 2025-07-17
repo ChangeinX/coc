@@ -6,7 +6,7 @@ from datetime import datetime
 class ChatMessage:
     """Simple schema stored in DynamoDB."""
 
-    group_id: str
+    channel: str
     user_id: int
-    text: str
+    content: str
     ts: datetime

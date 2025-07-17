@@ -46,7 +46,7 @@ def test_publish_ok(monkeypatch):
     def fake_publish(*args, **kwargs):
         called["args"] = args
         called["kwargs"] = kwargs
-        return models.ChatMessage(group_id="1", user_id=1, text="hi", ts=datetime.utcnow())
+        return models.ChatMessage(channel="1", user_id=1, content="hi", ts=datetime.utcnow())
 
     monkeypatch.setattr("messages.app.api.publish_message", fake_publish)
     app = create_app(TestConfig)

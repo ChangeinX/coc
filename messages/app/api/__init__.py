@@ -11,10 +11,10 @@ bp = Blueprint("messages", __name__, url_prefix=f"{API_PREFIX}/chat")
 def publish():
     data = request.get_json(silent=True) or {}
     group_id = data.get("groupId")
-    text = (data.get("text") or "").strip()
-    if not group_id or not text:
+    content = (data.get("text") or "").strip()
+    if not group_id or not content:
         abort(400)
     if not verify_group_member(g.user.id, str(group_id)):
         abort(403)
-    msg = publish_message(str(group_id), text, g.user.id)
+    msg = publish_message(str(group_id), content, g.user.id)
     return jsonify({"status": "ok", "ts": msg.ts.isoformat()})
