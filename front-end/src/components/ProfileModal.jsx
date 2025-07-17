@@ -42,6 +42,7 @@ export default function ProfileModal({ onClose, onVerified }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ features: chatEnabled ? ['chat'] : [], all: false }),
       });
+      window.dispatchEvent(new Event('features-updated'));
       onClose();
     } catch {
       setSaving(false);
