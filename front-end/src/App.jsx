@@ -66,7 +66,9 @@ export default function App() {
       setToken(null);
       return;
     }
-    if (!token && window.google) {
+
+    const tryInit = () => {
+      if (!window.google) return false;
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: (res) => {
@@ -79,6 +81,16 @@ export default function App() {
         { theme: 'outline', size: 'large' },
       );
       window.google.accounts.id.prompt();
+      return true;
+    };
+
+    if (!token) {
+      if (!tryInit()) {
+        const id = setInterval(() => {
+          if (tryInit()) clearInterval(id);
+        }, 100);
+        return () => clearInterval(id);
+      }
     }
   }, [token]);
 
