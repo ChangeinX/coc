@@ -4,7 +4,12 @@ from datetime import datetime
 from typing import Dict
 
 from coclib.extensions import db
-from coclib.models import LoyaltyMembership
+from coclib.models import (
+    LoyaltyMembership,
+    ChatGroup,
+    ChatGroupMember,
+    User,
+)
 from coclib.utils import normalize_tag
 
 __all__ = [
@@ -12,6 +17,39 @@ __all__ = [
     "get_player_loyalty",
     "get_clan_loyalty",
 ]
+
+
+def _sync_chat_membership(player_tag: str, clan_tag: str | None) -> None:
+    """Ensure :class:`ChatGroupMember` rows reflect *player_tag*'s clan."""
+
+    user = User.query.filter_by(player_tag=normalize_tag(player_tag)).first()
+    if user is None:
+        return
+
+    # Remove from all groups if clan-less
+    if not clan_tag:
+        ChatGroupMember.query.filter_by(user_id=user.id).delete()
+        db.session.commit()
+        return
+
+    clan_tag = normalize_tag(clan_tag)
+    group = ChatGroup.query.filter_by(name=clan_tag).first()
+    if group is None:
+        next_gid = (db.session.execute(db.select(db.func.max(ChatGroup.id))).scalar() or 0) + 1
+        group = ChatGroup(id=next_gid, name=clan_tag)
+        db.session.add(group)
+        db.session.flush()
+
+    # Remove stale memberships
+    ChatGroupMember.query.filter(
+        ChatGroupMember.user_id == user.id,
+        ChatGroupMember.group_id != group.id,
+    ).delete()
+
+    if not ChatGroupMember.query.filter_by(user_id=user.id, group_id=group.id).first():
+        db.session.add(ChatGroupMember(user_id=user.id, group_id=group.id))
+
+    db.session.commit()
 
 
 def ensure_membership(player_tag: str, current_clan_tag: str | None, ts: datetime) -> None:
@@ -37,6 +75,7 @@ def ensure_membership(player_tag: str, current_clan_tag: str | None, ts: datetim
             active.left_at = ts
             db.session.add(active)
             db.session.commit()
+        _sync_chat_membership(player_tag, None)
         return
 
     if active is None or active.clan_tag != current_clan_tag:
@@ -47,13 +86,17 @@ def ensure_membership(player_tag: str, current_clan_tag: str | None, ts: datetim
             db.session.flush()
 
         # Open a new membership row for the new clan
+        next_id = (db.session.execute(db.select(db.func.max(LoyaltyMembership.id))).scalar() or 0) + 1
         new_row = LoyaltyMembership(
+            id=next_id,
             player_tag=player_tag,
             clan_tag=current_clan_tag,
             joined_at=ts,
         )
         db.session.add(new_row)
         db.session.commit()
+
+    _sync_chat_membership(player_tag, current_clan_tag)
 
 
 # ---------------------------------------------------------------------------
