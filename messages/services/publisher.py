@@ -1,20 +1,17 @@
 import json
 import logging
-import os
 from datetime import datetime
 
 import boto3
 import httpx
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
+from flask import current_app
 from coclib.models import ChatGroupMember
 from messages import models
 
 logger = logging.getLogger(__name__)
 
-session = boto3.Session(region_name=os.getenv("AWS_REGION", "us-east-1"))
-dynamodb = session.resource("dynamodb")
-table = dynamodb.Table(os.getenv("MESSAGES_TABLE", "chat_messages"))
 
 
 def verify_group_member(user_id: int, group_id: str) -> bool:
@@ -24,11 +21,12 @@ def verify_group_member(user_id: int, group_id: str) -> bool:
 
 
 def _publish_to_appsync(channel: str, payload: dict) -> None:
-    url = os.getenv("APPSYNC_EVENTS_URL")
+    url = current_app.config.get("APPSYNC_EVENTS_URL")
     if not url:
         logger.info("APPSYNC_EVENTS_URL not configured, skipping publish")
         return
-    region = os.getenv("AWS_REGION", session.region_name or "us-east-1")
+    region = current_app.config.get("AWS_REGION", "us-east-1")
+    session = boto3.Session(region_name=region)
     request = AWSRequest("POST", url, data=json.dumps({"channels": [channel], "message": payload}))
     SigV4Auth(session.get_credentials(), "appsync", region).add_auth(request)
     httpx.post(url, content=request.body, headers=dict(request.headers))
@@ -38,6 +36,11 @@ def publish_message(group_id: str, text: str, user_id: int) -> models.ChatMessag
     ts = datetime.utcnow()
     msg = models.ChatMessage(group_id=group_id, user_id=user_id, text=text, ts=ts)
     logger.info("Publishing message: %s", msg)
+    region = current_app.config.get("AWS_REGION", "us-east-1")
+    session = boto3.Session(region_name=region)
+    dynamodb = session.resource("dynamodb")
+    table_name = current_app.config.get("MESSAGES_TABLE", "chat_messages")
+    table = dynamodb.Table(table_name)
     table.put_item(
         Item={
             "group_id": group_id,
