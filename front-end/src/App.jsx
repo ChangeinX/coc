@@ -3,11 +3,13 @@ import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';
 import { fetchJSON } from './lib/api.js';
 import { proxyImageUrl } from './lib/assets.js';
+import useFeatures from './hooks/useFeatures.js';
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanSearchModal = lazy(() => import('./components/ClanSearchModal.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
 const ProfileModal = lazy(() => import('./components/ProfileModal.jsx'));
+const ChatDrawer = lazy(() => import('./components/ChatDrawer.jsx'));
 
 function isTokenExpired(tok) {
   try {
@@ -54,6 +56,9 @@ export default function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const { enabled: hasFeature } = useFeatures(token);
+  const chatAllowed = hasFeature('chat');
   const menuRef = React.useRef(null);
 
   useEffect(() => {
@@ -201,6 +206,14 @@ export default function App() {
           >
             <i data-lucide="search" className="w-5 h-5" />
           </button>
+          {chatAllowed && (
+            <button
+              className="p-2 rounded hover:bg-slate-700"
+              onClick={() => setShowChat(true)}
+            >
+              <i data-lucide="message-circle" className="w-5 h-5" />
+            </button>
+          )}
           <div className="relative" ref={menuRef}>
             <button
               className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase hover:bg-slate-600"
@@ -272,6 +285,13 @@ export default function App() {
       {showProfile && (
         <Suspense fallback={<Loading className="h-screen" />}>
           <ProfileModal onClose={() => setShowProfile(false)} onVerified={() => setVerified(true)} />
+        </Suspense>
+      )}
+      {chatAllowed && showChat && (
+        <Suspense fallback={<Loading className="h-screen" />}>
+          <ChatDrawer open={showChat} onClose={() => setShowChat(false)}>
+            <div className="p-4 h-full overflow-y-auto">Chat coming soon…</div>
+          </ChatDrawer>
         </Suspense>
       )}
     </>

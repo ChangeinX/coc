@@ -22,6 +22,10 @@ client ID and provide it via the `VITE_GOOGLE_CLIENT_ID` environment variable
 when running the dev server. The backend must receive the same value through
 `GOOGLE_CLIENT_ID`.
 
+### Chat (Experimental)
+
+Users can opt in to the chat UI via the `/user/features` API which controls feature flags at runtime.
+
 ## Production build
 
 ```bash
