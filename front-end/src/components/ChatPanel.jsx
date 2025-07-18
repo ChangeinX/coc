@@ -20,6 +20,7 @@ export default function ChatPanel({ groupId = '1' }) {
     const trimmed = text.trim();
     if (!trimmed) return;
     setSending(true);
+    console.log('Publishing message', trimmed, 'to', groupId);
     try {
       await fetchJSON('/chat/publish', {
         method: 'POST',
@@ -27,8 +28,8 @@ export default function ChatPanel({ groupId = '1' }) {
         body: JSON.stringify({ groupId, text: trimmed }),
       });
       setText('');
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('Failed to publish message', err);
     }
     setSending(false);
   };
