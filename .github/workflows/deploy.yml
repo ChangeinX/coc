@@ -27,6 +27,7 @@ jobs:
       MESSAGES_SERVICE: ${{ secrets.MESSAGES_SERVICE }}
       VITE_API_URL: ${{ secrets.VITE_API_URL }}
       VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+      VITE_APPSYNC_EVENTS_URL: ${{ secrets.VITE_APPSYNC_EVENTS_URL }}
 
     steps:
       - uses: actions/checkout@v3
@@ -72,6 +73,8 @@ jobs:
           npm ci --prefix front-end
           VITE_API_URL=$VITE_API_URL \
           VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
+          VITE_APPSYNC_EVENTS_URL=$VITE_APPSYNC_EVENTS_URL \
+          VITE_AWS_REGION=$AWS_REGION \
           npm run --prefix front-end build
 
       - name: Sync front-end to S3
