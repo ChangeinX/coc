@@ -10,7 +10,7 @@ function isTokenExpired(tok) {
 }
 
 export default function useGoogleIdToken() {
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
 
   useEffect(() => {
     if (!window.google?.accounts?.id) return;
@@ -18,7 +18,10 @@ export default function useGoogleIdToken() {
     const fetchToken = () => {
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: (res) => setToken(res.credential),
+        callback: (res) => {
+          localStorage.setItem('token', res.credential);
+          setToken(res.credential);
+        },
       });
       window.google.accounts.id.prompt();
     };
