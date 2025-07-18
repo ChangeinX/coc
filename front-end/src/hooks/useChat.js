@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react';
 import { PubSub } from '@aws-amplify/pubsub';
+import { graphqlOperation } from '@aws-amplify/api-graphql';
 import ensurePubSub from '../aws/pubsub.js';
+
+const SUBSCRIBE_MESSAGE = /* GraphQL */ `
+  subscription SendMessage($channel: String!) {
+    sendMessage(channel: $channel) {
+      channel
+      ts
+      userId
+      content
+    }
+  }
+`;
 import useGoogleIdToken from './useGoogleIdToken.js';
 import { fetchJSON } from '../lib/api.js';
 
@@ -36,10 +48,12 @@ export default function useChat(groupId) {
 
       if (ignore) return;
       console.log('Subscribing to group', groupId);
-      sub = PubSub.subscribe(groupId).subscribe({
+      sub = PubSub.subscribe(
+        graphqlOperation(SUBSCRIBE_MESSAGE, { channel: groupId }),
+      ).subscribe({
         next: (data) => {
           console.log('Received message', data);
-          setMessages((m) => [...m, data.value]);
+          setMessages((m) => [...m, data.value.data.sendMessage]);
         },
         error: (err) => {
           console.error('Subscription error', err);
