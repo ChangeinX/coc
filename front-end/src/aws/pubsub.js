@@ -4,12 +4,14 @@ let lastToken = null;
 
 export default async function ensurePubSub(token) {
   if (!token || token === lastToken) return;
+  console.log('Configuring Amplify PubSub');
   try {
     // Wait until Cognito has exchanged the Google token for temporary AWS creds
     await Auth.currentCredentials();
   } catch {
     // Swallow errors to avoid blocking configuration
   }
+  console.log('AppSync endpoint', import.meta.env.VITE_APPSYNC_EVENTS_URL);
   Amplify.configure({
     PubSub: {
       AWSAppSync: {
