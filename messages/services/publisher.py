@@ -13,6 +13,7 @@ from messages import models
 logger = logging.getLogger(__name__)
 
 
+
 def verify_group_member(user_id: int, group_id: str) -> bool:
     """Return ``True`` if *user_id* belongs to *group_id*."""
     row = ChatGroupMember.query.filter_by(user_id=user_id, group_id=int(group_id)).first()
@@ -24,27 +25,12 @@ def _publish_to_appsync(channel: str, payload: dict) -> None:
     if not url:
         logger.info("APPSYNC_EVENTS_URL not configured, skipping publish")
         return
-
-    # ensure the URL points to /event
-    if url.endswith("/graphql"):
-        url = url[:-len("/graphql")] + "/event"
-    elif not url.endswith("/event"):
-        url = url.rstrip("/") + "/event"
-
+    logger.info("Publishing to AppSync URL: %s", url)
     region = current_app.config.get("AWS_REGION", "us-east-1")
     session = boto3.Session(region_name=region)
-
-    body = {
-        "channel": channel,
-        "events": [json.dumps(payload)]
-    }
-
-    request = AWSRequest("POST", url, data=json.dumps(body))
+    request = AWSRequest("POST", url, data=json.dumps({"channels": [channel], "message": payload}))
     SigV4Auth(session.get_credentials(), "appsync", region).add_auth(request)
-    headers = dict(request.headers)
-
-    headers["Content-Type"] = "application/json"
-    httpx.post(url, content=request.body, headers=headers)
+    httpx.post(url, content=request.body, headers=dict(request.headers))
 
 
 def publish_message(channel: str, content: str, user_id: int) -> models.ChatMessage:
