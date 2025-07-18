@@ -1,8 +1,15 @@
 import { Amplify } from 'aws-amplify';
+import { Auth } from '@aws-amplify/auth';
 let lastToken = null;
 
-export default function ensurePubSub(token) {
+export default async function ensurePubSub(token) {
   if (!token || token === lastToken) return;
+  try {
+    // Wait until Cognito has exchanged the Google token for temporary AWS creds
+    await Auth.currentCredentials();
+  } catch {
+    // Swallow errors to avoid blocking configuration
+  }
   Amplify.configure({
     PubSub: {
       AWSAppSync: {

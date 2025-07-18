@@ -20,6 +20,7 @@ export default function useChat(groupId) {
         if (!ignore) setMessages(data);
       })
       .catch(() => {});
+    console.log('sub mounted');
     const sub = PubSub.subscribe(`/groups/${groupId}`).subscribe({
       next: (data) => setMessages((m) => [...m, data.value]),
     });
