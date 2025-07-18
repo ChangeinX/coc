@@ -20,7 +20,7 @@ def verify_group_member(user_id: int, group_id: str) -> bool:
     return row is not None
 
 
-def _publish_to_appsync(channel: str, payload: dict) -> None:
+def _publish_to_appsync(channel: str, user_id: int, content: str) -> None:
     url = current_app.config.get("APPSYNC_EVENTS_URL")
     if not url:
         logger.info("APPSYNC_EVENTS_URL not configured, skipping publish")
@@ -28,7 +28,22 @@ def _publish_to_appsync(channel: str, payload: dict) -> None:
     logger.info("Publishing to AppSync URL: %s", url)
     region = current_app.config.get("AWS_REGION", "us-east-1")
     session = boto3.Session(region_name=region)
-    request = AWSRequest("POST", url, data=json.dumps({"channels": [channel], "message": payload}))
+
+    payload = {
+        "operationName": "SendMessage",
+        "query": (
+            "mutation SendMessage($channel: String!, $userId: String!, $content: String!) "
+            "{ sendMessage(channel: $channel, userId: $userId, content: $content) "
+            "{ channel ts userId content } }"
+        ),
+        "variables": {
+            "channel": channel,
+            "userId": str(user_id),
+            "content": content,
+        },
+    }
+
+    request = AWSRequest("POST", url, data=json.dumps(payload))
     SigV4Auth(session.get_credentials(), "appsync", region).add_auth(request)
     httpx.post(url, content=request.body, headers=dict(request.headers))
 
@@ -50,5 +65,5 @@ def publish_message(channel: str, content: str, user_id: int) -> models.ChatMess
             "content": content,
         }
     )
-    _publish_to_appsync(f"/groups/{channel}", {"content": content, "userId": user_id, "ts": ts.isoformat()})
+    _publish_to_appsync(channel, user_id, content)
     return msg
