@@ -8,8 +8,6 @@ This folder contains a standalone React version of the dashboard. It can be buil
 npm install
 VITE_API_URL=http://localhost:8080 \
 VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
-VITE_APPSYNC_EVENTS_URL=https://xxxxx.appsync-realtime-api.us-east-1.amazonaws.com/graphql \
-VITE_AWS_REGION=us-east-1 \
 npm run dev
 ```
 
@@ -28,13 +26,6 @@ when running the dev server. The backend must receive the same value through
 
 Users can opt in to the chat UI via the `/user/features` API which controls feature flags at runtime.
 
-#### Required variables
-
-Set the following variables so the chat UI can connect to AWS AppSync:
-
-- `VITE_APPSYNC_EVENTS_URL` – realtime endpoint returned by Terraform.
-- `VITE_AWS_REGION` – AWS region of the AppSync API.
-
 ## Production build
 
 ```bash
@@ -42,11 +33,17 @@ npm install
 npm run build
 ```
 
-The production build output will be in the `dist/` directory. Changes to the
-`main` branch trigger a GitHub Actions workflow which builds the site with the
-same environment variables and syncs the result to an S3 bucket behind
-CloudFront. Cache invalidations are issued automatically so users see the newest
-files on deploy.
+The production build output will be in the `dist/` directory. When building the
+Docker image you can supply build arguments to set the backend URL and Google
+client ID:
+
+```bash
+docker build \
+  --build-arg VITE_API_URL=https://api.example.com \
+  --build-arg VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
+  --build-arg VITE_BASE_PATH=/ \
+  -t dashboard .
+```
 
 ### Cache invalidation
 
