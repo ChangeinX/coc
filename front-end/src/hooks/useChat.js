@@ -16,34 +16,48 @@ export default function useChat(groupId) {
   useEffect(() => {
     if (!groupId || !token) return;
     let ignore = false;
-    console.log('Fetching history for group', groupId);
-    fetchJSON(`/chat/history/${encodeURIComponent(groupId)}?limit=100`)
-      .then((data) => {
+    let sub;
+
+    async function setup() {
+      console.log('Fetching history for group', groupId);
+      try {
+        const data = await fetchJSON(
+          `/chat/history/${encodeURIComponent(groupId)}?limit=100`,
+        );
         if (!ignore) {
           console.log('History loaded', data);
           setMessages(data);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('Error loading history', err);
+      }
+
+      await ensurePubSub(token);
+
+      if (ignore) return;
+      console.log('Subscribing to group', groupId);
+      sub = PubSub.subscribe(groupId).subscribe({
+        next: (data) => {
+          console.log('Received message', data);
+          setMessages((m) => [...m, data.value]);
+        },
+        error: (err) => {
+          console.error('Subscription error', err);
+        },
+        complete: () => {
+          console.log('Subscription completed');
+        },
       });
-    console.log('Subscribing to group', groupId);
-    const sub = PubSub.subscribe(groupId).subscribe({
-      next: (data) => {
-        console.log('Received message', data);
-        setMessages((m) => [...m, data.value]);
-      },
-      error: (err) => {
-        console.error('Subscription error', err);
-      },
-      complete: () => {
-        console.log('Subscription completed');
-      },
-    });
+    }
+
+    setup();
+
     return () => {
       ignore = true;
-      console.log('Unsubscribing from group', groupId);
-      sub.unsubscribe();
+      if (sub) {
+        console.log('Unsubscribing from group', groupId);
+        sub.unsubscribe();
+      }
     };
   }, [groupId, token]);
 
