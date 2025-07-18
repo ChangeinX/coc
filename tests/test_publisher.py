@@ -1,7 +1,10 @@
 import json
 from flask import Flask
 from messages.services import publisher
+from messages.app import create_app  # type: ignore
 from coclib.config import MessagesConfig
+from coclib.extensions import db
+from coclib.models import User, ChatGroup, ChatGroupMember
 
 class TestConfig(MessagesConfig):
     TESTING = True
@@ -59,4 +62,21 @@ def test_publish_message_posts_graphql(monkeypatch):
     body = json.loads(posted["body"])
     assert body["operationName"] == "SendMessage"
     assert body["variables"] == {"channel": "1", "userId": "5", "content": "hi"}
+
+
+def test_verify_group_member_accepts_tag(monkeypatch):
+    app = create_app(TestConfig)
+    with app.app_context():
+        db.create_all()
+        db.session.add_all([
+            User(id=2, sub="s", email="e", name="N"),
+            ChatGroup(id=1, name="CLAN"),
+            ChatGroupMember(group_id=1, user_id=2),
+        ])
+        db.session.commit()
+
+        assert publisher.verify_group_member(2, "CLAN") is True
+        assert publisher.verify_group_member(2, "999") is False
+
+
 
