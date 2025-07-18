@@ -10,8 +10,7 @@
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.13.3",
-    "@aws-amplify/pubsub": "^5.0.8",
-    "aws-amplify": "^6.0.0",
+    "aws-amplify": "^6.15.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-window": "^1.8.8"

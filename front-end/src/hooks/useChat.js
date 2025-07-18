@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { PubSub } from '@aws-amplify/pubsub';
-import { graphqlOperation } from '@aws-amplify/api-graphql';
-import ensurePubSub from '../aws/pubsub.js';
+import { getGraphQLClient } from '../aws/graphqlClient.js';
+
 
 const SUBSCRIBE_MESSAGE = /* GraphQL */ `
   subscription SendMessage($channel: String!) {
@@ -13,6 +12,8 @@ const SUBSCRIBE_MESSAGE = /* GraphQL */ `
     }
   }
 `;
+
+
 import useGoogleIdToken from './useGoogleIdToken.js';
 import { fetchJSON } from '../lib/api.js';
 
@@ -20,10 +21,6 @@ export default function useChat(groupId) {
   const token = useGoogleIdToken();
   const [messages, setMessages] = useState([]);
 
-  useEffect(() => {
-    console.log('Ensuring PubSub for token', token ? token.slice(0, 10) : 'none');
-    ensurePubSub(token);
-  }, [token]);
 
   useEffect(() => {
     if (!groupId || !token) return;
@@ -44,26 +41,23 @@ export default function useChat(groupId) {
         console.error('Error loading history', err);
       }
 
-      await ensurePubSub(token);
-
       if (ignore) return;
       console.log('Subscribing to group', groupId);
-      sub = PubSub.subscribe(
-        graphqlOperation(SUBSCRIBE_MESSAGE, { channel: groupId }),
-      ).subscribe({
-        next: (data) => {
-          console.log('Received message', data);
-                    setMessages((m) => {
-            const msg = data.value.data.sendMessage;
-            return m.some((x) => x.ts === msg.ts) ? m : [...m, msg];
-          });
+
+      const client = getGraphQLClient(token);
+      sub = client.graphql({
+        query: SUBSCRIBE_MESSAGE,
+        variables: { channel: groupId },
+        authMode: 'oidc',
+      }).subscribe({
+        next: ({ data }) => {
+          const msg = data.sendMessage;
+          setMessages((m) =>
+            m.some((x) => x.ts === msg.ts) ? m : [...m, msg],
+          );
         },
-        error: (err) => {
-          console.error('Subscription error', err);
-        },
-        complete: () => {
-          console.log('Subscription completed');
-        },
+        error: (err) => console.error('Subscription error', err),
+        complete: () => console.log('Subscription completed'),
       });
     }
 
