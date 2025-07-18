@@ -53,7 +53,10 @@ export default function useChat(groupId) {
       ).subscribe({
         next: (data) => {
           console.log('Received message', data);
-          setMessages((m) => [...m, data.value.data.sendMessage]);
+                    setMessages((m) => {
+            const msg = data.value.data.sendMessage;
+            return m.some((x) => x.ts === msg.ts) ? m : [...m, msg];
+          });
         },
         error: (err) => {
           console.error('Subscription error', err);
