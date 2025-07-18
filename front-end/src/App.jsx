@@ -304,7 +304,7 @@ export default function App() {
         <Suspense fallback={<Loading className="h-screen" />}>
           <ChatDrawer open={showChat} onClose={() => setShowChat(false)}>
             {verified ? (
-              <ChatPanel />
+              <ChatPanel groupId={homeClanTag || '1'} />
             ) : (
               <div className="p-4 h-full overflow-y-auto">Verify your account to chat.</div>
             )}
