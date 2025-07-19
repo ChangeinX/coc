@@ -33,7 +33,7 @@ def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
     socketio.init_app(
         app,
         cors_allowed_origins=app.config["CORS_ORIGINS"],
-        path=f"{API_PREFIX}/chat/socket.io",
+        path="socket.io",
     )
     publisher.set_socketio(socketio)
 
