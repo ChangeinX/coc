@@ -1,5 +1,7 @@
 import os
 import asyncio
+import importlib
+
 import httpx
 from httpx import ASGITransport
 from starlette.middleware.cors import CORSMiddleware
@@ -11,7 +13,12 @@ os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 os.environ['COC_API_TOKEN'] = 'dummy'
 
 from coclib.config import MessagesConfig
-from messages.app import create_app, socketio
+
+def _make_app(cfg_cls: type[MessagesConfig]):
+    import messages.app as mapp
+    importlib.reload(mapp)
+    app = mapp.create_app(cfg_cls)
+    return app, mapp.socketio
 
 def test_socketio_cors_header():
     async def run_test():
@@ -20,9 +27,9 @@ def test_socketio_cors_header():
             SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
             GOOGLE_CLIENT_ID = "dummy"
 
-        app = create_app(TestConfig)
+        app, sio = _make_app(TestConfig)
         asgi_app = ASGIApp(
-            socketio.server,
+            sio.server,
             other_asgi_app=WsgiToAsgi(app),
             socketio_path="socket.io",
         )
@@ -44,3 +51,5 @@ def test_socketio_cors_header():
         assert resp.status_code == 200
         assert resp.headers.get('Access-Control-Allow-Origin') == 'https://dev.clan-boards.com'
     asyncio.run(run_test())
+
+
