@@ -25,13 +25,7 @@ when running the dev server. The backend must receive the same value through
 ### Chat (Experimental)
 
 Users can opt in to the chat UI via the `/user/features` API which controls feature flags at runtime.
-The chat websocket requires additional build-time configuration:
-
-```bash
-VITE_APPSYNC_EVENTS_URL=wss://events.example.com/graphql \
-VITE_AWS_REGION=us-east-1 \
-npm run dev
-```
+The chat connects via Socket.IO at `/api/v1/chat/socket.io` and requires no AWS configuration.
 
 ## Production build
 
@@ -53,8 +47,6 @@ docker build \
   --build-arg VITE_API_URL=https://api.example.com \
   --build-arg VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
   --build-arg VITE_BASE_PATH=/ \
-  --build-arg VITE_APPSYNC_EVENTS_URL=wss://events.example.com/graphql \
-  --build-arg VITE_AWS_REGION=us-east-1 \
   -t dashboard .
 ```
 

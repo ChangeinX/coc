@@ -49,6 +49,7 @@ def test_publish_ok(monkeypatch):
         return models.ChatMessage(channel="1", user_id=1, content="hi", ts=datetime.utcnow())
 
     monkeypatch.setattr("messages.app.api.publish_message", fake_publish)
+    monkeypatch.setattr("messages.app.graphql.publish_message", fake_publish)
     app = create_app(TestConfig)
     client: FlaskClient = app.test_client()
     with app.app_context():
@@ -90,4 +91,41 @@ def test_history_returns_messages(monkeypatch):
     assert resp.status_code == 200
     data = resp.get_json()
     assert data[0]["content"] == "hi"
+
+
+def test_graphql_send(monkeypatch):
+    _mock_verify(monkeypatch)
+    called = {}
+
+    def fake_publish(channel, content, user_id):
+        called["args"] = (channel, content, user_id)
+        return models.ChatMessage(channel=channel, user_id=user_id, content=content, ts=datetime.utcnow())
+
+    monkeypatch.setattr("messages.app.api.publish_message", fake_publish)
+    monkeypatch.setattr("messages.app.graphql.publish_message", fake_publish)
+    monkeypatch.setattr(
+        "messages.app.api.fetch_recent_messages",
+        lambda gid, limit=100: [],
+    )
+
+    app = create_app(TestConfig)
+    client: FlaskClient = app.test_client()
+    with app.app_context():
+        db.create_all()
+        db.session.add_all([
+            User(id=1, sub="abc", email="u@example.com", name="U"),
+            ChatGroup(id=1, name="g"),
+            ChatGroupMember(group_id=1, user_id=1),
+        ])
+        db.session.commit()
+
+    hdrs = {"Authorization": "Bearer t"}
+    query = "mutation Send($c:String!,$t:String!){sendMessage(channel:$c,content:$t){content}}"
+    resp = client.post(
+        "/api/v1/chat/graphql",
+        json={"query": query, "variables": {"c": "1", "t": "hi"}},
+        headers=hdrs,
+    )
+    assert resp.status_code == 200
+    assert called["args"] == ("1", "hi", 1)
 

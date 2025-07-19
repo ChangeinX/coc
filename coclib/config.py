@@ -65,7 +65,6 @@ class MessagesConfig(Config):
 
     AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
     MESSAGES_TABLE = os.getenv("MESSAGES_TABLE", "chat_messages")
-    APPSYNC_EVENTS_URL = os.getenv("APPSYNC_EVENTS_URL")
     PORT = int(os.getenv("PORT", str(Config.PORT)))
 
 
