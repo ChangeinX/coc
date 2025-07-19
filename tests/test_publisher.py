@@ -20,26 +20,9 @@ def test_publish_message_posts_graphql(monkeypatch):
     posted = {}
     monkeypatch.setattr(publisher, "SigV4Auth", lambda *a, **k: type("A", (), {"add_auth": lambda self, r: None})())
 
-    class DummyTable:
-        def __init__(self):
-            self.items = []
-
-        def put_item(self, Item):
-            self.items.append(Item)
-
-    dummy_table = DummyTable()
-
-    class DummyResource:
-        def Table(self, name):
-            return dummy_table
-
     class DummySession:
         def __init__(self, *a, **k):
             pass
-
-        def resource(self, service):
-            assert service == "dynamodb"
-            return DummyResource()
 
         def get_credentials(self):
             return None
@@ -52,16 +35,31 @@ def test_publish_message_posts_graphql(monkeypatch):
         posted["headers"] = headers
         class Resp:
             status_code = 200
+
+            @staticmethod
+            def json():
+                return {
+                    "data": {
+                        "sendMessage": {
+                            "channel": "1",
+                            "ts": "2023-01-01T00:00:00",
+                            "userId": "5",
+                            "content": "hi",
+                        }
+                    }
+                }
+
         return Resp()
 
     monkeypatch.setattr(publisher, "httpx", type("M", (), {"post": staticmethod(fake_post)}))
 
     with app.app_context():
-        publisher.publish_message("1", "hi", 5)
+        msg = publisher.publish_message("1", "hi", 5)
 
     body = json.loads(posted["body"])
     assert body["operationName"] == "SendMessage"
     assert body["variables"] == {"channel": "1", "userId": "5", "content": "hi"}
+    assert msg.ts.isoformat() == "2023-01-01T00:00:00"
 
 
 def test_verify_group_member_accepts_tag(monkeypatch):

@@ -33,11 +33,11 @@ def verify_group_member(user_id: int, group_id: str) -> bool:
     return row is not None
 
 
-def _publish_to_appsync(channel: str, user_id: int, content: str) -> None:
+def _publish_to_appsync(channel: str, user_id: int, content: str) -> dict | None:
     url = current_app.config.get("APPSYNC_EVENTS_URL")
     if not url:
         logger.info("APPSYNC_EVENTS_URL not configured, skipping publish")
-        return
+        return None
     logger.info("Publishing to AppSync URL: %s", url)
     region = current_app.config.get("AWS_REGION", "us-east-1")
     session = boto3.Session(region_name=region)
@@ -58,28 +58,30 @@ def _publish_to_appsync(channel: str, user_id: int, content: str) -> None:
 
     request = AWSRequest("POST", url, data=json.dumps(payload))
     SigV4Auth(session.get_credentials(), "appsync", region).add_auth(request)
-    httpx.post(url, content=request.body, headers=dict(request.headers))
+    resp = httpx.post(url, content=request.body, headers=dict(request.headers))
+    try:
+        return resp.json().get("data", {}).get("sendMessage")
+    except Exception as exc:  # json() may raise, payload may be malformed
+        logger.warning("Failed to decode AppSync response: %s", exc)
+        return None
 
 
 def publish_message(channel: str, content: str, user_id: int) -> models.ChatMessage:
+    """Publish ``content`` to ``channel`` and return the created message."""
+    logger.info("Publishing message: channel=%s user=%s", channel, user_id)
+
+    payload = _publish_to_appsync(channel, user_id, content)
+    if payload:
+        ts = datetime.fromisoformat(payload["ts"])
+        return models.ChatMessage(
+            channel=payload["channel"],
+            user_id=int(payload["userId"]),
+            content=payload.get("content", ""),
+            ts=ts,
+        )
+
     ts = datetime.utcnow()
-    msg = models.ChatMessage(channel=channel, user_id=user_id, content=content, ts=ts)
-    logger.info("Publishing message: %s", msg)
-    region = current_app.config.get("AWS_REGION", "us-east-1")
-    session = boto3.Session(region_name=region)
-    dynamodb = session.resource("dynamodb")
-    table_name = current_app.config.get("MESSAGES_TABLE", "chat_messages")
-    table = dynamodb.Table(table_name)
-    table.put_item(
-        Item={
-            "channel": channel,
-            "ts": ts.isoformat(),
-            "userId": str(user_id),
-            "content": content,
-        }
-    )
-    _publish_to_appsync(channel, user_id, content)
-    return msg
+    return models.ChatMessage(channel=channel, user_id=user_id, content=content, ts=ts)
 
 
 def fetch_recent_messages(channel: str, limit: int = 100) -> list[models.ChatMessage]:
