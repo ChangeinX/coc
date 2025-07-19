@@ -12,11 +12,10 @@ from coclib.models import User
 
 from .api import bp as messages_bp, API_PREFIX
 from .api.health import bp as health_bp
-import socketio
-from urllib.parse import parse_qs
+from flask_socketio import SocketIO, join_room
 from messages.services import publisher
 
-socketio_server = socketio.AsyncServer(async_mode="asgi")  # initialized within create_app
+socketio = SocketIO()  # initialized within create_app
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +30,12 @@ def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
         raise RuntimeError("GOOGLE_CLIENT_ID environment variable is required")
 
     CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
-
-    global socketio_server
-    socketio_server = socketio.AsyncServer(
-        async_mode="asgi",
+    socketio.init_app(
+        app,
         cors_allowed_origins=app.config["CORS_ORIGINS"],
+        path=f"{API_PREFIX}/chat/socket.io",
     )
-    publisher.set_socketio(socketio_server)
+    publisher.set_socketio(socketio)
 
     db.init_app(app)
     cache.init_app(app)
@@ -73,11 +71,10 @@ def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
     app.register_blueprint(messages_bp)
     app.register_blueprint(health_bp)
 
-    @socketio_server.event(namespace=f"{API_PREFIX}/chat")
-    async def connect(sid, environ):
-        qs = parse_qs(environ.get("QUERY_STRING", ""))
-        group_id = qs.get("groupId", [None])[0]
-        token = qs.get("token", [""])[0]
+    @socketio.on("connect", namespace=f"{API_PREFIX}/chat")
+    def chat_connect():
+        group_id = request.args.get("groupId")
+        token = request.args.get("token", "")
         if not token or not group_id:
             return False
         try:
@@ -85,19 +82,18 @@ def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
         except Exception as exc:
             logger.warning("Socket token verification failed: %s", exc)
             return False
-        with app.app_context():
-            user = User.query.filter_by(sub=info["sub"]).one_or_none()
-            if not user:
-                user = User(sub=info["sub"], email=info.get("email"), name=info.get("name"))
-                db.session.add(user)
-                db.session.commit()
-            if not publisher.verify_group_member(user.id, str(group_id)):
-                return False
-        socketio_server.enter_room(sid, str(group_id))
+        user = User.query.filter_by(sub=info["sub"]).one_or_none()
+        if not user:
+            user = User(sub=info["sub"], email=info.get("email"), name=info.get("name"))
+            db.session.add(user)
+            db.session.commit()
+        if not publisher.verify_group_member(user.id, str(group_id)):
+            return False
+        join_room(str(group_id))
         return None
 
-    @socketio_server.event(namespace=f"{API_PREFIX}/chat")
-    async def disconnect(sid):
+    @socketio.on("disconnect", namespace=f"{API_PREFIX}/chat")
+    def chat_disconnect():
         pass
 
     return app
