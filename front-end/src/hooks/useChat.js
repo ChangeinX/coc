@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import useGoogleIdToken from './useGoogleIdToken.js';
-import { fetchJSON } from '../lib/api.js';
+import { API_URL, fetchJSON } from '../lib/api.js';
 
 export default function useChat(groupId) {
   const token = useGoogleIdToken();
@@ -29,7 +29,7 @@ export default function useChat(groupId) {
 
       if (ignore) return;
       console.log('Connecting socket for group', groupId);
-      const base = import.meta.env.VITE_API_URL || window.location.origin;
+      const base = API_URL || window.location.origin;
       client = new Client({
         webSocketFactory: () => new SockJS(`${base}/api/v1/chat/socket`),
         onConnect: () => {
