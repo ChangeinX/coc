@@ -190,3 +190,7 @@ fabric.properties
 !front-end/src/lib/
 
 .DS_Store
+# Java build artifacts
+messages-java/build/
+messages-java/.gradle/
+messages-java/gradle/wrapper/gradle-wrapper.jar
