@@ -28,7 +28,7 @@ jobs:
       VITE_API_URL: ${{ secrets.VITE_API_URL }}
       VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
       VITE_APPSYNC_EVENTS_URL: ${{ secrets.VITE_APPSYNC_EVENTS_URL }}
-      APP_SYNC_API_KEY: ${{ secrets.APP_SYNC_API_KEY }}
+      APP_SYNC_API_KEY: ${{ secrets.VITE_API_KEY }}
 
     steps:
       - uses: actions/checkout@v3
@@ -76,7 +76,7 @@ jobs:
           VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
           VITE_APPSYNC_EVENTS_URL=$VITE_APPSYNC_EVENTS_URL \
           VITE_AWS_REGION=$AWS_REGION \
-          APP_SYNC_API_KEY=$APP_SYNC_API_KEY \
+          VITE_API_KEY=$VITE_API_KEY \
           npm run --prefix front-end build
 
       - name: Sync front-end to S3
