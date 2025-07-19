@@ -24,6 +24,7 @@ asgi_app = CORSMiddleware(
     allow_origins=app.config["CORS_ORIGINS"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 logger = logging.getLogger(__name__)
 
