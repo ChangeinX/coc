@@ -2,9 +2,11 @@ import logging
 import os
 from dotenv import load_dotenv
 
+import socketio
 from asgiref.wsgi import WsgiToAsgi
 from coclib.config import messages_env_configs
-from messages.app import create_app
+from messages.app import create_app, socketio_server
+from messages.app.api import API_PREFIX
 
 load_dotenv()
 
@@ -12,7 +14,11 @@ cfg_name = os.getenv("APP_ENV", "production")
 cfg_cls = messages_env_configs[cfg_name]
 
 app = create_app(cfg_cls)
-asgi_app = WsgiToAsgi(app)
+asgi_app = socketio.ASGIApp(
+    socketio_server,
+    other_asgi_app=WsgiToAsgi(app),
+    socketio_path=f"{API_PREFIX}/chat/socket.io",
+)
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from flask_socketio import SocketIO
+import socketio
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -9,10 +9,10 @@ from flask import current_app
 from coclib.models import ChatGroup, ChatGroupMember
 from messages import models
 
-_socketio: SocketIO | None = None
+_socketio: socketio.AsyncServer | None = None
 
 
-def set_socketio(sio: SocketIO) -> None:
+def set_socketio(sio: socketio.AsyncServer) -> None:
     """Store the SocketIO instance for broadcasting."""
     global _socketio
     _socketio = sio
