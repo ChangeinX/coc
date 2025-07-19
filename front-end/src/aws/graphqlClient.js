@@ -6,12 +6,15 @@ Amplify.configure({
         GraphQL: {
             endpoint: import.meta.env.VITE_APPSYNC_EVENTS_URL,
             region: import.meta.env.VITE_AWS_REGION,
-            defaultAuthMode: 'oidc',
-            oidcProvider: {
-                getToken: async () => localStorage.getItem('token')
-                }
+            defaultAuthMode: 'apiKey',
+            apiKey: import.meta.env.APP_SYNC_API_KEY
         }
     }
 });
+
+// trim and show api key to make sure it's set
+if (import.meta.env.APP_SYNC_API_KEY) {
+    console.log('AppSync API Key:', import.meta.env.APP_SYNC_API_KEY.trim().slice(0, 5) + '...');
+}
 
 export const client = generateClient();
