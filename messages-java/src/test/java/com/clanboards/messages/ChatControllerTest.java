@@ -30,12 +30,12 @@ class ChatControllerTest {
     @Test
     void publishReturnsOk() throws Exception {
         Instant ts = Instant.parse("2024-01-01T00:00:00Z");
-        Mockito.when(chatService.publish("1", "hi", "0"))
-                .thenReturn(new ChatMessage("1", "0", "hi", ts));
+        Mockito.when(chatService.publish("1", "hi", "u"))
+                .thenReturn(new ChatMessage("1", "u", "hi", ts));
 
         mvc.perform(post("/api/v1/chat/publish")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"groupId\":\"1\",\"text\":\"hi\"}"))
+                .content("{\"groupId\":\"1\",\"text\":\"hi\",\"userId\":\"u\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"))
                 .andExpect(jsonPath("$.ts").value(ts.toString()));

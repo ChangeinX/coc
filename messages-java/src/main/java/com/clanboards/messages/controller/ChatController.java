@@ -22,7 +22,7 @@ public class ChatController {
 
     @PostMapping("/publish")
     public ResponseEntity<Map<String, String>> publish(@RequestBody PublishRequest req) {
-        ChatMessage msg = chatService.publish(req.groupId(), req.text(), "0");
+        ChatMessage msg = chatService.publish(req.groupId(), req.text(), req.userId());
         messaging.convertAndSend("/topic/chat/" + req.groupId(), Map.of(
                 "channel", msg.channel(),
                 "userId", msg.userId(),
@@ -46,5 +46,5 @@ public class ChatController {
         return ResponseEntity.ok(body);
     }
 
-    public static record PublishRequest(String groupId, String text) {}
+    public static record PublishRequest(String groupId, String text, String userId) {}
 }
