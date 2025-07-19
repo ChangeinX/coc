@@ -48,7 +48,6 @@ export default function useChat(groupId) {
       sub = client.graphql({
         query: SUBSCRIBE_MESSAGE,
         variables: { channel: groupId },
-        authMode: 'oidc',
       }).subscribe({
         next: ({ data }) => {
           const msg = data.onMessage;
@@ -56,7 +55,10 @@ export default function useChat(groupId) {
             m.some((x) => x.ts === msg.ts) ? m : [...m, msg],
           );
         },
-        error: (err) => console.error('Subscription error', err),
+        error: (err) => {
+          console.error('Subscription error', err);
+          console.error(JSON.stringify(err, null, 2));
+        },
         complete: () => console.log('Subscription completed'),
       });
     }
