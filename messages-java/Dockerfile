@@ -1,9 +1,9 @@
 FROM eclipse-temurin:21-jdk-jammy AS build
-RUN apt-get update && apt-get install -y gradle && rm -rf /var/lib/apt/lists/*
 WORKDIR /workspace
 COPY messages-java/ ./messages-java
 WORKDIR /workspace/messages-java
-RUN gradle bootJar --no-daemon
+RUN chmod +x gradlew
+RUN ./gradlew bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /opt/app
