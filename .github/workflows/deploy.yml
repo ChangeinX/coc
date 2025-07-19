@@ -47,7 +47,7 @@ jobs:
             static:
               - sync/**
             messages:
-              - messages/**
+              - messages-java/**
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -123,7 +123,7 @@ jobs:
         run: |
           docker buildx build \
             --platform linux/arm64 \
-            -f messages/Dockerfile \
+            -f messages-java/Dockerfile \
             -t $ECR_REGISTRY/$MESSAGES_REPOSITORY:latest \
             -t $ECR_REGISTRY/$MESSAGES_REPOSITORY:${{ github.sha }} \
             --push .

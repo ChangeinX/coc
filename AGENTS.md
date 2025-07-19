@@ -8,7 +8,7 @@ This monorepo hosts several services and a front-end that make up a Clash of Cla
 - `coclib/` – shared Python modules for both services
 - `db/` – minimal Flask app used solely for running migrations
 - `migrations/` – Alembic migration scripts
-- `messages/` - Message service for chatting
+- `messages-java/` - Chat service implemented in Spring Boot
 
 Each directory contains its own `AGENTS.md` with project specific notes. Check those files when working in a subfolder.
 
