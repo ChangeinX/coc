@@ -29,8 +29,8 @@ export default function useChat(groupId) {
       if (ignore) return;
       console.log('Connecting socket for group', groupId);
       const base = import.meta.env.VITE_API_URL || window.location.origin;
-      socket = io(base, {
-        path: '/api/v1/chat/socket.io',
+      socket = io(`${base}/api/v1/chat`, {
+        path: '/socket.io',
         query: { token, groupId },
       });
       socket.on('message', (msg) => {
