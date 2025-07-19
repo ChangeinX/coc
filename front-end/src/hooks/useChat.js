@@ -48,6 +48,8 @@ export default function useChat(groupId) {
       sub = client.graphql({
         query: SUBSCRIBE_MESSAGE,
         variables: { channel: groupId },
+        authMode: 'oidc',
+        authToken: token
       }).subscribe({
         next: ({ data }) => {
           const msg = data.onMessage;
