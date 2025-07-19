@@ -7,6 +7,7 @@ from coclib.config import MessagesConfig
 from coclib.extensions import db
 from coclib.models import User, ChatGroup, ChatGroupMember
 from messages import models
+from messages.app import socketio, API_PREFIX
 
 
 class TestConfig(MessagesConfig):
@@ -128,4 +129,27 @@ def test_graphql_send(monkeypatch):
     )
     assert resp.status_code == 200
     assert called["args"] == ("1", "hi", 1)
+
+
+def test_socket_connect_no_auth(monkeypatch):
+    _mock_verify(monkeypatch)
+    monkeypatch.setattr(
+        "messages.services.publisher.verify_group_member",
+        lambda u, g: True,
+    )
+    app = create_app(TestConfig)
+    client: FlaskClient = app.test_client()
+    with app.app_context():
+        db.create_all()
+        db.session.add(User(id=1, sub="abc", email="u@example.com", name="U"))
+        db.session.commit()
+
+    sio_client = socketio.test_client(
+        app,
+        namespace=f"{API_PREFIX}/chat",
+        query_string="groupId=1&token=t",
+        flask_test_client=client,
+    )
+    assert sio_client.is_connected(f"{API_PREFIX}/chat")
+    sio_client.disconnect(f"{API_PREFIX}/chat")
 
