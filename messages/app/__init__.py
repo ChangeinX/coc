@@ -29,7 +29,11 @@ def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
     if not client_id:
         raise RuntimeError("GOOGLE_CLIENT_ID environment variable is required")
 
-    CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
+    CORS(
+        app,
+        resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}},
+        supports_credentials=True,
+    )
     socketio.init_app(
         app,
         cors_allowed_origins=app.config["CORS_ORIGINS"],
