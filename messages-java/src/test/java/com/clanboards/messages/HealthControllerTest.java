@@ -1,4 +1,4 @@
-package com.example.messages;
+package com.clanboards.messages;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

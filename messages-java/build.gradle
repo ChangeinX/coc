@@ -4,7 +4,7 @@ plugins {
     id 'java'
 }
 
-group = 'com.example'
+group = 'com.clanboards'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '21'
 
@@ -20,6 +20,9 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation platform('software.amazon.awssdk:bom:2.25.32')
+    implementation 'software.amazon.awssdk:dynamodb'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
