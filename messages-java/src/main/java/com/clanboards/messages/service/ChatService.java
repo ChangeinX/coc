@@ -23,7 +23,7 @@ public class ChatService {
 
     public ChatService(
             DynamoDbClient dynamoDb,
-            @Value("${messages.table:chat_messages}") String tableName) {
+            @Value("${messages.table:webapp-chat-messages}") String tableName) {
         this.dynamoDb = dynamoDb;
         this.tableName = tableName;
     }
