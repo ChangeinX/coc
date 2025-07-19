@@ -10,6 +10,9 @@ import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,13 +53,21 @@ public class ChatService {
                 .build();
         QueryResponse resp = dynamoDb.query(req);
         return resp.items().stream()
-                .sorted(Comparator.comparing(m -> Instant.parse(m.get("ts").s())))
+                .sorted(Comparator.comparing(m -> parseInstant(m.get("ts").s())))
                 .map(item -> new ChatMessage(
                         item.get("channel").s(),
                         item.get("userId").s(),
                         item.get("content").s(),
-                        Instant.parse(item.get("ts").s())
+                        parseInstant(item.get("ts").s())
                 ))
                 .collect(Collectors.toList());
+    }
+
+    private Instant parseInstant(String value) {
+        try {
+            return Instant.parse(value);
+        } catch (DateTimeParseException ex) {
+            return LocalDateTime.parse(value).toInstant(ZoneOffset.UTC);
+        }
     }
 }
