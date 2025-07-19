@@ -1,9 +1,6 @@
-import pathlib
-import sys
 from datetime import datetime, timedelta
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "sync"))
-from services import player_service
+from coclib.services import player_service
 
 class Snap:
     def __init__(self, *, last_seen=None, trophies=0, donations=0, donations_received=0, war_attacks_used=None):

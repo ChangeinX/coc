@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import logging
 import os
 from typing import TYPE_CHECKING
-import httpx
 
 from coclib.extensions import cache
 from coclib.extensions import db
@@ -13,18 +12,7 @@ from coclib.utils import normalize_tag
 
 
 logger = logging.getLogger(__name__)
-SYNC_BASE = os.getenv("SYNC_BASE")
 STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
-
-async def _trigger_sync(tag: str) -> None:
-    if not SYNC_BASE:
-        return
-    url = f"{SYNC_BASE.rstrip('/')}/war/{tag}"
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            await client.post(url)
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.warning("Sync request to %s failed: %s", url, exc)
 
 async def current_war(clan_tag: str) -> dict:
     clan_tag = normalize_tag(clan_tag)
@@ -66,7 +54,7 @@ async def current_war_snapshot(clan_tag: str) -> "dict | None":
     row = await safe_to_thread(_last_war_sync, clan_tag)
     needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
     if needs_refresh:
-        await _trigger_sync(clan_tag)
+        await current_war(clan_tag)
         row = await safe_to_thread(_last_war_sync, clan_tag)
         if row is None:
             return None
