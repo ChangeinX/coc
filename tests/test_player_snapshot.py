@@ -1,16 +1,12 @@
-import sys
-import pathlib
 import asyncio
 from datetime import datetime, timedelta
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "back-end"))
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "sync"))
+from coclib.services.player_service import get_player_snapshot
 
 from app import create_app
 from coclib.config import Config
 from coclib.extensions import db
 from coclib.models import PlayerSnapshot, Player
-from services.player_service import get_player_snapshot
 
 class TestConfig(Config):
     TESTING = True

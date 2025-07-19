@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, abort
 
-from sync.services import clan_service, player_service, war_service
+from coclib.services import clan_service, player_service, war_service
 
 bp = Blueprint("sync_api", __name__, url_prefix="/sync")
 

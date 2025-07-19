@@ -6,26 +6,14 @@ from datetime import datetime, timedelta
 from typing import Optional, TypedDict
 
 from coclib.utils import safe_to_thread
-import httpx
 from sqlalchemy import func
 
 from coclib.extensions import cache, db
 from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot, Clan, Player
 from coclib.utils import normalize_tag
+from coclib.services import clan_service, player_service
 
 logger = logging.getLogger(__name__)
-SYNC_BASE = os.getenv("SYNC_BASE", "http://localhost:8000/sync")
-
-
-async def _trigger_sync(path: str) -> None:
-    if not SYNC_BASE:
-        return
-    url = f"{SYNC_BASE.rstrip('/')}/{path.lstrip('/')}"
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            await client.post(url)
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.warning("Sync request to %s failed: %s", url, exc)
 
 CACHE_TTL = 60
 STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
@@ -176,7 +164,7 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
     )
     needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
     if needs_refresh:
-        await _trigger_sync(f"clan/{tag}")
+        await clan_service.get_clan(tag)
         row = (
             ClanSnapshot.query
             .filter_by(clan_tag=tag)
@@ -217,7 +205,7 @@ async def get_player(tag: str) -> Optional[PlayerDict]:
     )
     needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
     if needs_refresh:
-        await _trigger_sync(f"player/{tag}")
+        await player_service.get_player(tag)
         row = (
             PlayerSnapshot.query
             .filter_by(player_tag=tag)
