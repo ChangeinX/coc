@@ -12,6 +12,10 @@ from coclib.models import User
 
 from .api import bp as messages_bp, API_PREFIX
 from .api.health import bp as health_bp
+from flask_socketio import SocketIO, join_room
+from messages.services import publisher
+
+socketio = SocketIO()  # initialized within create_app
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +30,12 @@ def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
         raise RuntimeError("GOOGLE_CLIENT_ID environment variable is required")
 
     CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
+    socketio.init_app(
+        app,
+        cors_allowed_origins=app.config["CORS_ORIGINS"],
+        path=f"{API_PREFIX}/chat/socket.io",
+    )
+    publisher.set_socketio(socketio)
 
     db.init_app(app)
     cache.init_app(app)
@@ -60,5 +70,30 @@ def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
 
     app.register_blueprint(messages_bp)
     app.register_blueprint(health_bp)
+
+    @socketio.on("connect", namespace=f"{API_PREFIX}/chat")
+    def chat_connect():
+        group_id = request.args.get("groupId")
+        token = request.args.get("token", "")
+        if not token or not group_id:
+            return False
+        try:
+            info = id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
+        except Exception as exc:
+            logger.warning("Socket token verification failed: %s", exc)
+            return False
+        user = User.query.filter_by(sub=info["sub"]).one_or_none()
+        if not user:
+            user = User(sub=info["sub"], email=info.get("email"), name=info.get("name"))
+            db.session.add(user)
+            db.session.commit()
+        if not publisher.verify_group_member(user.id, str(group_id)):
+            return False
+        join_room(str(group_id))
+        return None
+
+    @socketio.on("disconnect", namespace=f"{API_PREFIX}/chat")
+    def chat_disconnect():
+        pass
 
     return app

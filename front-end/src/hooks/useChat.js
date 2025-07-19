@@ -1,19 +1,5 @@
 import { useEffect, useState } from 'react';
-import { client } from '../aws/graphqlClient.js';
-
-
-const SUBSCRIBE_MESSAGE = /* GraphQL */ `
-  subscription OnMessage($channel: String!) {
-    onMessage(channel: $channel) {
-      channel
-      ts
-      userId
-      content
-    }
-  }
-`;
-
-
+import { io } from 'socket.io-client';
 import useGoogleIdToken from './useGoogleIdToken.js';
 import { fetchJSON } from '../lib/api.js';
 
@@ -21,11 +7,10 @@ export default function useChat(groupId) {
   const token = useGoogleIdToken();
   const [messages, setMessages] = useState([]);
 
-
   useEffect(() => {
     if (!groupId || !token) return;
     let ignore = false;
-    let sub;
+    let socket;
 
     async function setup() {
       console.log('Fetching history for group', groupId);
@@ -42,35 +27,25 @@ export default function useChat(groupId) {
       }
 
       if (ignore) return;
-      console.log('Subscribing to group', groupId);
-
-      sub = client.graphql({
-        query: SUBSCRIBE_MESSAGE,
-        variables: { channel: groupId },
-        authMode: 'oidc',
-        authToken: token
-      }).subscribe({
-        next: ({ data }) => {
-          const msg = data.onMessage;
-          setMessages((m) =>
-            m.some((x) => x.ts === msg.ts) ? m : [...m, msg],
-          );
-        },
-        error: (err) => {
-          console.error('Subscription error', err);
-          console.error(JSON.stringify(err, null, 2));
-        },
-        complete: () => console.log('Subscription completed'),
+      console.log('Connecting socket for group', groupId);
+      const base = import.meta.env.VITE_API_URL || window.location.origin;
+      socket = io(base, {
+        path: '/api/v1/chat/socket.io',
+        query: { token, groupId },
       });
+      socket.on('message', (msg) => {
+        setMessages((m) => (m.some((x) => x.ts === msg.ts) ? m : [...m, msg]));
+      });
+      socket.on('connect_error', (err) => console.error('socket error', err));
     }
 
     setup();
 
     return () => {
       ignore = true;
-      if (sub) {
-        console.log('Unsubscribing from group', groupId);
-        sub.unsubscribe();
+      if (socket) {
+        console.log('Closing socket for group', groupId);
+        socket.disconnect();
       }
     };
   }, [groupId, token]);
