@@ -32,7 +32,6 @@ def fake_publish(channel: str, content: str, user_id: int) -> models.ChatMessage
 def main() -> None:
 
     app = create_app(MessagesTestConfig)
-    socketio.sockio_mw.engineio_path = "/socket.io/"
     client = app.test_client()
     with app.app_context():
         db.create_all()
