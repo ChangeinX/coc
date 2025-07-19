@@ -2,23 +2,15 @@ from flask import Blueprint, jsonify, request, g, abort
 from coclib.extensions import db
 from coclib.utils import normalize_tag
 from coclib.models import UserProfile, FeatureFlag
-import os
-import httpx
+from coclib.services.player_service import verify_token as verify_player_token
 from . import API_PREFIX
 
-SYNC_BASE = os.getenv("SYNC_BASE", "http://localhost:8000/sync")
 
 bp = Blueprint("user", __name__, url_prefix=f"{API_PREFIX}/user")
 
 
 async def _verify_player_token(tag: str, token: str) -> dict:
-    if not SYNC_BASE:
-        raise RuntimeError("SYNC_BASE not configured")
-    url = f"{SYNC_BASE.rstrip('/')}/verify/{tag}"
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.post(url, json={"token": token})
-    resp.raise_for_status()
-    return resp.json()
+    return await verify_player_token(tag, token)
 
 
 @bp.get("/me")
