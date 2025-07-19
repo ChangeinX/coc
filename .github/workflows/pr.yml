@@ -22,7 +22,7 @@ jobs:
         run: pip install nox
 
       - name: Run nox
-        run: nox -s lint tests
+        run: nox -s lint tests smoke
 
       - name: Enable auto-merge
         uses: peter-evans/enable-pull-request-automerge@v3
