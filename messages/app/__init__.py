@@ -45,7 +45,11 @@ def create_app(cfg_cls: type[MessagesConfig] = MessagesConfig) -> Flask:
 
     def require_auth():
         path = request.path.rstrip("/")
-        if request.method == "OPTIONS" or path.endswith("/health"):
+        if (
+            request.method == "OPTIONS"
+            or path.endswith("/health")
+            or path.endswith("/socket.io")
+        ):
             return
         auth = request.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
