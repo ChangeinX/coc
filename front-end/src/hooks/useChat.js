@@ -3,8 +3,8 @@ import { getGraphQLClient } from '../aws/graphqlClient.js';
 
 
 const SUBSCRIBE_MESSAGE = /* GraphQL */ `
-  subscription SendMessage($channel: String!) {
-    sendMessage(channel: $channel) {
+  subscription OnMessage($channel: String!) {
+    onMessage(channel: $channel) {
       channel
       ts
       userId
@@ -51,7 +51,7 @@ export default function useChat(groupId) {
         authMode: 'oidc',
       }).subscribe({
         next: ({ data }) => {
-          const msg = data.sendMessage;
+          const msg = data.onMessage;
           setMessages((m) =>
             m.some((x) => x.ts === msg.ts) ? m : [...m, msg],
           );
