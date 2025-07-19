@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { fetchJSON } from '../lib/api.js';
 import useChat from '../hooks/useChat.js';
+import ChatMessage from './ChatMessage.jsx';
 
 export default function ChatPanel({ groupId = '1' }) {
   const { messages } = useChat(groupId);
@@ -51,9 +52,7 @@ export default function ChatPanel({ groupId = '1' }) {
         <>
           <div className="flex-1 overflow-y-auto space-y-2 p-4">
             {messages.map((m, idx) => (
-              <div key={idx} className="bg-slate-100 rounded px-2 py-1">
-                {m.content}
-              </div>
+              <ChatMessage key={m.ts || idx} message={m} />
             ))}
             <div ref={endRef} />
           </div>
