@@ -40,6 +40,10 @@ npm install
 npm run build
 ```
 
+The build script automatically injects the current git commit hash into the
+bundle using the `VITE_COMMIT_HASH` environment variable. The application logs
+this commit hash to the browser console on page load.
+
 The production build output will be in the `dist/` directory. When building the
 Docker image you can supply build arguments to set the backend URL and Google
 client ID:
