@@ -7,7 +7,7 @@ Amplify.configure({
             endpoint: import.meta.env.VITE_APPSYNC_EVENTS_URL,
             region: import.meta.env.VITE_AWS_REGION,
             defaultAuthMode: 'apiKey',
-            apiKey: import.meta.env.APP_SYNC_API_KEY
+            apiKey: import.meta.env.VITE_API_KEY
         }
     }
 });
