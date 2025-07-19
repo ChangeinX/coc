@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, g, abort
+from ..graphql import schema
 
 from messages.services.publisher import (
     publish_message,
@@ -22,6 +23,17 @@ def publish():
         abort(403)
     msg = publish_message(str(group_id), content, g.user.id)
     return jsonify({"status": "ok", "ts": msg.ts.isoformat()})
+
+
+@bp.post("/graphql")
+def graphql_api():
+    data = request.get_json(silent=True) or {}
+    query = data.get("query")
+    variables = data.get("variables")
+    result = schema.execute(query, variable_values=variables, context_value={"user": g.user})
+    if result.errors:
+        return jsonify({"errors": [str(e) for e in result.errors]}), 400
+    return jsonify(result.data)
 
 
 @bp.get("/history/<group_id>")

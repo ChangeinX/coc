@@ -1,4 +1,3 @@
-import json
 from flask import Flask
 from messages.services import publisher
 from messages.app import create_app  # type: ignore
@@ -10,56 +9,51 @@ class TestConfig(MessagesConfig):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     GOOGLE_CLIENT_ID = "dummy"
-    APPSYNC_EVENTS_URL = "https://api.test/graphql"
+    MESSAGES_TABLE = "chat_messages"
 
 
-def test_publish_message_posts_graphql(monkeypatch):
+def test_publish_message_saves(monkeypatch):
     app = Flask(__name__)
     app.config.from_object(TestConfig)
 
-    posted = {}
-    monkeypatch.setattr(publisher, "SigV4Auth", lambda *a, **k: type("A", (), {"add_auth": lambda self, r: None})())
+    put_called = {}
+
+    class DummyTable:
+        def put_item(self, Item=None):
+            put_called["item"] = Item
+
+    class DummyResource:
+        def Table(self, name):
+            put_called["table"] = name
+            return DummyTable()
 
     class DummySession:
         def __init__(self, *a, **k):
             pass
 
-        def get_credentials(self):
-            return None
+        def resource(self, *_a, **_k):
+            return DummyResource()
 
     monkeypatch.setattr(publisher.boto3, "Session", DummySession)
+    class DummySocketIO:
+        def __init__(self):
+            self.calls = []
 
-    def fake_post(url, content=None, headers=None):
-        posted["url"] = url
-        posted["body"] = content
-        posted["headers"] = headers
-        class Resp:
-            status_code = 200
+        def emit(self, event, data, namespace=None, room=None):
+            self.calls.append((event, data, namespace, room))
 
-            @staticmethod
-            def json():
-                return {
-                    "data": {
-                        "sendMessage": {
-                            "channel": "1",
-                            "ts": "2023-01-01T00:00:00",
-                            "userId": "5",
-                            "content": "hi",
-                        }
-                    }
-                }
-
-        return Resp()
-
-    monkeypatch.setattr(publisher, "httpx", type("M", (), {"post": staticmethod(fake_post)}))
+    dummy_sio = DummySocketIO()
+    monkeypatch.setattr(publisher, "_socketio", dummy_sio)
 
     with app.app_context():
         msg = publisher.publish_message("1", "hi", 5)
 
-    body = json.loads(posted["body"])
-    assert body["operationName"] == "SendMessage"
-    assert body["variables"] == {"channel": "1", "userId": "5", "content": "hi"}
-    assert msg.ts.isoformat() == "2023-01-01T00:00:00"
+    assert put_called["table"] == "chat_messages"
+    assert put_called["item"]["channel"] == "1"
+    assert put_called["item"]["userId"] == "5"
+    assert msg.content == "hi"
+    assert dummy_sio.calls[0][0] == "message"
+    assert dummy_sio.calls[0][3] == "1"
 
 
 def test_verify_group_member_accepts_tag(monkeypatch):
