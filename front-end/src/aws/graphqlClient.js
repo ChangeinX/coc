@@ -14,6 +14,6 @@ Amplify.configure({
 
 // trim and show api key to make sure it's set
 
-console.log('AppSync API Key:', import.meta.env.APP_SYNC_API_KEY.trim().slice(0, 5) + '...');
+console.log('AppSync API Key:', import.meta.env.VITE_API_KEY.trim().slice(0, 5) + '...');
 
 export const client = generateClient();
