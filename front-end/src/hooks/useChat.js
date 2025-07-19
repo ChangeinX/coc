@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getGraphQLClient } from '../aws/graphqlClient.js';
+import { client } from '../aws/graphqlClient.js';
 
 
 const SUBSCRIBE_MESSAGE = /* GraphQL */ `
@@ -44,7 +44,6 @@ export default function useChat(groupId) {
       if (ignore) return;
       console.log('Subscribing to group', groupId);
 
-      const client = getGraphQLClient(token);
       sub = client.graphql({
         query: SUBSCRIBE_MESSAGE,
         variables: { channel: groupId },
