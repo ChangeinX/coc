@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 
 from coclib.extensions import db, cache
 from sqlalchemy.dialects.postgresql import insert
-from coclib.models import ClanSnapshot, Clan
+from coclib.models import ClanSnapshot, Clan, LoyaltyMembership
 from .coc_client import get_client
 from .player_cache import upsert_player
 from .player_service import get_player
+from .loyalty_service import ensure_membership
 from coclib.utils import normalize_tag
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,13 @@ async def get_clan(tag: str) -> dict:
         set_={"data": stmt.excluded.data, "updated_at": db.func.now()},
     )
     db.session.execute(stmt)
+
+    # Close memberships for players no longer in the clan
+    current_tags = {normalize_tag(m["tag"]) for m in data.get("memberList", [])}
+    active_rows = LoyaltyMembership.query.filter_by(clan_tag=norm_tag, left_at=None).all()
+    for row in active_rows:
+        if row.player_tag not in current_tags:
+            ensure_membership(row.player_tag, None, datetime.utcnow())
 
     # Persist minimal snapshot (async context outside of event loop)
     last = (
