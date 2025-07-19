@@ -3,7 +3,7 @@ import { fetchJSON } from '../lib/api.js';
 import useChat from '../hooks/useChat.js';
 import ChatMessage from './ChatMessage.jsx';
 
-export default function ChatPanel({ groupId = '1' }) {
+export default function ChatPanel({ groupId = '1', userId = '' }) {
   const { messages } = useChat(groupId);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -26,7 +26,7 @@ export default function ChatPanel({ groupId = '1' }) {
       await fetchJSON('/chat/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId, text: trimmed }),
+        body: JSON.stringify({ groupId, userId, text: trimmed }),
       });
       setText('');
     } catch (err) {

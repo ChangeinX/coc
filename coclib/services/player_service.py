@@ -65,6 +65,8 @@ async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
         return cached
 
     data = await _fetch_player(tag)
+    if "tag" not in data:
+        raise RuntimeError("player-not-found")
     upsert_player(data)
 
     now = datetime.utcnow()
