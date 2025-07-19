@@ -1,5 +1,5 @@
 import {Amplify} from 'aws-amplify';
-import {generateClient} from 'aws-amplify/api';
+import { generateClient } from 'aws-amplify/api';
 
 
 let cached = {token: null, client: null};
