@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 import useGoogleIdToken from './useGoogleIdToken.js';
 import { fetchJSON } from '../lib/api.js';
 
@@ -10,7 +11,7 @@ export default function useChat(groupId) {
   useEffect(() => {
     if (!groupId || !token) return;
     let ignore = false;
-    let socket;
+    let client;
 
     async function setup() {
       console.log('Fetching history for group', groupId);
@@ -29,25 +30,33 @@ export default function useChat(groupId) {
       if (ignore) return;
       console.log('Connecting socket for group', groupId);
       const base = import.meta.env.VITE_API_URL || window.location.origin;
-      socket = io(`${base}/api/v1/chat`, {
-        path: '/socket.io',
-        query: { token, groupId },
+      client = new Client({
+        webSocketFactory: () => new SockJS(`${base}/api/v1/chat/socket`),
+        onConnect: () => {
+          client.subscribe(`/topic/chat/${groupId}`, (frame) => {
+            try {
+              const msg = JSON.parse(frame.body);
+              setMessages((m) =>
+                m.some((x) => x.ts === msg.ts) ? m : [...m, msg]
+              );
+            } catch (err) {
+              console.error('Failed to parse message', err);
+            }
+          });
+        },
       });
-      socket.on('message', (msg) => {
-        setMessages((m) => (m.some((x) => x.ts === msg.ts) ? m : [...m, msg]));
-      });
-      socket.on('connect_error', (err) => console.error('socket error', err));
+      client.activate();
     }
 
     setup();
 
     return () => {
       ignore = true;
-      if (socket) {
+      if (client) {
         console.log('Closing socket for group', groupId);
-        socket.disconnect();
+        client.deactivate();
       }
-    };
+  };
   }, [groupId, token]);
 
   return { messages };
