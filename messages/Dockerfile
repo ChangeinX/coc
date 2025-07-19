@@ -1,19 +1,13 @@
-FROM python:3.11-slim
+FROM eclipse-temurin:21-jdk-jammy AS build
+RUN apt-get update && apt-get install -y gradle && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace
+COPY messages-java/ ./messages-java
+WORKDIR /workspace/messages-java
+RUN gradle bootJar --no-daemon
 
-# Build this image from within the root directory:
-#   docker build -f messages/Dockerfile -t clan-boards/message-service .
-
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /opt/app
-
-COPY messages/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY messages/ ./messages
-COPY coclib/ ./coclib
-COPY migrations/ ./migrations
-
-ENV PYTHONPATH=/opt/app
-
+COPY --from=build /workspace/messages-java/build/libs/messages-java-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8010
+ENTRYPOINT ["java","-jar","/opt/app/app.jar"]
 
-CMD ["sh", "-c", "uvicorn messages.run:asgi_app --host 0.0.0.0 --port ${PORT:-80} --workers 1"]
