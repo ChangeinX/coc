@@ -24,7 +24,7 @@ function Row({ index, style, data }) {
     }
   };
   return (
-    <div style={{ ...style, overflow: 'hidden' }} className="border-b px-3" onClick={toggle}>
+    <div style={{ ...style, overflow: 'hidden' }} className="relative border-b px-3" onClick={toggle}>
       <div className="flex justify-between items-center py-2">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
@@ -45,17 +45,22 @@ function Row({ index, style, data }) {
             {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
           </p>
         </div>
-        {!open && (refreshing ? (
-          <Loading size={32} />
-        ) : (
-          <RiskRing score={m.risk_score} size={32} />
-        ))}
+        {!open && <RiskRing score={m.risk_score} size={32} />}
+        {refreshing && (
+          <div className="absolute top-2 right-3">
+            <Loading size={16} />
+          </div>
+        )}
       </div>
       {open && (
         <div className="text-sm space-y-1 pb-2">
           <div className="flex justify-between">
+            <span>Tag: {m.tag}</span>
+            <span>Role: {m.role || '—'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>TH: {m.townHallLevel}</span>
             <span>Trophies: {m.trophies}</span>
-            <span>Last Seen: {m.last_seen ? timeAgo(m.last_seen) : '—'}</span>
           </div>
           <div className="flex justify-between items-center">
             <span>Don/Rec: {m.donations}/{m.donationsReceived}</span>
@@ -63,11 +68,11 @@ function Row({ index, style, data }) {
           </div>
           <div className="flex justify-between items-center">
             <span>Days in Clan: {m.loyalty}</span>
-            {refreshing ? (
-              <Loading size={32} />
-            ) : (
-              <RiskRing score={m.risk_score} size={32} />
-            )}
+            <RiskRing score={m.risk_score} size={32} />
+          </div>
+          <div className="flex justify-between">
+            <span>Last Seen:</span>
+            <span>{m.last_seen ? timeAgo(m.last_seen) : '—'}</span>
           </div>
           {m.risk_breakdown && m.risk_breakdown.length > 0 && (
             <ul className="list-disc list-inside text-xs pt-1">
@@ -91,7 +96,7 @@ export default function MemberAccordionList({ members, height, refreshing = fals
     const m = members[index];
     const base = 56;
     if (openIndex !== index) return base;
-    const lines = (m.risk_breakdown?.length || 0) + 3; // three base rows
+    const lines = (m.risk_breakdown?.length || 0) + 6; // six base rows
     return base + 24 + lines * 20;
   };
 
