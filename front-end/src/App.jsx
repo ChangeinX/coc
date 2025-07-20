@@ -174,7 +174,7 @@ export default function App() {
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.setAttribute('content', '#1e3a8a');
+      meta.setAttribute('content', '#2563eb');
     }
   }, []);
 
