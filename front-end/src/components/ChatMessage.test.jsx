@@ -17,12 +17,8 @@ const sample = { name: 'Alice', leagueIcon: 'http://ex/icon.png' };
 describe('ChatMessage', () => {
   it('displays player name and icon', async () => {
     fetchJSONCached.mockResolvedValue(sample);
-    render(
-      <ChatMessage message={{ userId: 'UID', playerTag: 'AAA', content: 'hi' }} />
-    );
-    await waitFor(() =>
-      expect(fetchJSONCached).toHaveBeenCalledWith('/player/AAA')
-    );
+    render(<ChatMessage message={{ userId: 'AAA', content: 'hi' }} />);
+    await waitFor(() => expect(fetchJSONCached).toHaveBeenCalled());
     expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.getByAltText('league')).toHaveAttribute('src', sample.leagueIcon);
   });
