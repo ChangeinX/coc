@@ -13,7 +13,8 @@ const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
 const DashboardPage = lazy(() => import('./pages/Dashboard.jsx'));
 const ChatPage = lazy(() => import('./pages/ChatPage.jsx'));
-const CommunityPage = lazy(() => import('./pages/Community.jsx'));
+const ScoutPage = lazy(() => import('./pages/Scout.jsx'));
+const StatsPage = lazy(() => import('./pages/Stats.jsx'));
 const AccountPage = lazy(() => import('./pages/Account.jsx'));
 const LoginPage = lazy(() => import('./pages/Login.jsx'));
 
@@ -269,7 +270,8 @@ export default function App() {
             <Routes>
               <Route path="/" element={<DashboardPage defaultTag={clanTag} showSearchForm={false} onClanLoaded={setClanInfo} />} />
               <Route path="/chat" element={<ChatPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} />} />
-              <Route path="/community" element={<CommunityPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} defaultClanTag={homeClanTag} />} />
+              <Route path="/scout" element={<ScoutPage />} />
+              <Route path="/stats" element={<StatsPage />} />
               <Route path="/account" element={<AccountPage onVerified={() => setVerified(true)} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
