@@ -1,5 +1,5 @@
 import React from 'react';
-import { proxyImageUrl } from '../lib/assets.js';
+import CachedImage from './CachedImage.jsx';
 
 export default function ClanModal({ clan, onClose }) {
   if (!clan) return null;
@@ -11,7 +11,7 @@ export default function ClanModal({ clan, onClose }) {
           <button className="absolute top-3 right-3 text-slate-400" onClick={onClose}>✕</button>
           <div className="flex items-center gap-3">
             {clan.badgeUrls && (
-              <img src={proxyImageUrl(clan.badgeUrls.medium)} alt="badge" className="w-12 h-12" />
+              <CachedImage src={clan.badgeUrls.medium} alt="badge" className="w-12 h-12" />
             )}
             <div>
               <h3 className="text-xl font-semibold">{clan.name}</h3>

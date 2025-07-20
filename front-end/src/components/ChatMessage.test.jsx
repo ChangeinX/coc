@@ -5,8 +5,8 @@ import { vi } from 'vitest';
 vi.mock('../lib/api.js', () => ({
   fetchJSONCached: vi.fn(),
 }));
-vi.mock('../lib/assets.js', () => ({
-  proxyImageUrl: (url) => url,
+vi.mock('../hooks/useCachedIcon.js', () => ({
+  default: (url) => url,
 }));
 
 import ChatMessage from './ChatMessage.jsx';
