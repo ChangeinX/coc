@@ -10,6 +10,7 @@ export default function Account({ onVerified }) {
   const [saving, setSaving] = useState(false);
   const [token, setToken] = useState('');
   const [chatEnabled, setChatEnabled] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   const totalWeight =
     (profile?.risk_weight_war || 0) +
@@ -69,11 +70,19 @@ export default function Account({ onVerified }) {
       <div className="space-y-4">
         <h4 className="text-lg font-medium flex items-center gap-1">
           Risk Weights
-          <Info
-            className="w-4 h-4 text-slate-200"
-            title="Adjust how each factor influences the Risk tab"
-          />
+          <button
+            type="button"
+            onClick={() => setShowInfo((v) => !v)}
+            className="p-1"
+          >
+            <Info className="w-4 h-4 text-slate-600" />
+          </button>
         </h4>
+        {showInfo && (
+          <p className="text-xs text-slate-600">
+            Adjust how each factor influences the Risk tab
+          </p>
+        )}
         <label className="block">
           <span className="text-sm">War Weight: {Math.round((profile.risk_weight_war ?? 0) * 100)}%</span>
           <input
