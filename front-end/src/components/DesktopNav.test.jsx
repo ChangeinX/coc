@@ -12,7 +12,8 @@ describe('DesktopNav', () => {
     );
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Chat')).toBeInTheDocument();
-    expect(screen.getByText('Community')).toBeInTheDocument();
+    expect(screen.getByText('Scout')).toBeInTheDocument();
+    expect(screen.getByText('Stats')).toBeInTheDocument();
     expect(screen.getByText('Account')).toBeInTheDocument();
   });
 });
