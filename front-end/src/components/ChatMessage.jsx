@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from '../lib/api.js';
-import { proxyImageUrl } from '../lib/assets.js';
+import CachedImage from './CachedImage.jsx';
 
 export default function ChatMessage({ message }) {
   const { userId, content } = message;
@@ -27,11 +27,7 @@ export default function ChatMessage({ message }) {
       {info && (
         <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
           {info.icon && (
-            <img
-              src={proxyImageUrl(info.icon)}
-              alt="league"
-              className="w-4 h-4"
-            />
+            <CachedImage src={info.icon} alt="league" className="w-4 h-4" />
           )}
           <span>{info.name}</span>
         </div>

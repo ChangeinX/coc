@@ -9,7 +9,7 @@ import DonationRing from '../components/DonationRing.jsx';
 import MemberAccordionList from '../components/MemberAccordionList.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
 import { getTownHallIcon } from '../lib/townhall.js';
-import { proxyImageUrl } from '../lib/assets.js';
+import CachedImage from '../components/CachedImage.jsx';
 import { Users } from 'lucide-react';
 
 const winStreakIcon = new URL('../assets/win-streak.svg', import.meta.url).href;
@@ -32,7 +32,7 @@ function Stat({icon, iconUrl, label, value, onClick}) {
             {(iconUrl || icon) && (
                 <div className="p-3 rounded-full bg-slate-200">
                     {iconUrl ? (
-                        <img src={proxyImageUrl(iconUrl)} alt="icon" className="w-7 h-7" />
+                        <CachedImage src={iconUrl} alt="icon" className="w-7 h-7" />
                     ) : (
                         Icon ? React.createElement(Icon, { className: 'w-7 h-7' }) : null
                     )}
@@ -271,7 +271,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                             <td data-label="Player" className="px-4 py-2 font-medium">
                                                 <span className="flex items-center gap-2">
                                                     {m.leagueIcon && (
-                                                        <img src={proxyImageUrl(m.leagueIcon)} alt="league" className="w-5 h-5" />
+                                                        <CachedImage src={m.leagueIcon} alt="league" className="w-5 h-5" />
                                                     )}
                                                     <img
                                                         src={getTownHallIcon(m.townHallLevel)}
@@ -359,7 +359,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                 <div className="flex flex-col">
                                                     <span className="flex items-center gap-2">
                                                         {m.leagueIcon && (
-                                                            <img src={proxyImageUrl(m.leagueIcon)} alt="league" className="w-5 h-5" />
+                                                            <CachedImage src={m.leagueIcon} alt="league" className="w-5 h-5" />
                                                         )}
                                                         <img
                                                             src={getTownHallIcon(m.townHallLevel)}

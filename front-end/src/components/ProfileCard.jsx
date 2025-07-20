@@ -3,7 +3,7 @@ import RiskRing from './RiskRing.jsx';
 import Loading from './Loading.jsx';
 import { timeAgo } from '../lib/time.js';
 import { getTownHallIcon } from '../lib/townhall.js';
-import { proxyImageUrl } from '../lib/assets.js';
+import CachedImage from './CachedImage.jsx';
 
 export default function ProfileCard({ member, onClick, refreshing = false }) {
   if (!member) return null;
@@ -14,7 +14,7 @@ export default function ProfileCard({ member, onClick, refreshing = false }) {
     >
       <div className="flex gap-1 mb-1">
         {member.leagueIcon && (
-          <img src={proxyImageUrl(member.leagueIcon)} alt="league" className="w-6 h-6" />
+          <CachedImage src={member.leagueIcon} alt="league" className="w-6 h-6" />
         )}
         <img
           src={getTownHallIcon(member.townHallLevel)}
