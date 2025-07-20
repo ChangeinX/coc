@@ -140,6 +140,7 @@ export default function Account({ onVerified }) {
         onClick={() => {
           window.google?.accounts.id.disableAutoSelect();
           localStorage.removeItem('token');
+          window.location.hash = '#/';
           window.location.reload();
         }}
         className="px-4 py-2 rounded bg-red-600 text-white w-full"

@@ -8,6 +8,7 @@ export default function Login() {
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: (res) => {
           localStorage.setItem('token', res.credential);
+          window.location.hash = '#/';
           window.location.reload();
         },
       });
@@ -28,7 +29,7 @@ export default function Login() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-[100dvh] flex flex-col">
       <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 text-center shadow-md">
         <h1 className="text-lg font-semibold">Clan Dashboard</h1>
       </header>
