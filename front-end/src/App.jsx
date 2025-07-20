@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import CachedImage from './components/CachedImage.jsx';
 import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';
 import { fetchJSON } from './lib/api.js';
@@ -194,10 +195,18 @@ export default function App() {
           onClick={() => setShowClanInfo(true)}
         >
           <span className="text-lg font-semibold">Clan Boards</span>
-          <span className="text-sm hover:underline hidden sm:block">{clanInfo?.name || 'Clan Dashboard'}</span>
+          <span className="flex items-center gap-1 text-sm hover:underline hidden sm:flex">
+            {clanInfo?.badgeUrls?.small && (
+              <CachedImage src={clanInfo.badgeUrls.small} alt="clan" className="w-4 h-4" />
+            )}
+            {clanInfo?.name || 'Clan Dashboard'}
+          </span>
         </h1>
         <div className="flex items-center gap-3">
-          <span className="text-sm hover:underline sm:hidden" onClick={() => setShowClanInfo(true)}>
+          <span className="flex items-center gap-1 text-sm hover:underline sm:hidden" onClick={() => setShowClanInfo(true)}>
+            {clanInfo?.badgeUrls?.small && (
+              <CachedImage src={clanInfo.badgeUrls.small} alt="clan" className="w-4 h-4" />
+            )}
             {clanInfo?.name || 'Clan Dashboard'}
           </span>
           {homeClanTag && clanTag !== homeClanTag && (
