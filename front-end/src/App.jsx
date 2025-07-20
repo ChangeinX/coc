@@ -60,6 +60,14 @@ export default function App() {
   const [showMenu, setShowMenu] = useState(false);
   const { enabled: hasFeature } = useFeatures(token);
   const chatAllowed = hasFeature('chat');
+  const handleLogout = () => {
+    window.google?.accounts.id.disableAutoSelect();
+    localStorage.removeItem('token');
+    setToken(null);
+    setPlayerTag(null);
+    setClanTag(null);
+    setShowMenu(false);
+  };
   const menuRef = React.useRef(null);
 
   useEffect(() => {
@@ -208,7 +216,7 @@ export default function App() {
             </button>
           )}
           {chatAllowed && null}
-          <div className="relative" ref={menuRef}>
+          <div className="relative hidden sm:block" ref={menuRef}>
             <button
               className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase hover:bg-slate-600"
               onClick={() => setShowMenu((v) => !v)}
@@ -227,14 +235,7 @@ export default function App() {
                 </Link>
                 <button
                   className="block w-full text-left px-3 py-2 hover:bg-slate-100"
-                  onClick={() => {
-                    window.google?.accounts.id.disableAutoSelect();
-                    localStorage.removeItem('token');
-                    setToken(null);
-                    setPlayerTag(null);
-                    setClanTag(null);
-                    setShowMenu(false);
-                  }}
+                  onClick={handleLogout}
                 >
                   Logout
                 </button>
@@ -259,7 +260,16 @@ export default function App() {
               <Route path="/" element={<DashboardPage defaultTag={clanTag} showSearchForm={false} onClanLoaded={setClanInfo} />} />
               <Route path="/chat" element={<ChatPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} />} />
               <Route path="/community" element={<CommunityPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} onClanSelect={(c) => setClanTag(c.tag)} />} />
-              <Route path="/account" element={<AccountPage onVerified={() => setVerified(true)} />} />
+              <Route
+                path="/account"
+                element={
+                  <AccountPage
+                    onVerified={() => setVerified(true)}
+                    initials={initials}
+                    onLogout={handleLogout}
+                  />
+                }
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>

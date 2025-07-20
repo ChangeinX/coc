@@ -16,25 +16,49 @@ const dbPromise = openDB('coc-cache', 3, {
 });
 
 export async function getApiCache(path) {
-  return (await dbPromise).get('api', path);
+  try {
+    return (await dbPromise).get('api', path);
+  } catch {
+    return undefined;
+  }
 }
 
 export async function putApiCache(record) {
-  return (await dbPromise).put('api', record);
+  try {
+    return (await dbPromise).put('api', record);
+  } catch {
+    return undefined;
+  }
 }
 
 export async function getClanCache(key) {
-  return (await dbPromise).get('clans', key);
+  try {
+    return (await dbPromise).get('clans', key);
+  } catch {
+    return undefined;
+  }
 }
 
 export async function putClanCache(record) {
-  return (await dbPromise).put('clans', record);
+  try {
+    return (await dbPromise).put('clans', record);
+  } catch {
+    return undefined;
+  }
 }
 
 export async function getIconCache(url) {
-  return (await dbPromise).get('icons', url);
+  try {
+    return (await dbPromise).get('icons', url);
+  } catch {
+    return undefined;
+  }
 }
 
 export async function putIconCache(record) {
-  return (await dbPromise).put('icons', record);
+  try {
+    return (await dbPromise).put('icons', record);
+  } catch {
+    return undefined;
+  }
 }

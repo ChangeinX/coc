@@ -30,7 +30,7 @@ describe('fetchCachedIcon', () => {
     const url = 'https://api-assets.clashofclans.com/icon.png';
     const proxied = `${API_URL}/api/v1/assets?url=${encodeURIComponent(url)}`;
     const blob = new Blob(['img'], { type: 'image/png' });
-    const fetchMock = vi.fn().mockResolvedValue(new Response(blob, { status: 200 }));
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(blob, { status: 200 })));
     global.fetch = fetchMock;
 
     const data1 = await fetchCachedIcon(url);
@@ -44,5 +44,27 @@ describe('fetchCachedIcon', () => {
 
     const cached = await getIconCache(proxied);
     expect(typeof cached.blob.size).toBe('number');
+  });
+
+  it('refreshes icons after ttl', async () => {
+    vi.useFakeTimers();
+    const url = 'https://api-assets.clashofclans.com/icon2.png';
+    const proxied = `${API_URL}/api/v1/assets?url=${encodeURIComponent(url)}`;
+    const blob = new Blob(['img'], { type: 'image/png' });
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(blob, { status: 200 })));
+    global.fetch = fetchMock;
+
+    await fetchCachedIcon(url);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    fetchMock.mockClear();
+    vi.advanceTimersByTime(29 * 60 * 1000);
+    await fetchCachedIcon(url);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(2 * 60 * 1000);
+    await fetchCachedIcon(url);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 });

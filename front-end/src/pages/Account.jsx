@@ -4,7 +4,7 @@ import Loading from '../components/Loading.jsx';
 import VerifiedBadge from '../components/VerifiedBadge.jsx';
 import ChatBadge from '../components/ChatBadge.jsx';
 
-export default function Account({ onVerified }) {
+export default function Account({ onVerified, initials = '', onLogout }) {
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [token, setToken] = useState('');
@@ -54,6 +54,11 @@ export default function Account({ onVerified }) {
 
   return (
     <form className="max-w-md mx-auto space-y-4" onSubmit={handleSubmit}>
+      <div className="flex justify-center sm:hidden">
+        <div className="w-12 h-12 rounded-full bg-slate-700 text-white flex items-center justify-center text-lg font-medium">
+          {initials}
+        </div>
+      </div>
       <h3 className="text-xl font-semibold flex items-center gap-2">
         Profile
         {profile.verified && <VerifiedBadge />}
@@ -134,6 +139,13 @@ export default function Account({ onVerified }) {
       )}
       <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white w-full">
         {saving ? 'Saving…' : 'Save'}
+      </button>
+      <button
+        type="button"
+        onClick={onLogout}
+        className="px-4 py-2 rounded bg-red-600 text-white w-full"
+      >
+        Logout
       </button>
     </form>
   );
