@@ -189,10 +189,9 @@ export default function App() {
   return (
     <Router>
       <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md sticky top-0 z-50">
-        <h1 className="text-lg font-semibold flex items-center gap-2">
-          <button onClick={() => setShowClanInfo(true)} className="hover:underline">
-            {clanInfo?.name || 'Clan Dashboard'}
-          </button>
+        <h1 className="flex flex-col leading-tight" onClick={() => setShowClanInfo(true)}>
+          <span className="text-lg font-semibold">Clan Boards</span>
+          <span className="text-sm hover:underline">{clanInfo?.name || 'Clan Dashboard'}</span>
         </h1>
         <div className="flex items-center gap-3">
           {homeClanTag && clanTag !== homeClanTag && (
