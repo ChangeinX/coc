@@ -37,7 +37,7 @@ export default function ChatPanel({ groupId = '1', userId = '' }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex border-b">
+      <div className="flex border-b sticky top-0 bg-white z-10">
         {['Clan', 'Friends', 'All'].map((t) => (
           <button
             key={t}

@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Tabs({ tabs, active, onChange }) {
   return (
-    <div className="flex border-b text-sm">
+    <div className="flex border-b text-sm sticky top-0 bg-white z-10">
       {tabs.map((t) => (
         <button
           key={t.value}
