@@ -4,6 +4,7 @@ import { fetchJSON } from '../lib/api.js';
 import Loading from '../components/Loading.jsx';
 import VerifiedBadge from '../components/VerifiedBadge.jsx';
 import ChatBadge from '../components/ChatBadge.jsx';
+import RiskPrioritySelect, { PRESETS } from '../components/RiskPrioritySelect.jsx';
 
 export default function Account({ onVerified }) {
   const [profile, setProfile] = useState(null);
@@ -12,11 +13,7 @@ export default function Account({ onVerified }) {
   const [chatEnabled, setChatEnabled] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
-  const totalWeight =
-    (profile?.risk_weight_war || 0) +
-    (profile?.risk_weight_idle || 0) +
-    (profile?.risk_weight_don_deficit || 0) +
-    (profile?.risk_weight_don_drop || 0);
+
 
   useEffect(() => {
     const load = async () => {
@@ -69,7 +66,7 @@ export default function Account({ onVerified }) {
       </h3>
       <div className="space-y-4">
         <h4 className="text-lg font-medium flex items-center gap-1">
-          Risk Weights
+          Risk Priority
           <button
             type="button"
             onClick={() => setShowInfo((v) => !v)}
@@ -80,62 +77,15 @@ export default function Account({ onVerified }) {
         </h4>
         {showInfo && (
           <p className="text-xs text-slate-600">
-            Adjust how each factor influences the Risk tab
+            Choose a preset to adjust how members are ranked by risk
           </p>
         )}
-        <label className="block">
-          <span className="text-sm">War Weight: {Math.round((profile.risk_weight_war ?? 0) * 100)}%</span>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={Math.round((profile.risk_weight_war ?? 0) * 100)}
-            onChange={(e) => handleChange('risk_weight_war', parseFloat(e.target.value) / 100)}
-            className="mt-1 w-full"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm">Idle Weight: {Math.round((profile.risk_weight_idle ?? 0) * 100)}%</span>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={Math.round((profile.risk_weight_idle ?? 0) * 100)}
-            onChange={(e) => handleChange('risk_weight_idle', parseFloat(e.target.value) / 100)}
-            className="mt-1 w-full"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm">Deficit Weight: {Math.round((profile.risk_weight_don_deficit ?? 0) * 100)}%</span>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={Math.round((profile.risk_weight_don_deficit ?? 0) * 100)}
-            onChange={(e) => handleChange('risk_weight_don_deficit', parseFloat(e.target.value) / 100)}
-            className="mt-1 w-full"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm">Drop Weight: {Math.round((profile.risk_weight_don_drop ?? 0) * 100)}%</span>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={Math.round((profile.risk_weight_don_drop ?? 0) * 100)}
-            onChange={(e) => handleChange('risk_weight_don_drop', parseFloat(e.target.value) / 100)}
-            className="mt-1 w-full"
-          />
-        </label>
-        {Math.round(totalWeight * 100) !== 100 && (
-          <div className="text-red-500 text-sm" role="alert">
-            Weights should total 100%
-          </div>
-        )}
+        <RiskPrioritySelect
+          weights={profile}
+          onSelect={(w) => {
+            Object.entries(w).forEach(([k, v]) => handleChange(k, v));
+          }}
+        />
       </div>
       <div className="space-y-2">
         <h4 className="text-lg font-medium">Features</h4>
