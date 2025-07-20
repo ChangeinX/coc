@@ -9,10 +9,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.1.1",
+    "lucide-react": "^0.367.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.23.0",
     "react-window": "^1.8.8",
-    "@stomp/stompjs": "^7.1.1",
     "sockjs-client": "^1.6.1"
   },
   "devDependencies": {

@@ -1,16 +1,19 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';
 import { fetchJSON } from './lib/api.js';
 import { proxyImageUrl } from './lib/assets.js';
 import useFeatures from './hooks/useFeatures.js';
+import BottomNav from './components/BottomNav.jsx';
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
-const ClanSearchModal = lazy(() => import('./components/ClanSearchModal.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
-const ProfileModal = lazy(() => import('./components/ProfileModal.jsx'));
-const ChatDrawer = lazy(() => import('./components/ChatDrawer.jsx'));
-const ChatPanel = lazy(() => import('./components/ChatPanel.jsx'));
+const DashboardPage = lazy(() => import('./pages/Dashboard.jsx'));
+const ChatPage = lazy(() => import('./pages/ChatPage.jsx'));
+const CommunityPage = lazy(() => import('./pages/Community.jsx'));
+const AccountPage = lazy(() => import('./pages/Account.jsx'));
 
 function isTokenExpired(tok) {
   try {
@@ -54,10 +57,7 @@ export default function App() {
   const [clanInfo, setClanInfo] = useState(null);
   const [showClanInfo, setShowClanInfo] = useState(false);
   const [loadingUser, setLoadingUser] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showChat, setShowChat] = useState(false);
   const { enabled: hasFeature } = useFeatures(token);
   const chatAllowed = hasFeature('chat');
   const menuRef = React.useRef(null);
@@ -159,9 +159,6 @@ export default function App() {
     }
   }, [token]);
 
-  useEffect(() => {
-    window.lucide?.createIcons();
-  });
 
   useEffect(() => {
     const handler = (e) => {
@@ -194,12 +191,9 @@ export default function App() {
   }
 
   return (
-    <>
+    <Router>
       <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md">
         <h1 className="text-lg font-semibold flex items-center gap-2">
-          {clanInfo?.badgeUrls && (
-            <img src={proxyImageUrl(clanInfo.badgeUrls.small)} alt="badge" className="w-6 h-6" />
-          )}
           <button onClick={() => setShowClanInfo(true)} className="hover:underline">
             {clanInfo?.name || 'Clan Dashboard'}
           </button>
@@ -210,23 +204,10 @@ export default function App() {
               className="p-2 rounded hover:bg-slate-700"
               onClick={() => setClanTag(homeClanTag)}
             >
-              <i data-lucide="arrow-left" className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <button
-            className="p-2 rounded hover:bg-slate-700"
-            onClick={() => setShowSearch(true)}
-          >
-            <i data-lucide="search" className="w-5 h-5" />
-          </button>
-          {chatAllowed && (
-            <button
-              className="p-2 rounded hover:bg-slate-700"
-              onClick={() => setShowChat(true)}
-            >
-              <i data-lucide="message-circle" className="w-5 h-5" />
-            </button>
-          )}
+          {chatAllowed && null}
           <div className="relative" ref={menuRef}>
             <button
               className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase hover:bg-slate-600"
@@ -237,15 +218,13 @@ export default function App() {
             </button>
             {showMenu && (
               <div className="absolute right-0 mt-2 w-28 bg-white text-slate-700 rounded shadow-lg z-10">
-                <button
+                <Link
+                  to="/account"
                   className="block w-full text-left px-3 py-2 hover:bg-slate-100"
-                  onClick={() => {
-                    setShowMenu(false);
-                    setShowProfile(true);
-                  }}
+                  onClick={() => setShowMenu(false)}
                 >
-                  Profile
-                </button>
+                  Account
+                </Link>
                 <button
                   className="block w-full text-left px-3 py-2 hover:bg-slate-100"
                   onClick={() => {
@@ -275,42 +254,22 @@ export default function App() {
         )}
         {!loadingUser && playerTag && (
           <Suspense fallback={<Loading className="py-20" />}>
-            <Dashboard defaultTag={clanTag} showSearchForm={false} onClanLoaded={setClanInfo} />
+            <Routes>
+              <Route path="/" element={<DashboardPage defaultTag={clanTag} showSearchForm={false} onClanLoaded={setClanInfo} />} />
+              <Route path="/chat" element={<ChatPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} />} />
+              <Route path="/community" element={<CommunityPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} onClanSelect={(c) => setClanTag(c.tag)} />} />
+              <Route path="/account" element={<AccountPage onVerified={() => setVerified(true)} />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </Suspense>
         )}
       </main>
-      {showSearch && (
-        <Suspense fallback={<Loading className="h-screen" />}>
-          <ClanSearchModal
-            onClose={() => setShowSearch(false)}
-            onClanLoaded={(c) => {
-              setClanTag(c.tag);
-              setShowSearch(false);
-            }}
-          />
-        </Suspense>
-      )}
+      <BottomNav clanIcon={clanInfo?.badgeUrls?.small} />
       {showClanInfo && (
         <Suspense fallback={<Loading className="h-screen" />}>
           <ClanModal clan={clanInfo} onClose={() => setShowClanInfo(false)} />
         </Suspense>
       )}
-      {showProfile && (
-        <Suspense fallback={<Loading className="h-screen" />}>
-          <ProfileModal onClose={() => setShowProfile(false)} onVerified={() => setVerified(true)} />
-        </Suspense>
-      )}
-      {chatAllowed && showChat && (
-        <Suspense fallback={<Loading className="h-screen" />}>
-          <ChatDrawer open={showChat} onClose={() => setShowChat(false)}>
-            {verified ? (
-              <ChatPanel groupId={homeClanTag || '1'} userId={playerTag || ''} />
-            ) : (
-              <div className="p-4 h-full overflow-y-auto">Verify your account to chat.</div>
-            )}
-          </ChatDrawer>
-        </Suspense>
-      )}
-    </>
+    </Router>
   );
 }
