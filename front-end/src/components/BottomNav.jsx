@@ -1,11 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Shield, MessageCircle, Users, User } from 'lucide-react';
-import CachedImage from './CachedImage.jsx';
+import { Home, MessageCircle, Users, User } from 'lucide-react';
 
 export default function BottomNav({ clanIcon }) {
   const items = [
-    { to: '/', label: 'Home', icon: Shield },
+    { to: '/', label: 'Home', icon: Home },
     { to: '/chat', label: 'Chat', icon: MessageCircle },
     { to: '/community', label: 'Community', icon: Users },
     { to: '/account', label: 'Account', icon: User },
@@ -22,11 +21,7 @@ export default function BottomNav({ clanIcon }) {
             `flex-1 py-2 text-center flex flex-col items-center ${isActive ? 'text-blue-600' : 'text-slate-600'}`
           }
         >
-          {item.to === '/' && clanIcon ? (
-            <CachedImage src={clanIcon} alt="clan" className="w-5 h-5" />
-          ) : (
-            React.createElement(item.icon, { className: 'w-5 h-5' })
-          )}
+          {React.createElement(item.icon, { className: 'w-5 h-5' })}
           <span className="text-xs mt-1">{item.label}</span>
         </NavLink>
       ))}
