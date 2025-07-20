@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 vi.mock('../hooks/useChat.js', () => ({
   default: () => ({ messages: [] }),
 }));
-vi.mock('../lib/api.js', () => ({ fetchJSON: vi.fn() }));
+vi.mock('../lib/api.js', () => ({ fetchJSON: vi.fn(), fetchJSONCached: vi.fn() }));
 
 import ChatPanel from './ChatPanel.jsx';
 

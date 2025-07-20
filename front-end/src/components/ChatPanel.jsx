@@ -1,19 +1,57 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { fetchJSON } from '../lib/api.js';
+import { fetchJSON, fetchJSONCached } from '../lib/api.js';
 import useChat from '../hooks/useChat.js';
 import ChatMessage from './ChatMessage.jsx';
+import Loading from './Loading.jsx';
 
 export default function ChatPanel({ groupId = '1', userId = '' }) {
   const { messages } = useChat(groupId);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState('Clan');
+  const [infoMap, setInfoMap] = useState({});
+  const [loading, setLoading] = useState(true);
   const endRef = useRef(null);
 
   useEffect(() => {
     if (endRef.current && typeof endRef.current.scrollIntoView === 'function') {
       endRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+  }, [messages]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadInfo() {
+      const ids = [...new Set(messages.map((m) => m.userId).filter(Boolean))];
+      const missing = ids.filter((id) => !infoMap[id]);
+      if (missing.length === 0) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      const fetched = await Promise.all(
+        missing.map((id) =>
+          fetchJSONCached(`/player/${encodeURIComponent(id)}`).catch(() => null)
+        )
+      );
+      if (ignore) return;
+      const updated = { ...infoMap };
+      missing.forEach((id, idx) => {
+        const data = fetched[idx];
+        if (data) {
+          updated[id] = { name: data.name, icon: data.leagueIcon };
+        }
+      });
+      setInfoMap(updated);
+      setLoading(false);
+    }
+
+    if (messages.length) loadInfo();
+
+    return () => {
+      ignore = true;
+    };
   }, [messages]);
 
   const handleSubmit = async (e) => {
@@ -51,9 +89,25 @@ export default function ChatPanel({ groupId = '1', userId = '' }) {
       {tab === 'Clan' ? (
         <>
           <div className="flex-1 overflow-y-auto space-y-2 p-4">
-            {messages.map((m, idx) => (
-              <ChatMessage key={m.ts || idx} message={m} />
-            ))}
+            {loading ? (
+              <div className="py-20">
+                <Loading />
+                <div className="text-center text-sm text-slate-500 mt-2">
+                  Loading messages…
+                </div>
+              </div>
+            ) : (
+              messages.map((m, idx) =>
+                infoMap[m.userId] ? (
+                  <ChatMessage
+                    key={m.ts || idx}
+                    message={m}
+                    info={infoMap[m.userId]}
+                    isSelf={m.userId === userId}
+                  />
+                ) : null
+              )
+            )}
             <div ref={endRef} />
           </div>
           <form onSubmit={handleSubmit} className="flex gap-2 p-2 border-t">
