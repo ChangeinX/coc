@@ -31,6 +31,10 @@ async def get_clan(tag: str) -> dict:
     norm_tag = normalize_tag(tag)
     data = await fetch_clan(tag)
 
+    data_valid = "tag" in data
+    if not data_valid and Clan.query.filter_by(tag=norm_tag).first() is None:
+        raise RuntimeError("clan-not-found")
+
     logger.info(f"Data fetched for clan {tag}: {data.get('name', 'Unknown')}")
 
     cache.set(key, data)
@@ -55,7 +59,7 @@ async def get_clan(tag: str) -> dict:
         .order_by(ClanSnapshot.ts.desc())
         .first()
     )
-    if not last or last.data != data:
+    if data_valid and (not last or last.data != data):
         snap = ClanSnapshot(
             ts=datetime.utcnow(),
             clan_tag=norm_tag,
