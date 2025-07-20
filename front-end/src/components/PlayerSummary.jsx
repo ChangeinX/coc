@@ -44,7 +44,7 @@ export default function PlayerSummary({ tag, showHeader = true, scrollBadges = t
           scrollBadges ? 'flex-nowrap overflow-x-auto scroller' : 'flex-wrap'
         }`}
       >
-        <div className="flex flex-col items-center w-16">
+        <div className="flex flex-col items-center w-12">
           <img
             src={getTownHallIcon(player.townHallLevel)}
             alt={`TH${player.townHallLevel}`}
@@ -53,7 +53,7 @@ export default function PlayerSummary({ tag, showHeader = true, scrollBadges = t
           <p className="text-xs text-slate-500 mt-1">TH{player.townHallLevel}</p>
         </div>
         {player.labels?.map((l) => (
-          <div className="flex flex-col items-center w-16" key={l.id || l.name}>
+          <div className="flex flex-col items-center w-12" key={l.id || l.name}>
             <CachedImage
               src={l.iconUrls.small || l.iconUrls.medium}
               alt={l.name}
@@ -62,7 +62,7 @@ export default function PlayerSummary({ tag, showHeader = true, scrollBadges = t
             <p className="text-xs text-slate-500 mt-1">{l.name}</p>
           </div>
         ))}
-        <div className="flex flex-col items-center w-16">
+        <div className="flex flex-col items-center w-12">
           <span className="text-2xl leading-none">🏆</span>
           <p className="text-xs text-slate-500 mt-1">{player.trophies}</p>
         </div>
