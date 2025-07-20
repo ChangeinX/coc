@@ -43,11 +43,22 @@ public class ChatService {
     }
 
     public List<ChatMessage> history(String groupId, int limit) {
+        return history(groupId, limit, null);
+    }
+
+    public List<ChatMessage> history(String groupId, int limit, Instant before) {
+        Map<String, AttributeValue> values = new HashMap<>();
+        values.put(":c", AttributeValue.fromS(groupId));
+        String expr = "channel = :c";
+        if (before != null) {
+            expr += " and ts < :b";
+            values.put(":b", AttributeValue.fromS(before.toString()));
+        }
+
         QueryRequest req = QueryRequest.builder()
                 .tableName(tableName)
-                .keyConditionExpression("channel = :c")
-                .expressionAttributeValues(Map.of(
-                        ":c", AttributeValue.fromS(groupId)))
+                .keyConditionExpression(expr)
+                .expressionAttributeValues(values)
                 .limit(limit)
                 .scanIndexForward(false)
                 .build();

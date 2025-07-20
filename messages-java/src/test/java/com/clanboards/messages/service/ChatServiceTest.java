@@ -31,7 +31,7 @@ class ChatServiceTest {
         QueryResponse resp = QueryResponse.builder().items(List.of(item)).build();
         Mockito.when(dynamoDb.query(Mockito.any(QueryRequest.class))).thenReturn(resp);
 
-        List<ChatMessage> msgs = service.history("1", 1);
+        List<ChatMessage> msgs = service.history("1", 1, null);
         Instant expected = LocalDateTime.parse(ts).toInstant(ZoneOffset.UTC);
         assertEquals(1, msgs.size());
         assertEquals(expected, msgs.get(0).ts());
@@ -56,7 +56,7 @@ class ChatServiceTest {
         QueryResponse resp = QueryResponse.builder().items(List.of(item2, item1)).build();
         Mockito.when(dynamoDb.query(Mockito.any(QueryRequest.class))).thenReturn(resp);
 
-        List<ChatMessage> msgs = service.history("1", 2);
+        List<ChatMessage> msgs = service.history("1", 2, null);
         assertEquals(2, msgs.size());
         assertEquals("first", msgs.get(0).content());
         assertEquals("second", msgs.get(1).content());

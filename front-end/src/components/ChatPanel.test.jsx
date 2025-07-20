@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
 vi.mock('../hooks/useChat.js', () => ({
-  default: () => ({ messages: [] }),
+  default: () => ({ messages: [], loadMore: vi.fn(), hasMore: false }),
 }));
 vi.mock('../lib/api.js', () => ({ fetchJSON: vi.fn(), fetchJSONCached: vi.fn() }));
 

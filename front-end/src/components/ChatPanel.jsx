@@ -5,7 +5,7 @@ import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
 
 export default function ChatPanel({ groupId = '1', userId = '' }) {
-  const { messages } = useChat(groupId);
+  const { messages, loadMore, hasMore } = useChat(groupId);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState('Clan');
@@ -89,6 +89,14 @@ export default function ChatPanel({ groupId = '1', userId = '' }) {
       {tab === 'Clan' ? (
         <>
           <div className="flex-1 overflow-y-auto min-h-0 space-y-2 p-4">
+            {hasMore && !loading && (
+              <button
+                onClick={loadMore}
+                className="block mx-auto mb-2 text-sm text-blue-600 underline"
+              >
+                Load earlier messages
+              </button>
+            )}
             {loading ? (
               <div className="py-20">
                 <Loading />
