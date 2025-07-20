@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { fetchJSONCached, API_URL } from './api.js';
 
-afterEach(() => {
+afterEach(async () => {
   vi.restoreAllMocks();
   vi.useRealTimers();
   localStorage.clear();
+  await new Promise((resolve) => {
+    const req = indexedDB.deleteDatabase('coc-cache');
+    req.onsuccess = req.onerror = req.onblocked = () => resolve();
+  });
 });
 
 describe('fetchJSONCached', () => {
