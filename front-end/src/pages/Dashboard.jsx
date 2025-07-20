@@ -7,6 +7,7 @@ import MobileTabs from '../components/MobileTabs.jsx';
 import RiskRing from '../components/RiskRing.jsx';
 import DonationRing from '../components/DonationRing.jsx';
 import MemberAccordionList from '../components/MemberAccordionList.jsx';
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
 import { getTownHallIcon } from '../lib/townhall.js';
 import CachedImage from '../components/CachedImage.jsx';
@@ -318,6 +319,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                             </div>
                             <h2 className="text-xl font-semibold text-slate-700">All Members</h2>
                             <div className="overflow-x-auto shadow bg-white rounded">
+                                <ErrorBoundary fallback={<p className="p-4">Unable to display members.</p>}>
                                 <table className="mobile-table min-w-full text-xs sm:text-sm" id="membersTable">
                                     <thead className="bg-slate-50 text-left text-slate-600">
                                     <tr>
@@ -406,6 +408,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                     ))}
                                     </tbody>
                                 </table>
+                                </ErrorBoundary>
                             </div>
                         </>
                     ) : (
@@ -429,11 +432,13 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                             )}
                             {activeTab === 'all' && (
                                 <div className="bg-white rounded shadow" style={{ height: listHeight }}>
-                                    <MemberAccordionList
-                                        members={sortedMembers}
-                                        height={listHeight}
-                                        refreshing={refreshing && !loading}
-                                    />
+                                    <ErrorBoundary fallback={<p className="p-4">Unable to display members.</p>}>
+                                        <MemberAccordionList
+                                            members={sortedMembers}
+                                            height={listHeight}
+                                            refreshing={refreshing && !loading}
+                                        />
+                                    </ErrorBoundary>
                                 </div>
                             )}
                         </>
