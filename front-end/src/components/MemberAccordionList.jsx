@@ -28,12 +28,12 @@ function Row({ index, style, data }) {
   useLayoutEffect(() => {
     if (!rowRef.current) return;
     const el = rowRef.current;
-    setSize(index, el.offsetHeight);
+    setSize(index, el.scrollHeight);
     listRef.current?.scrollToItem(index);
     let observer;
     if (typeof ResizeObserver !== 'undefined') {
       observer = new ResizeObserver(() => {
-        setSize(index, el.offsetHeight);
+        setSize(index, el.scrollHeight);
         listRef.current?.scrollToItem(index);
       });
       observer.observe(el);
