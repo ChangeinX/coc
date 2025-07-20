@@ -208,7 +208,7 @@ export default function App() {
             </button>
           )}
           {chatAllowed && null}
-          <div className="relative" ref={menuRef}>
+          <div className="relative hidden sm:block" ref={menuRef}>
             <button
               className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium uppercase hover:bg-slate-600"
               onClick={() => setShowMenu((v) => !v)}

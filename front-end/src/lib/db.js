@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 
-const dbPromise = openDB('coc-cache', 3, {
+const dbPromise = openDB('coc-cache', 4, {
   upgrade(db, oldVersion, newVersion, transaction) {
     if (oldVersion < 1) {
       db.createObjectStore('api', { keyPath: 'path' });
@@ -10,6 +10,9 @@ const dbPromise = openDB('coc-cache', 3, {
       db.createObjectStore('icons', { keyPath: 'url' });
     }
     if (oldVersion < 3 && oldVersion >= 2) {
+      transaction.objectStore('icons').clear();
+    }
+    if (oldVersion < 4) {
       transaction.objectStore('icons').clear();
     }
   },
