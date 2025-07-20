@@ -6,7 +6,7 @@ import { timeAgo } from '../lib/time.js';
 import MobileTabs from '../components/MobileTabs.jsx';
 import RiskRing from '../components/RiskRing.jsx';
 import DonationRing from '../components/DonationRing.jsx';
-import MemberAccordionList from '../components/MemberAccordionList.jsx';
+import MemberList from '../components/MemberList.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
 import { getTownHallIcon } from '../lib/townhall.js';
@@ -18,7 +18,7 @@ const levelIcon = new URL('../assets/level.svg', import.meta.url).href;
 const warWinsIcon = new URL('../assets/war-wins.svg', import.meta.url).href;
 const warLossesIcon = new URL('../assets/war-losses.svg', import.meta.url).href;
 
-const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
+const PlayerSheet = lazy(() => import('../components/PlayerSheet.jsx'));
 
 
 const ICON_MAP = { users: Users };
@@ -433,9 +433,10 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                             {activeTab === 'all' && (
                                 <div className="bg-white rounded shadow" style={{ height: listHeight }}>
                                     <ErrorBoundary fallback={<p className="p-4">Unable to display members.</p>}>
-                                        <MemberAccordionList
+                                        <MemberList
                                             members={sortedMembers}
                                             height={listHeight}
+                                            onSelect={setSelected}
                                             refreshing={refreshing && !loading}
                                         />
                                     </ErrorBoundary>
@@ -447,10 +448,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             )}
             {selected && (
                 <Suspense fallback={<Loading className="py-8"/>}>
-                    <PlayerModal
+                    <PlayerSheet
                         tag={selected}
                         onClose={() => setSelected(null)}
-                        refreshing={refreshing && !loading}
                     />
                 </Suspense>
             )}
