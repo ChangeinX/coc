@@ -258,7 +258,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<DashboardPage defaultTag={clanTag} showSearchForm={false} onClanLoaded={setClanInfo} />} />
               <Route path="/chat" element={<ChatPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} />} />
-              <Route path="/community" element={<CommunityPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} onClanSelect={(c) => setClanTag(c.tag)} />} />
+              <Route path="/community" element={<CommunityPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} defaultClanTag={homeClanTag} />} />
               <Route path="/account" element={<AccountPage onVerified={() => setVerified(true)} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

@@ -10,7 +10,7 @@ import MemberAccordionList from '../components/MemberAccordionList.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
 import { getTownHallIcon } from '../lib/townhall.js';
 import CachedImage from '../components/CachedImage.jsx';
-import { Users } from 'lucide-react';
+import { Users, SearchX } from 'lucide-react';
 
 const winStreakIcon = new URL('../assets/win-streak.svg', import.meta.url).href;
 const levelIcon = new URL('../assets/level.svg', import.meta.url).href;
@@ -140,7 +140,14 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                 /* ignore */
             }
         } catch (err) {
-            if (!clan) setError(err.message);
+            if (err.message.startsWith('HTTP 404')) {
+                setError('Clan not found. Please check your tag.');
+                setClan(null);
+                setMembers([]);
+                setTopRisk([]);
+            } else if (!clan) {
+                setError(err.message);
+            }
         }
         setLoading(false);
         setRefreshing(false);
@@ -213,7 +220,12 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                     </button>
                 </form>
             )}
-            {error && <p className="text-center text-red-600 font-medium">{error}</p>}
+            {error && (
+                <div className="flex flex-col items-center gap-2 text-red-600">
+                    <SearchX className="w-8 h-8" />
+                    <p className="font-medium">{error}</p>
+                </div>
+            )}
             {loading && !clan && <Loading className="py-20"/>}
             {loading && clan && <Loading className="py-4"/>}
             {clan && (

@@ -4,7 +4,7 @@ import Loading from '../components/Loading.jsx';
 
 const Dashboard = lazy(() => import('./Dashboard.jsx'));
 
-export default function Community({ verified, groupId, userId, onClanSelect }) {
+export default function Community({ verified, groupId, userId, defaultClanTag }) {
   const [tab, setTab] = useState('scouting');
 
   return (
@@ -21,7 +21,7 @@ export default function Community({ verified, groupId, userId, onClanSelect }) {
         {tab === 'scouting' && <div className="p-4">Coming soon...</div>}
         {tab === 'stats' && (
           <Suspense fallback={<Loading className="py-20" />}>
-            <Dashboard showSearchForm={true} onClanLoaded={onClanSelect} />
+            <Dashboard showSearchForm={true} defaultTag={defaultClanTag} />
           </Suspense>
         )}
       </div>
