@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';

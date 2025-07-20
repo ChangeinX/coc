@@ -5,7 +5,7 @@ const ChatPanel = lazy(() => import('../components/ChatPanel.jsx'));
 
 export default function ChatPage({ verified, groupId, userId }) {
   return (
-    <div className="h-[calc(100dvh-8rem)] sm:h-[calc(100dvh-4rem)]">
+    <div className="h-[calc(100vh-8rem)] sm:h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
       <Suspense fallback={<Loading className="py-20" />}>
         {verified ? (
           <ChatPanel groupId={groupId} userId={userId} />
