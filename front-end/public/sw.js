@@ -23,9 +23,10 @@ async function staleWhileRevalidate(request) {
       cache.put(request, response.clone());
       try {
         const data = await response.clone().json();
+        const etag = response.headers.get('ETag') || null;
         const clients = await self.clients.matchAll();
         for (const client of clients) {
-          client.postMessage({ type: 'api-update', url: request.url, data });
+          client.postMessage({ type: 'api-update', url: request.url, data, etag });
         }
       } catch {
         // ignore JSON parse errors
