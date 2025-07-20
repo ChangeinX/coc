@@ -5,7 +5,7 @@ import Loading from './Loading.jsx';
 import DonationRing from './DonationRing.jsx';
 import { timeAgo } from '../lib/time.js';
 import { getTownHallIcon } from '../lib/townhall.js';
-import { proxyImageUrl } from '../lib/assets.js';
+import CachedImage from './CachedImage.jsx';
 
 function Row({ index, style, data }) {
   const { members, openIndex, setOpenIndex, getSize, listRef, refreshing } = data;
@@ -29,7 +29,7 @@ function Row({ index, style, data }) {
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             {m.leagueIcon && (
-              <img src={proxyImageUrl(m.leagueIcon)} alt="league" className="w-5 h-5" />
+              <CachedImage src={m.leagueIcon} alt="league" className="w-5 h-5" />
             )}
             <img
               src={getTownHallIcon(m.townHallLevel)}

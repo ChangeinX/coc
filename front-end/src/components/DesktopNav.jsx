@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Shield, MessageCircle, Users, User } from 'lucide-react';
-import { proxyImageUrl } from '../lib/assets.js';
+import CachedImage from './CachedImage.jsx';
 
 export default function DesktopNav({ clanIcon }) {
   const items = [
@@ -23,7 +23,7 @@ export default function DesktopNav({ clanIcon }) {
           }
         >
           {item.to === '/' && clanIcon ? (
-            <img src={proxyImageUrl(clanIcon)} alt="clan" className="w-4 h-4" />
+            <CachedImage src={clanIcon} alt="clan" className="w-4 h-4" />
           ) : (
             React.createElement(item.icon, { className: 'w-4 h-4' })
           )}

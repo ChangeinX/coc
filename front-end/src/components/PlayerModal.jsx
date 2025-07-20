@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from '../lib/api.js';
-import { proxyImageUrl } from '../lib/assets.js';
+import CachedImage from './CachedImage.jsx';
 import { getTownHallIcon } from '../lib/townhall.js';
 
 import Loading from './Loading.jsx';
@@ -40,7 +40,7 @@ export default function PlayerModal({ tag, onClose, refreshing = false }) {
             <>
               <h3 className="text-xl font-semibold text-slate-800 flex flex-wrap items-center gap-2">
                 {player.leagueIcon && (
-                  <img src={proxyImageUrl(player.leagueIcon)} alt="league" className="w-6 h-6" />
+                  <CachedImage src={player.leagueIcon} alt="league" className="w-6 h-6" />
                 )}
                 <span>{player.name}</span>
                 <span className="text-sm font-normal text-slate-500">{player.tag}</span>
@@ -57,8 +57,8 @@ export default function PlayerModal({ tag, onClose, refreshing = false }) {
                 </div>
                 {player.labels?.map((l) => (
                   <div className="flex flex-col items-center w-16" key={l.id || l.name}>
-                    <img
-                      src={proxyImageUrl(l.iconUrls.small || l.iconUrls.medium)}
+                    <CachedImage
+                      src={l.iconUrls.small || l.iconUrls.medium}
                       alt={l.name}
                       className="w-8 h-8"
                     />

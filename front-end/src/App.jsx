@@ -4,7 +4,6 @@ import { ArrowLeft } from 'lucide-react';
 import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';
 import { fetchJSON } from './lib/api.js';
-import { proxyImageUrl } from './lib/assets.js';
 import useFeatures from './hooks/useFeatures.js';
 import BottomNav from './components/BottomNav.jsx';
 import DesktopNav from './components/DesktopNav.jsx';
