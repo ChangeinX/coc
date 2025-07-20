@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import MobileTabs from '../components/MobileTabs.jsx';
+import Tabs from '../components/Tabs.jsx';
 import Loading from '../components/Loading.jsx';
 
 const Dashboard = lazy(() => import('./Dashboard.jsx'));
@@ -9,7 +9,7 @@ export default function Community({ verified, groupId, userId, onClanSelect }) {
 
   return (
     <div className="h-[calc(100dvh-8rem)] sm:h-[calc(100dvh-4rem)] flex flex-col overflow-hidden">
-      <MobileTabs
+      <Tabs
         tabs={[
           { label: 'Scouting', value: 'scouting' },
           { label: 'Stats', value: 'stats' },

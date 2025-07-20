@@ -5,6 +5,7 @@ import { API_URL } from './api.js';
 
 afterEach(async () => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
   await new Promise((resolve) => {
     const req = indexedDB.deleteDatabase('coc-cache');
     req.onsuccess = req.onerror = req.onblocked = () => resolve();

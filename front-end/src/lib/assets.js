@@ -1,6 +1,8 @@
 import { API_URL } from './api.js';
 import { getIconCache, putIconCache } from './db.js';
 
+const ICON_TTL = 30 * 60 * 1000; // 30 minutes
+
 const API_PREFIX = '/api/v1';
 
 export function proxyImageUrl(url) {
@@ -21,6 +23,7 @@ export async function fetchCachedIcon(url) {
   const res = await fetch(proxied);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const blob = await res.blob();
+
   await putIconCache({ url: proxied, blob, ts: Date.now() });
   return blob;
 }
