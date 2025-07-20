@@ -226,6 +226,7 @@ export default function App() {
                   onClick={() => {
                     window.google?.accounts.id.disableAutoSelect();
                     localStorage.removeItem('token');
+                    window.location.hash = '#/';
                     setToken(null);
                     setPlayerTag(null);
                     setClanTag(null);
@@ -241,7 +242,7 @@ export default function App() {
       </header>
       <DesktopNav clanIcon={clanInfo?.badgeUrls?.small} />
       <main className="px-2 pt-0 pb-2 sm:px-4 sm:pt-0 sm:pb-4">
-        {loadingUser && <Loading className="h-[calc(100vh-4rem)]" />}
+        {loadingUser && <Loading className="h-[calc(100dvh-4rem)]" />}
         {!loadingUser && !playerTag && (
           <PlayerTagForm
             onSaved={(tag) => {
