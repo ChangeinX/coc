@@ -1,13 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Shield, MessageCircle, Users, User } from 'lucide-react';
+import { Shield, MessageCircle, Users, BarChart2, User } from 'lucide-react';
 import CachedImage from './CachedImage.jsx';
 
 export default function DesktopNav({ clanIcon }) {
   const items = [
     { to: '/', label: 'Home', icon: Shield },
     { to: '/chat', label: 'Chat', icon: MessageCircle },
-    { to: '/community', label: 'Community', icon: Users },
+    { to: '/scout', label: 'Scout', icon: Users },
+    { to: '/stats', label: 'Stats', icon: BarChart2 },
     { to: '/account', label: 'Account', icon: User },
   ];
 

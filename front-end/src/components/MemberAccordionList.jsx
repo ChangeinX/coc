@@ -3,6 +3,7 @@ import { VariableSizeList as List } from 'react-window';
 import RiskRing from './RiskRing.jsx';
 import Loading from './Loading.jsx';
 import DonationRing from './DonationRing.jsx';
+import PlayerSummary from './PlayerSummary.jsx';
 import { timeAgo } from '../lib/time.js';
 import { getTownHallIcon } from '../lib/townhall.js';
 import CachedImage from './CachedImage.jsx';
@@ -53,36 +54,8 @@ function Row({ index, style, data }) {
         )}
       </div>
       {open && (
-        <div className="text-sm space-y-1 pb-2">
-          <div className="flex justify-between">
-            <span>Tag: {m.tag}</span>
-            <span>Role: {m.role || '—'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>TH: {m.townHallLevel}</span>
-            <span>Trophies: {m.trophies}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span>Don/Rec: {m.donations}/{m.donationsReceived}</span>
-            <DonationRing donations={m.donations} received={m.donationsReceived} size={32} />
-          </div>
-          <div className="flex justify-between items-center">
-            <span>Days in Clan: {m.loyalty}</span>
-            <RiskRing score={m.risk_score} size={32} />
-          </div>
-          <div className="flex justify-between">
-            <span>Last Seen:</span>
-            <span>{m.last_seen ? timeAgo(m.last_seen) : '—'}</span>
-          </div>
-          {m.risk_breakdown && m.risk_breakdown.length > 0 && (
-            <ul className="list-disc list-inside text-xs pt-1">
-              {m.risk_breakdown.map((r, i) => (
-                <li key={i}>
-                  {r.points} pts – {r.reason}
-                </li>
-              ))}
-            </ul>
-          )}
+        <div className="pb-2">
+          <PlayerSummary tag={m.tag} />
         </div>
       )}
     </div>
@@ -93,11 +66,10 @@ export default function MemberAccordionList({ members, height, refreshing = fals
   const listRef = useRef();
   const [openIndex, setOpenIndex] = React.useState(null);
   const getSize = (index) => {
-    const m = members[index];
     const base = 56;
     if (openIndex !== index) return base;
-    const lines = (m.risk_breakdown?.length || 0) + 6; // six base rows
-    return base + 24 + lines * 20;
+    // Expanded summary content is roughly 360px tall
+    return base + 360;
   };
 
   return (
