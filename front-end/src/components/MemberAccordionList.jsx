@@ -55,7 +55,7 @@ function Row({ index, style, data }) {
       </div>
       {open && (
         <div className="pb-2">
-          <PlayerSummary tag={m.tag} />
+          <PlayerSummary tag={m.tag} showHeader={false} scrollBadges={false} />
         </div>
       )}
     </div>
@@ -68,8 +68,8 @@ export default function MemberAccordionList({ members, height, refreshing = fals
   const getSize = (index) => {
     const base = 56;
     if (openIndex !== index) return base;
-    // Expanded summary content is roughly 360px tall
-    return base + 360;
+    // Expanded summary content is roughly 300px tall
+    return base + 300;
   };
 
   return (

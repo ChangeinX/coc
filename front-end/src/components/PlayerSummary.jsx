@@ -8,7 +8,7 @@ import DonationRing from './DonationRing.jsx';
 import PresenceDot from './PresenceDot.jsx';
 import LoyaltyBadge from './LoyaltyBadge.jsx';
 
-export default function PlayerSummary({ tag }) {
+export default function PlayerSummary({ tag, showHeader = true, scrollBadges = true }) {
   const [player, setPlayer] = useState(null);
   const [error, setError] = useState('');
 
@@ -30,14 +30,20 @@ export default function PlayerSummary({ tag }) {
 
   return (
     <>
-      <h3 className="text-lg font-semibold text-slate-800 flex flex-wrap items-center gap-2">
-        {player.leagueIcon && (
-          <CachedImage src={player.leagueIcon} alt="league" className="w-6 h-6" />
-        )}
-        <span>{player.name}</span>
-        <span className="text-sm font-normal text-slate-500">{player.tag}</span>
-      </h3>
-      <div className="flex flex-nowrap overflow-x-auto gap-4 mt-4 justify-center scroller">
+      {showHeader && (
+        <h3 className="text-lg font-semibold text-slate-800 flex flex-wrap items-center gap-2">
+          {player.leagueIcon && (
+            <CachedImage src={player.leagueIcon} alt="league" className="w-6 h-6" />
+          )}
+          <span>{player.name}</span>
+          <span className="text-sm font-normal text-slate-500">{player.tag}</span>
+        </h3>
+      )}
+      <div
+        className={`flex gap-4 mt-4 justify-center ${
+          scrollBadges ? 'flex-nowrap overflow-x-auto scroller' : 'flex-wrap'
+        }`}
+      >
         <div className="flex flex-col items-center w-16">
           <img
             src={getTownHallIcon(player.townHallLevel)}
