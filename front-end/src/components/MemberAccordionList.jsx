@@ -48,7 +48,11 @@ function Row({ index, style, data }) {
   return (
     <div
       ref={rowRef}
-      style={{ ...style, overflow: open ? 'visible' : 'hidden' }}
+      style={{
+        ...style,
+        overflow: open ? 'visible' : 'hidden',
+        zIndex: open ? 1 : "auto",
+      }}
       className="relative border-b px-3"
       onClick={toggle}
     >
