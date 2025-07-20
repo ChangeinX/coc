@@ -1,4 +1,6 @@
 const CACHE_NAME = 'api-cache-v1';
+const API_TTL = 60 * 1000; // 1 minute
+const ASSET_TTL = 30 * 60 * 1000; // 30 minutes
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -17,10 +19,27 @@ self.addEventListener('fetch', (event) => {
 
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
+  let cached = await cache.match(request);
+  if (cached) {
+    const ttl = request.url.includes('/assets?') ? ASSET_TTL : API_TTL;
+    const ts = parseInt(cached.headers.get('sw-cache-time') || '0', 10);
+    if (Date.now() - ts > ttl) {
+      await cache.delete(request);
+      cached = undefined;
+    }
+  }
   const network = fetch(request)
     .then(async (response) => {
-      cache.put(request, response.clone());
+      const cloned = response.clone();
+      const headers = new Headers(cloned.headers);
+      headers.set('sw-cache-time', Date.now().toString());
+      const body = await cloned.blob();
+      const cachedResp = new Response(body, {
+        status: cloned.status,
+        statusText: cloned.statusText,
+        headers,
+      });
+      cache.put(request, cachedResp);
       try {
         const data = await response.clone().json();
         const etag = response.headers.get('ETag') || null;

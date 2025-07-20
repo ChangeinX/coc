@@ -5,6 +5,7 @@ import { API_URL } from './api.js';
 
 afterEach(async () => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
   await new Promise((resolve) => {
     const req = indexedDB.deleteDatabase('coc-cache');
     req.onsuccess = req.onerror = req.onblocked = () => resolve();
@@ -45,4 +46,5 @@ describe('fetchCachedIcon', () => {
     const cached = await getIconCache(proxied);
     expect(typeof cached.blob.size).toBe('number');
   });
+
 });

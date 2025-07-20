@@ -135,6 +135,17 @@ export default function Account({ onVerified }) {
       <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white w-full">
         {saving ? 'Saving…' : 'Save'}
       </button>
+      <button
+        type="button"
+        onClick={() => {
+          window.google?.accounts.id.disableAutoSelect();
+          localStorage.removeItem('token');
+          window.location.reload();
+        }}
+        className="px-4 py-2 rounded bg-red-600 text-white w-full"
+      >
+        Logout
+      </button>
     </form>
   );
 }
