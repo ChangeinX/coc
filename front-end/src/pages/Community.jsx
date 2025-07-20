@@ -8,7 +8,7 @@ export default function Community({ verified, groupId, userId, defaultClanTag })
   const [tab, setTab] = useState('scouting');
 
   return (
-    <div className="h-[calc(100dvh-8rem)] sm:h-[calc(100dvh-4rem)] flex flex-col overflow-hidden">
+    <div className="h-[calc(100dvh-4rem)] flex flex-col overflow-hidden">
       <Tabs
         tabs={[
           { label: 'Scouting', value: 'scouting' },
