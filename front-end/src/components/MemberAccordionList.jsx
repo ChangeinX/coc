@@ -28,17 +28,21 @@ function Row({ index, style, data }) {
   useLayoutEffect(() => {
     if (!rowRef.current) return;
     const el = rowRef.current;
-    setSize(index, el.scrollHeight);
-    listRef.current?.scrollToItem(index);
-    let observer;
+    const update = () => {
+      setSize(index, el.scrollHeight);
+      listRef.current?.scrollToItem(index);
+    };
+    update();
+    let cleanup = null;
     if (typeof ResizeObserver !== 'undefined') {
-      observer = new ResizeObserver(() => {
-        setSize(index, el.scrollHeight);
-        listRef.current?.scrollToItem(index);
-      });
+      const observer = new ResizeObserver(update);
       observer.observe(el);
+      cleanup = () => observer.disconnect();
+    } else {
+      const id = setInterval(update, 100);
+      cleanup = () => clearInterval(id);
     }
-    return () => observer?.disconnect();
+    return cleanup;
   }, [open, index, setSize]);
 
   return (
