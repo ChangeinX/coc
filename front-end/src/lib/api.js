@@ -1,3 +1,5 @@
+import { getApiCache, putApiCache } from './db.js';
+
 // Base URL for the backend API. When running the React dev server the
 // environment variable `VITE_API_URL` can be used to override this value.
 // It defaults to the Flask development server location so that API calls
@@ -64,33 +66,21 @@ async function requestWithETag(path, options = {}, etag) {
 
 export async function fetchJSONCached(path, options = {}) {
     const key = `${CACHE_PREFIX}${path}`;
-    let parsed;
-    const cached = localStorage.getItem(key);
-    if (cached) {
-        try {
-            parsed = JSON.parse(cached);
-        } catch {
-            localStorage.removeItem(key);
-        }
-    }
+    const cached = await getApiCache(key);
 
-    const hasMeta = parsed && Object.prototype.hasOwnProperty.call(parsed, 'ts');
-    const ts = hasMeta ? parsed.ts : 0;
-    const data = hasMeta ? parsed.data : parsed;
-    const etag = hasMeta ? parsed.etag : null;
+    const hasMeta = cached && Object.prototype.hasOwnProperty.call(cached, 'ts');
+    const ts = hasMeta ? cached.ts : 0;
+    const data = hasMeta ? cached.data : cached;
+    const etag = hasMeta ? cached.etag : null;
     const age = Date.now() - ts;
 
     if (hasMeta && age < CACHE_TTL) {
         requestWithETag(path, options, etag)
             .then((res) => {
-                try {
-                    if (res.notModified) {
-                        localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data, etag: res.etag }));
-                    } else {
-                        localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: res.data, etag: res.etag }));
-                    }
-                } catch {
-                    /* ignore */
+                if (res.notModified) {
+                    putApiCache({ path: key, ts: Date.now(), data, etag: res.etag });
+                } else {
+                    putApiCache({ path: key, ts: Date.now(), data: res.data, etag: res.etag });
                 }
             })
             .catch(() => {});
@@ -99,17 +89,9 @@ export async function fetchJSONCached(path, options = {}) {
 
     const res = await requestWithETag(path, options, etag);
     if (res.notModified) {
-        try {
-            localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data, etag: res.etag }));
-        } catch {
-            /* ignore */
-        }
+        await putApiCache({ path: key, ts: Date.now(), data, etag: res.etag });
         return data;
     }
-    try {
-        localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: res.data, etag: res.etag }));
-    } catch {
-        /* ignore */
-    }
+    await putApiCache({ path: key, ts: Date.now(), data: res.data, etag: res.etag });
     return res.data;
 }

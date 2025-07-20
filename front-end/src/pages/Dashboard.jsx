@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useMemo, Suspense, lazy} from 'react';
 import Loading from '../components/Loading.jsx';
 import {fetchJSONCached} from '../lib/api.js';
+import { getClanCache, putClanCache } from '../lib/db.js';
 import { timeAgo } from '../lib/time.js';
 import MobileTabs from '../components/MobileTabs.jsx';
 import RiskRing from '../components/RiskRing.jsx';
@@ -95,17 +96,12 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
 
     const load = async (clanTag) => {
         const cacheKey = `clan:${clanTag}`;
-        const cached = localStorage.getItem(cacheKey);
+        const cached = await getClanCache(cacheKey);
         if (cached) {
-            try {
-                const data = JSON.parse(cached);
-                setClan(data.clan);
-                if (onClanLoaded) onClanLoaded(data.clan);
-                setMembers(data.members);
-                setTopRisk(data.topRisk.slice(0, 5));
-            } catch {
-                localStorage.removeItem(cacheKey);
-            }
+            setClan(cached.clan);
+            if (onClanLoaded) onClanLoaded(cached.clan);
+            setMembers(cached.members);
+            setTopRisk(cached.topRisk.slice(0, 5));
         } else {
             setLoading(true);
         }
@@ -139,7 +135,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             setTopRisk(top);
             setError('');
             try {
-                localStorage.setItem(cacheKey, JSON.stringify({ clan: clanData, members: merged, topRisk: top }));
+                await putClanCache({ key: cacheKey, clan: clanData, members: merged, topRisk: top });
             } catch {
                 /* ignore */
             }
