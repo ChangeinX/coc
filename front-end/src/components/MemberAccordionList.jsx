@@ -29,10 +29,12 @@ function Row({ index, style, data }) {
     if (!rowRef.current) return;
     const el = rowRef.current;
     setSize(index, el.offsetHeight);
+    listRef.current?.scrollToItem(index);
     let observer;
     if (typeof ResizeObserver !== 'undefined') {
       observer = new ResizeObserver(() => {
         setSize(index, el.offsetHeight);
+        listRef.current?.scrollToItem(index);
       });
       observer.observe(el);
     }
@@ -40,7 +42,12 @@ function Row({ index, style, data }) {
   }, [open, index, setSize]);
 
   return (
-    <div ref={rowRef} style={{ ...style, overflow: 'hidden' }} className="relative border-b px-3" onClick={toggle}>
+    <div
+      ref={rowRef}
+      style={{ ...style, overflow: open ? 'visible' : 'hidden' }}
+      className="relative border-b px-3"
+      onClick={toggle}
+    >
       <div className="flex justify-between items-center py-2">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
