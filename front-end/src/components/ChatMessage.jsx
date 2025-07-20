@@ -3,13 +3,13 @@ import { fetchJSONCached } from '../lib/api.js';
 import { proxyImageUrl } from '../lib/assets.js';
 
 export default function ChatMessage({ message }) {
-  const { userId, content } = message;
+  const { userId: playerTag, content } = message;
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
     let ignore = false;
-    if (!userId) return;
-    fetchJSONCached(`/player/${encodeURIComponent(userId)}`)
+    if (!playerTag) return;
+    fetchJSONCached(`/player/${encodeURIComponent(playerTag)}`)
       .then((data) => {
         if (!ignore) {
           setInfo({ name: data.name, icon: data.leagueIcon });
@@ -19,7 +19,7 @@ export default function ChatMessage({ message }) {
     return () => {
       ignore = true;
     };
-  }, [userId]);
+  }, [playerTag]);
 
   return (
     <div className="bg-slate-100 rounded px-2 py-1">
