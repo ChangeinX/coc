@@ -74,17 +74,17 @@ export default function MemberAccordionList({ members, height, refreshing = fals
   const [openIndex, setOpenIndex] = React.useState(null);
   const [sizes, setSizes] = React.useState(() => members.map(() => 56));
 
-  const setSize = (idx, size) =>
+  const setSize = React.useCallback((idx, size) => {
     setSizes((s) => {
+      if (s[idx] === size) return s;
       const next = [...s];
-      if (next[idx] !== size) {
-        next[idx] = size;
-        listRef.current?.resetAfterIndex(idx);
-      }
+      next[idx] = size;
+      listRef.current?.resetAfterIndex(idx);
       return next;
     });
+  }, []);
 
-  const getSize = (index) => sizes[index] || 56;
+  const getSize = React.useCallback((index) => sizes[index] || 56, [sizes]);
 
   React.useEffect(() => {
     setSizes(members.map(() => 56));
