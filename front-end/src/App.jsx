@@ -180,7 +180,7 @@ export default function App() {
   if (!token) {
     return (
       <>
-        <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 text-center shadow-md">
+        <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 text-center shadow-md sticky top-0 z-50">
           <h1 className="text-lg font-semibold">Clan Dashboard</h1>
         </header>
         <div className="flex justify-center items-center h-[calc(100vh-4rem)] p-2 sm:p-4">
@@ -192,7 +192,7 @@ export default function App() {
 
   return (
     <Router>
-      <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md">
+      <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md sticky top-0 z-50">
         <h1 className="text-lg font-semibold flex items-center gap-2">
           <button onClick={() => setShowClanInfo(true)} className="hover:underline">
             {clanInfo?.name || 'Clan Dashboard'}
