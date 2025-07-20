@@ -9,6 +9,7 @@ import MemberAccordionList from '../components/MemberAccordionList.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
 import { getTownHallIcon } from '../lib/townhall.js';
 import { proxyImageUrl } from '../lib/assets.js';
+import { Users } from 'lucide-react';
 
 const winStreakIcon = new URL('../assets/win-streak.svg', import.meta.url).href;
 const levelIcon = new URL('../assets/level.svg', import.meta.url).href;
@@ -18,7 +19,10 @@ const warLossesIcon = new URL('../assets/war-losses.svg', import.meta.url).href;
 const PlayerModal = lazy(() => import('../components/PlayerModal.jsx'));
 
 
+const ICON_MAP = { users: Users };
+
 function Stat({icon, iconUrl, label, value, onClick}) {
+    const Icon = ICON_MAP[icon];
     return (
         <div
             className={`flex items-center gap-3 bg-white shadow rounded p-4 ${onClick ? 'cursor-pointer' : ''}`}
@@ -29,7 +33,7 @@ function Stat({icon, iconUrl, label, value, onClick}) {
                     {iconUrl ? (
                         <img src={proxyImageUrl(iconUrl)} alt="icon" className="w-7 h-7" />
                     ) : (
-                        <i data-lucide={icon} className="w-7 h-7"/>
+                        Icon ? React.createElement(Icon, { className: 'w-7 h-7' }) : null
                     )}
                 </div>
             )}
@@ -152,11 +156,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
         }
     }, [defaultTag]);
 
-    useEffect(() => {
-        if (window.lucide) {
-            window.lucide.createIcons();
-        }
-    });
 
     useEffect(() => {
         document.title = clan?.name || 'Clan Dashboard';
