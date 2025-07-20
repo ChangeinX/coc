@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -35,8 +36,13 @@ public class ChatController {
     @GetMapping("/history/{groupId}")
     public ResponseEntity<List<Map<String, String>>> history(
             @PathVariable String groupId,
-            @RequestParam(defaultValue = "100") int limit) {
-        List<ChatMessage> msgs = chatService.history(groupId, Math.min(limit, 100));
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(required = false) String before) {
+        List<ChatMessage> msgs = chatService.history(
+                groupId,
+                Math.min(limit, 100),
+                before != null ? Instant.parse(before) : null
+        );
         List<Map<String, String>> body = msgs.stream()
                 .map(m -> Map.of(
                         "userId", m.userId(),

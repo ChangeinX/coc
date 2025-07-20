@@ -45,7 +45,8 @@ class ChatControllerTest {
     void historyReturnsMessages() throws Exception {
         Instant ts = Instant.parse("2024-01-01T00:00:00Z");
         List<ChatMessage> msgs = List.of(new ChatMessage("1", "0", "hi", ts));
-        Mockito.when(chatService.history("1", 2)).thenReturn(msgs);
+        Mockito.when(chatService.history(Mockito.eq("1"), Mockito.eq(2), Mockito.isNull()))
+                .thenReturn(msgs);
 
         mvc.perform(get("/api/v1/chat/history/1?limit=2"))
                 .andExpect(status().isOk())
