@@ -74,7 +74,7 @@ export default function ChatPanel({ groupId = '1', userId = '' }) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="flex border-b sticky top-0 bg-white z-10">
         {['Clan', 'Friends', 'All'].map((t) => (
           <button
@@ -88,7 +88,7 @@ export default function ChatPanel({ groupId = '1', userId = '' }) {
       </div>
       {tab === 'Clan' ? (
         <>
-          <div className="flex-1 overflow-y-auto space-y-2 p-4">
+          <div className="flex-1 overflow-y-auto min-h-0 space-y-2 p-4">
             {loading ? (
               <div className="py-20">
                 <Loading />
