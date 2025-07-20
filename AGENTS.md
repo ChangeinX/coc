@@ -1,8 +1,9 @@
 # Codex Guidelines
 
 This monorepo hosts several microservices and a front-end that make up a Clash of Clans dashboard. The key directories are:
-
-- `back-end/` – Flask API service, generic routes
+- `clan-service/` – Flask API for clan and player data
+- `user-service/` – Flask API for user accounts and profiles
+- `asset-service/` – Flask API proxy for static assets
 - `sync/` – service used to synchronize data from Clash of Clans
 - `front-end/` – React dashboard built with Vite
 - `coclib/` – shared Python modules for both services
@@ -25,7 +26,7 @@ Validate changes using:
 nox -s lint tests
 
 # Lint Python sources manually if needed
-ruff back-end sync coclib db
+ruff clan-service user-service asset-service sync coclib db
 
 # Install deps and run front-end tests and build
 cd front-end

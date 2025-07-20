@@ -1,6 +1,14 @@
 # Clash of Clans Dashboard
 
-This monorepo contains a Flask API, a data sync service and a React dashboard.
+This monorepo contains several microservices and a React dashboard.
+
+Key directories:
+
+- `clan-service/` – Flask service for clan and player data
+- `user-service/` – Flask service for user management
+- `asset-service/` – Flask proxy for static assets
+- `sync/` – background data sync worker
+- `messages-java/` – chat service built with Spring Boot
 
 ## Google Sign-In setup
 

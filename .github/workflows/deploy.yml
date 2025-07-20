@@ -43,7 +43,9 @@ jobs:
             app:
               - front-end/**
             worker:
-              - back-end/**
+              - clan-service/**
+              - user-service/**
+              - asset-service/**
             static:
               - sync/**
             messages:
@@ -93,7 +95,7 @@ jobs:
         run: |
           docker buildx build \
             --platform linux/arm64 \
-            -f back-end/Dockerfile \
+            -f clan-service/Dockerfile \
             -t $ECR_REGISTRY/$WORKER_REPOSITORY:latest \
             -t $ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }} \
             --push .

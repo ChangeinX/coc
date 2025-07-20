@@ -3,7 +3,10 @@ import pathlib
 import asyncio
 from datetime import datetime
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "back-end"))
+for m in list(sys.modules):
+    if m == "app" or m.startswith("app."):
+        sys.modules.pop(m)
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "clan-service"))
 
 from app import create_app
 from coclib.config import Config

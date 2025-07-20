@@ -80,7 +80,9 @@ target/
 celerybeat-schedule
 
 # dotenv
-back-end/.env
+clan-service/.env
+user-service/.env
+asset-service/.env
 *.env
 
 # virtualenv

@@ -1,4 +1,4 @@
-# Back-end Guidelines
+# Asset Service Guidelines
 
 This folder contains the Flask API service. Source code lives inside `app/`.
 
@@ -8,4 +8,4 @@ This folder contains the Flask API service. Source code lives inside `app/`.
 - Migrations live in the repo root `migrations/` directory; do not place them here.
 - Add a relevant test case for any changes made to this service.
 
-Before opening a pull request run `ruff back-end` to lint the code.
+Before opening a pull request run `ruff asset-service` to lint the code.
