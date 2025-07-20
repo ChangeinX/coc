@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import { VariableSizeList as List } from 'react-window';
 import RiskRing from './RiskRing.jsx';
 import Loading from './Loading.jsx';
@@ -9,9 +9,10 @@ import { getTownHallIcon } from '../lib/townhall.js';
 import CachedImage from './CachedImage.jsx';
 
 function Row({ index, style, data }) {
-  const { members, openIndex, setOpenIndex, getSize, listRef, refreshing } = data;
+  const { members, openIndex, setOpenIndex, listRef, refreshing, setSize } = data;
   const m = members[index];
   const open = openIndex === index;
+  const rowRef = useRef(null);
   const toggle = () => {
     const prev = openIndex;
     const next = open ? null : index;
@@ -24,8 +25,14 @@ function Row({ index, style, data }) {
       }
     }
   };
+  useLayoutEffect(() => {
+    if (rowRef.current) {
+      setSize(index, rowRef.current.offsetHeight);
+    }
+  }, [open, index, setSize]);
+
   return (
-    <div style={{ ...style, overflow: 'hidden' }} className="relative border-b px-3" onClick={toggle}>
+    <div ref={rowRef} style={{ ...style, overflow: 'hidden' }} className="relative border-b px-3" onClick={toggle}>
       <div className="flex justify-between items-center py-2">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
@@ -65,12 +72,24 @@ function Row({ index, style, data }) {
 export default function MemberAccordionList({ members, height, refreshing = false }) {
   const listRef = useRef();
   const [openIndex, setOpenIndex] = React.useState(null);
-  const getSize = (index) => {
-    const base = 56;
-    if (openIndex !== index) return base;
-    // Expanded summary content is roughly 300px tall
-    return base + 300;
-  };
+  const [sizes, setSizes] = React.useState(() => members.map(() => 56));
+
+  const setSize = (idx, size) =>
+    setSizes((s) => {
+      const next = [...s];
+      if (next[idx] !== size) {
+        next[idx] = size;
+        listRef.current?.resetAfterIndex(idx);
+      }
+      return next;
+    });
+
+  const getSize = (index) => sizes[index] || 56;
+
+  React.useEffect(() => {
+    setSizes(members.map(() => 56));
+    setOpenIndex(null);
+  }, [members]);
 
   return (
     <List
@@ -78,7 +97,7 @@ export default function MemberAccordionList({ members, height, refreshing = fals
       itemCount={members.length}
       itemSize={getSize}
       width="100%"
-      itemData={{ members, openIndex, setOpenIndex, getSize, listRef, refreshing }}
+      itemData={{ members, openIndex, setOpenIndex, listRef, refreshing, setSize }}
       ref={listRef}
     >
       {Row}

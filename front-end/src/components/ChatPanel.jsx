@@ -13,11 +13,13 @@ export default function ChatPanel({ groupId = '1', userId = '' }) {
   const [loading, setLoading] = useState(true);
   const endRef = useRef(null);
 
-  useEffect(() => {
-    if (endRef.current && typeof endRef.current.scrollIntoView === 'function') {
-      endRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+useEffect(() => {
+  if (endRef.current && typeof endRef.current.scrollIntoView === 'function') {
+    requestAnimationFrame(() => {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+}, [messages, infoMap]);
 
   useEffect(() => {
     let ignore = false;
