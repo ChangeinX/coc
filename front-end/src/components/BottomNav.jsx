@@ -1,13 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { Shield, MessageCircle, Users, User } from 'lucide-react';
 import { proxyImageUrl } from '../lib/assets.js';
 
 export default function BottomNav({ clanIcon }) {
   const items = [
-    { to: '/', label: 'Home', icon: 'shield' },
-    { to: '/chat', label: 'Chat', icon: 'message-circle' },
-    { to: '/community', label: 'Community', icon: 'users' },
-    { to: '/account', label: 'Account', icon: 'user' },
+    { to: '/', label: 'Home', icon: Shield },
+    { to: '/chat', label: 'Chat', icon: MessageCircle },
+    { to: '/community', label: 'Community', icon: Users },
+    { to: '/account', label: 'Account', icon: User },
   ];
 
   return (
@@ -24,7 +25,7 @@ export default function BottomNav({ clanIcon }) {
           {item.to === '/' && clanIcon ? (
             <img src={proxyImageUrl(clanIcon)} alt="clan" className="w-5 h-5" />
           ) : (
-            <i data-lucide={item.icon} className="w-5 h-5" />
+            React.createElement(item.icon, { className: 'w-5 h-5' })
           )}
           <span className="text-xs mt-1">{item.label}</span>
         </NavLink>

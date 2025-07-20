@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';
 import { fetchJSON } from './lib/api.js';
@@ -158,9 +159,6 @@ export default function App() {
     }
   }, [token]);
 
-  useEffect(() => {
-    window.lucide?.createIcons();
-  });
 
   useEffect(() => {
     const handler = (e) => {
@@ -206,7 +204,7 @@ export default function App() {
               className="p-2 rounded hover:bg-slate-700"
               onClick={() => setClanTag(homeClanTag)}
             >
-              <i data-lucide="arrow-left" className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
           )}
           {chatAllowed && null}
