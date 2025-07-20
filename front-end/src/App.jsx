@@ -7,6 +7,7 @@ import { fetchJSON } from './lib/api.js';
 import { proxyImageUrl } from './lib/assets.js';
 import useFeatures from './hooks/useFeatures.js';
 import BottomNav from './components/BottomNav.jsx';
+import DesktopNav from './components/DesktopNav.jsx';
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
@@ -243,6 +244,7 @@ export default function App() {
           </div>
         </div>
       </header>
+      <DesktopNav clanIcon={clanInfo?.badgeUrls?.small} />
       <main className="px-2 pt-0 pb-2 sm:px-4 sm:pt-0 sm:pb-4">
         {loadingUser && <Loading className="h-[calc(100vh-4rem)]" />}
         {!loadingUser && !playerTag && (
