@@ -164,7 +164,10 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
     )
     needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
     if needs_refresh:
-        await clan_service.get_clan(tag)
+        try:
+            await clan_service.get_clan(tag)
+        except RuntimeError:
+            pass
         row = (
             ClanSnapshot.query
             .filter_by(clan_tag=tag)

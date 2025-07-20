@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, g
+from flask import Blueprint, jsonify, g, abort
 
 from ..services.snapshot_service import get_clan as get_clan_snapshot
 from coclib.services.loyalty_service import get_clan_loyalty
@@ -11,6 +11,8 @@ bp = Blueprint("clan", __name__, url_prefix=f"{API_PREFIX}/clan")
 @bp.get("/<string:tag>")
 async def clan_profile(tag: str):
     data = await get_clan_snapshot(tag.upper())
+    if data is None:
+        abort(404)
     return jsonify(data)
 
 
