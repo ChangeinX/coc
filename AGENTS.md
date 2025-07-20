@@ -1,6 +1,6 @@
 # Codex Guidelines
 
-This monorepo hosts several services and a front-end that make up a Clash of Clans dashboard. The key directories are:
+This monorepo hosts several microservices and a front-end that make up a Clash of Clans dashboard. The key directories are:
 
 - `back-end/` – Flask API service, generic routes
 - `sync/` – service used to synchronize data from Clash of Clans
@@ -45,6 +45,7 @@ Any lint errors or build failures should fail the PR.
 
 ### Issue-creation helper
 
+Only use this helper when an issue # or issue(s) creation request is provided in your prompt.
 `create_issues.py` is pre-configured for you. Reference issues in commit message and **not** the PR title for tracking. 
 At runtime the container already has:
 
