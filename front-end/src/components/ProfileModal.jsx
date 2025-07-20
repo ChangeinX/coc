@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Info } from 'lucide-react';
 import { fetchJSON } from '../lib/api.js';
 import Loading from './Loading.jsx';
 import VerifiedBadge from './VerifiedBadge.jsx';
@@ -9,6 +10,12 @@ export default function ProfileModal({ onClose, onVerified }) {
   const [saving, setSaving] = useState(false);
   const [token, setToken] = useState('');
   const [chatEnabled, setChatEnabled] = useState(false);
+
+  const totalWeight =
+    (profile?.risk_weight_war || 0) +
+    (profile?.risk_weight_idle || 0) +
+    (profile?.risk_weight_don_deficit || 0) +
+    (profile?.risk_weight_don_drop || 0);
 
   useEffect(() => {
     const load = async () => {
@@ -67,22 +74,66 @@ export default function ProfileModal({ onClose, onVerified }) {
             {profile.verified && <VerifiedBadge />}
             {chatEnabled && <ChatBadge />}
           </h3>
+          <h4 className="text-lg font-medium flex items-center gap-1">
+            Risk Weights
+            <Info
+              className="w-4 h-4 text-slate-500"
+              title="Adjust how each factor influences the Risk tab"
+            />
+          </h4>
           <label className="block">
             <span className="text-sm">War Weight</span>
-            <input type="number" step="0.01" value={profile.risk_weight_war ?? 0} onChange={(e) => handleChange('risk_weight_war', parseFloat(e.target.value))} className="mt-1 w-full border px-2 py-1 rounded" />
+            <input
+              type="number"
+              step="1"
+              min="0"
+              max="100"
+              value={Math.round((profile.risk_weight_war ?? 0) * 100)}
+              onChange={(e) => handleChange('risk_weight_war', parseFloat(e.target.value) / 100)}
+              className="mt-1 w-full border px-2 py-1 rounded"
+            />
           </label>
           <label className="block">
             <span className="text-sm">Idle Weight</span>
-            <input type="number" step="0.01" value={profile.risk_weight_idle ?? 0} onChange={(e) => handleChange('risk_weight_idle', parseFloat(e.target.value))} className="mt-1 w-full border px-2 py-1 rounded" />
+            <input
+              type="number"
+              step="1"
+              min="0"
+              max="100"
+              value={Math.round((profile.risk_weight_idle ?? 0) * 100)}
+              onChange={(e) => handleChange('risk_weight_idle', parseFloat(e.target.value) / 100)}
+              className="mt-1 w-full border px-2 py-1 rounded"
+            />
           </label>
           <label className="block">
             <span className="text-sm">Deficit Weight</span>
-            <input type="number" step="0.01" value={profile.risk_weight_don_deficit ?? 0} onChange={(e) => handleChange('risk_weight_don_deficit', parseFloat(e.target.value))} className="mt-1 w-full border px-2 py-1 rounded" />
+            <input
+              type="number"
+              step="1"
+              min="0"
+              max="100"
+              value={Math.round((profile.risk_weight_don_deficit ?? 0) * 100)}
+              onChange={(e) => handleChange('risk_weight_don_deficit', parseFloat(e.target.value) / 100)}
+              className="mt-1 w-full border px-2 py-1 rounded"
+            />
           </label>
           <label className="block">
             <span className="text-sm">Drop Weight</span>
-            <input type="number" step="0.01" value={profile.risk_weight_don_drop ?? 0} onChange={(e) => handleChange('risk_weight_don_drop', parseFloat(e.target.value))} className="mt-1 w-full border px-2 py-1 rounded" />
-          </label>
+          <input
+            type="number"
+            step="1"
+            min="0"
+            max="100"
+            value={Math.round((profile.risk_weight_don_drop ?? 0) * 100)}
+            onChange={(e) => handleChange('risk_weight_don_drop', parseFloat(e.target.value) / 100)}
+            className="mt-1 w-full border px-2 py-1 rounded"
+          />
+        </label>
+        {Math.round(totalWeight * 100) !== 100 && (
+          <div className="text-red-500 text-sm" role="alert">
+            Weights should total 100%
+          </div>
+        )}
           <label className="inline-flex items-center gap-2">
             <input type="checkbox" checked={chatEnabled} onChange={(e) => setChatEnabled(e.target.checked)} />
             <span className="text-sm">Enable Chat</span>
