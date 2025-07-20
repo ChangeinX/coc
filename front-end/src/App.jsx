@@ -14,6 +14,7 @@ const DashboardPage = lazy(() => import('./pages/Dashboard.jsx'));
 const ChatPage = lazy(() => import('./pages/ChatPage.jsx'));
 const CommunityPage = lazy(() => import('./pages/Community.jsx'));
 const AccountPage = lazy(() => import('./pages/Account.jsx'));
+const LoginPage = lazy(() => import('./pages/Login.jsx'));
 
 function isTokenExpired(tok) {
   try {
@@ -179,14 +180,9 @@ export default function App() {
 
   if (!token) {
     return (
-      <>
-        <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 text-center shadow-md sticky top-0 z-50">
-          <h1 className="text-lg font-semibold">Clan Dashboard</h1>
-        </header>
-        <div className="flex justify-center items-center h-[calc(100vh-4rem)] p-2 sm:p-4">
-          <div id="signin"></div>
-        </div>
-      </>
+      <Suspense fallback={<Loading className="h-screen" />}> 
+        <LoginPage />
+      </Suspense>
     );
   }
 
