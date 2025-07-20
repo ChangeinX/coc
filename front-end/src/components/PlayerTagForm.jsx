@@ -28,7 +28,7 @@ export default function PlayerTagForm({ onSaved }) {
   };
 
   return (
-    <div className="flex justify-center items-center h-[calc(100vh-4rem)]">
+    <div className="flex justify-center items-center h-[calc(100dvh-4rem)]">
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4 w-full max-w-sm">
         <p className="font-medium text-slate-700">Enter your player tag</p>
         <input
