@@ -26,9 +26,17 @@ function Row({ index, style, data }) {
     }
   };
   useLayoutEffect(() => {
-    if (rowRef.current) {
-      setSize(index, rowRef.current.offsetHeight);
+    if (!rowRef.current) return;
+    const el = rowRef.current;
+    setSize(index, el.offsetHeight);
+    let observer;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => {
+        setSize(index, el.offsetHeight);
+      });
+      observer.observe(el);
     }
+    return () => observer?.disconnect();
   }, [open, index, setSize]);
 
   return (
