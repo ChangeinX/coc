@@ -13,7 +13,7 @@ export default function PlayerSheet({ tag, onClose }) {
         active={active}
         onChange={setActive}
       />
-      <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 150px)' }}>
+      <div className="p-4 overflow-y-auto" style={{ height: 'calc(100% - 150px)' }}>
         {active === 'overview' && <PlayerSummary tag={tag} />}
       </div>
     </BottomSheet>
