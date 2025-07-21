@@ -36,6 +36,11 @@ export default function Account({ onVerified }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    if (chatEnabled && !profile.verified) {
+      alert('You must verify your account to enable chat.');
+      setSaving(false);
+      return;
+    }
     try {
       await fetchJSON('/user/profile', {
         method: 'POST',
@@ -110,6 +115,15 @@ export default function Account({ onVerified }) {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ token }),
                 });
+                await fetchJSON('/user/features', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    features: chatEnabled ? ['chat'] : [],
+                    all: false,
+                  }),
+                });
+                window.dispatchEvent(new Event('features-updated'));
                 setProfile((p) => ({ ...p, verified: true }));
                 onVerified && onVerified();
               } catch {
