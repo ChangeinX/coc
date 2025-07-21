@@ -3,7 +3,7 @@ import Loading from '../components/Loading.jsx';
 import {fetchJSONCached} from '../lib/api.js';
 import { getClanCache, putClanCache } from '../lib/db.js';
 import { timeAgo } from '../lib/time.js';
-import MobileTabs from '../components/MobileTabs.jsx';
+import Tabs from '../components/Tabs.jsx';
 import RiskRing from '../components/RiskRing.jsx';
 import DonationRing from '../components/DonationRing.jsx';
 import MemberList from '../components/MemberList.jsx';
@@ -59,7 +59,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     const [selected, setSelected] = useState(null);
     const [sortField, setSortField] = useState('');
     const [sortDir, setSortDir] = useState('asc');
-    const [activeTab, setActiveTab] = useState('top');
+    const [activeSection, setActiveSection] = useState('health');
     const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width:640px)').matches);
     const [listHeight, setListHeight] = useState(() => Math.min(500, window.innerHeight - 200));
 
@@ -231,218 +231,199 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             {loading && clan && <Loading className="py-4"/>}
             {clan && (
                 <>
-                    <div className="flex justify-center mt-6">
-                        <Stat
-                            iconUrl={winStreakIcon}
-                            label="Win Streak"
-                            value={clan.warWinStreak || 0}
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Stat
-                            icon="users"
-                            iconUrl={clan.badgeUrls?.small}
-                            label="Members"
-                            value={members.length}
-                        />
-                        <Stat
-                            iconUrl={levelIcon}
-                            label="Level"
-                            value={clan.clanLevel}
-                        />
-                        <Stat
-                            iconUrl={warWinsIcon}
-                            label="War Wins"
-                            value={clan.warWins || 0}
-                        />
-                        <Stat
-                            iconUrl={warLossesIcon}
-                            label="War Losses"
-                            value={clan.warLosses || 0}
-                        />
-                    </div>
-                    {isDesktop ? (
+                    <Tabs
+                        tabs={[
+                            { value: 'health', label: 'Clan Health' },
+                            { value: 'members', label: 'Members' },
+                            { value: 'intel', label: 'Intel' },
+                        ]}
+                        active={activeSection}
+                        onChange={setActiveSection}
+                    />
+
+                    {activeSection === 'health' && (
                         <>
-                            <h2 className="text-xl font-semibold text-slate-700">At-Risk Members</h2>
-                            <div className="overflow-x-auto shadow bg-white rounded mb-6">
-                                <table className="mobile-table min-w-full text-xs sm:text-sm">
-                                    <thead className="bg-slate-50 text-left text-slate-600">
-                                    <tr>
-                                        <th className="px-4 py-3">Player</th>
-                                        <th className="px-4 py-3">Tag</th>
-                                        <th className="px-4 py-3">Days in Clan</th>
-                                        <th className="px-4 py-3">Score</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {topRisk.map((m) => (
-                                        <tr
-                                            key={m.tag}
-                                            className="border-b last:border-none hover:bg-rose-50 cursor-pointer"
-                                            onClick={() => setSelected(m.tag)}
-                                        >
-                                            <td data-label="Player" className="px-4 py-2 font-medium">
-                                                <span className="flex items-center gap-2">
-                                                    {m.leagueIcon && (
-                                                        <CachedImage src={m.leagueIcon} alt="league" className="w-5 h-5" />
-                                                    )}
-                                                    <img
-                                                        src={getTownHallIcon(m.townHallLevel)}
-                                                        alt={`TH${m.townHallLevel}`}
-                                                        className="w-5 h-5"
-                                                    />
-                                                    {m.name}
-                                                </span>
-                                            </td>
-                                            <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
-                                            <td data-label="Days in Clan" className="px-4 py-2 text-center">{m.loyalty}</td>
-                                            <td data-label="Score" className="px-4 py-2">
-                                                <div className="flex items-center gap-2">
-                                                    {refreshing && !loading ? (
-                                                        <Loading size={40} />
-                                                    ) : (
-                                                        <RiskRing score={m.risk_score} size={40} />
-                                                    )}
-                                                    {m.risk_breakdown && m.risk_breakdown.length > 0 && (
-                                                        <ul className="list-disc list-inside text-xs">
-                                                            {m.risk_breakdown.map((r, i) => (
-                                                                <li key={i}>{r.points} pts – {r.reason}</li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
+                            <div className="flex justify-center mt-6">
+                                <Stat
+                                    iconUrl={winStreakIcon}
+                                    label="Win Streak"
+                                    value={clan.warWinStreak || 0}
+                                />
                             </div>
-                            <h2 className="text-xl font-semibold text-slate-700">All Members</h2>
-                            <div className="overflow-x-auto shadow bg-white rounded">
-                                <ErrorBoundary fallback={<p className="p-4">Unable to display members.</p>}>
-                                <table className="mobile-table min-w-full text-xs sm:text-sm" id="membersTable">
-                                    <thead className="bg-slate-50 text-left text-slate-600">
-                                    <tr>
-                                        <th className="px-3 py-2">Player</th>
-                                        <th
-                                            className="px-3 py-2 cursor-pointer select-none hidden sm:table-cell"
-                                            onClick={() => toggleSort('role')}
-                                        >
-                                            Role {sortField === 'role' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                        </th>
-                                        <th
-                                            className="px-3 py-2 cursor-pointer select-none text-center"
-                                            onClick={() => toggleSort('th')}
-                                        >
-                                            TH {sortField === 'th' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                        </th>
-                                        <th
-                                            className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell"
-                                            onClick={() => toggleSort('trophies')}
-                                        >
-                                            Trophies {sortField === 'trophies' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                        </th>
-                                        <th
-                                            className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell"
-                                            onClick={() => toggleSort('donations')}
-                                        >
-                                            Don&nbsp;/&nbsp;Rec {sortField === 'donations' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                        </th>
-                                        <th
-                                            className="px-3 py-2 cursor-pointer select-none text-center hidden sm:table-cell"
-                                            onClick={() => toggleSort('loyalty')}
-                                        >
-                                            Days in Clan {sortField === 'loyalty' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                        </th>
-                                        <th
-                                            className="px-3 py-2 cursor-pointer select-none text-center"
-                                            onClick={() => toggleSort('risk')}
-                                        >
-                                            Risk {sortField === 'risk' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                                        </th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {sortedMembers.map((m) => (
-                                        <tr
-                                            key={m.tag}
-                                            className="border-b last:border-none hover:bg-slate-50 cursor-pointer"
-                                            onClick={() => setSelected(m.tag)}
-                                        >
-                                            <td data-label="Player" className="px-3 py-2 font-medium">
-                                                <div className="flex flex-col">
-                                                    <span className="flex items-center gap-2">
-                                                        {m.leagueIcon && (
-                                                            <CachedImage src={m.leagueIcon} alt="league" className="w-5 h-5" />
-                                                        )}
-                                                        <img
-                                                            src={getTownHallIcon(m.townHallLevel)}
-                                                            alt={`TH${m.townHallLevel}`}
-                                                            className="w-5 h-5"
-                                                        />
-                                                        {m.name}
-                                                    </span>
-                                                    <span className="text-xs text-slate-500">
-                                                        {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td data-label="Role" className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
-                                            <td data-label="TH" className="px-3 py-2 text-center">{m.townHallLevel}</td>
-                                            <td data-label="Trophies" className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
-                                            <td data-label="Don/Rec" className="px-3 py-2 text-center hidden md:table-cell">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    {m.donations}/{m.donationsReceived}
-                                                    <DonationRing donations={m.donations} received={m.donationsReceived} size={36} />
-                                                </div>
-                                            </td>
-                                            <td data-label="Days in Clan" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
-                                            <td data-label="Risk" className="px-3 py-2 text-center">
-                                                {refreshing && !loading ? (
-                                                    <Loading size={36} />
-                                                ) : (
-                                                    <RiskRing score={m.risk_score} size={36} />
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
-                                </ErrorBoundary>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <Stat icon="users" iconUrl={clan.badgeUrls?.small} label="Members" value={members.length} />
+                                <Stat iconUrl={levelIcon} label="Level" value={clan.clanLevel} />
+                                <Stat iconUrl={warWinsIcon} label="War Wins" value={clan.warWins || 0} />
+                                <Stat iconUrl={warLossesIcon} label="War Losses" value={clan.warLosses || 0} />
                             </div>
                         </>
-                    ) : (
+                    )}
+
+                    {activeSection === 'members' && (
                         <>
-                            <MobileTabs
-                                tabs={[{ value: 'top', label: 'Top 5 At-Risk' }, { value: 'all', label: 'All Members' }]}
-                                active={activeTab}
-                                onChange={setActiveTab}
-                            />
-                            {activeTab === 'top' && (
-                                <div className="flex overflow-x-auto gap-3 px-4 py-3 scroller">
-                                    {topRisk.map((m) => (
-                                        <ProfileCard
-                                            key={m.tag}
-                                            member={m}
-                                            refreshing={refreshing && !loading}
-                                            onClick={() => setSelected(m.tag)}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                            {activeTab === 'all' && (
-                                <div className="bg-white rounded shadow" style={{ height: listHeight }}>
-                                    <ErrorBoundary fallback={<p className="p-4">Unable to display members.</p>}>
-                                        <MemberList
-                                            members={sortedMembers}
-                                            height={listHeight}
-                                            onSelect={setSelected}
-                                            refreshing={refreshing && !loading}
-                                        />
-                                    </ErrorBoundary>
-                                </div>
+                            {isDesktop ? (
+                                <>
+                                    <h2 className="text-xl font-semibold text-slate-700">At-Risk Members</h2>
+                                    <div className="overflow-x-auto shadow bg-white rounded mb-6">
+                                        <table className="mobile-table min-w-full text-xs sm:text-sm">
+                                            <thead className="bg-slate-50 text-left text-slate-600">
+                                            <tr>
+                                                <th className="px-4 py-3">Player</th>
+                                                <th className="px-4 py-3">Tag</th>
+                                                <th className="px-4 py-3">Days in Clan</th>
+                                                <th className="px-4 py-3">Score</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {topRisk.map((m) => (
+                                                <tr
+                                                    key={m.tag}
+                                                    className="border-b last:border-none hover:bg-rose-50 cursor-pointer"
+                                                    onClick={() => setSelected(m.tag)}
+                                                >
+                                                    <td data-label="Player" className="px-4 py-2 font-medium">
+                                                        <span className="flex items-center gap-2">
+                                                            {m.leagueIcon && (
+                                                                <CachedImage src={m.leagueIcon} alt="league" className="w-5 h-5" />
+                                                            )}
+                                                            <img
+                                                                src={getTownHallIcon(m.townHallLevel)}
+                                                                alt={`TH${m.townHallLevel}`}
+                                                                className="w-5 h-5"
+                                                            />
+                                                            {m.name}
+                                                        </span>
+                                                    </td>
+                                                    <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
+                                                    <td data-label="Days in Clan" className="px-4 py-2 text-center">{m.loyalty}</td>
+                                                    <td data-label="Score" className="px-4 py-2">
+                                                        <div className="flex items-center gap-2">
+                                                            {refreshing && !loading ? (
+                                                                <Loading size={40} />
+                                                            ) : (
+                                                                <RiskRing score={m.risk_score} size={40} />
+                                                            )}
+                                                            {m.risk_breakdown && m.risk_breakdown.length > 0 && (
+                                                                <ul className="list-disc list-inside text-xs">
+                                                                    {m.risk_breakdown.map((r, i) => (
+                                                                        <li key={i}>{r.points} pts – {r.reason}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <h2 className="text-xl font-semibold text-slate-700">All Members</h2>
+                                    <div className="overflow-x-auto shadow bg-white rounded">
+                                        <ErrorBoundary fallback={<p className="p-4">Unable to display members.</p>}>
+                                            <table className="mobile-table min-w-full text-xs sm:text-sm" id="membersTable">
+                                                <thead className="bg-slate-50 text-left text-slate-600">
+                                                <tr>
+                                                    <th className="px-3 py-2">Player</th>
+                                                    <th className="px-3 py-2 cursor-pointer select-none hidden sm:table-cell" onClick={() => toggleSort('role')}>
+                                                        Role {sortField === 'role' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                                    </th>
+                                                    <th className="px-3 py-2 cursor-pointer select-none text-center" onClick={() => toggleSort('th')}>
+                                                        TH {sortField === 'th' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                                    </th>
+                                                    <th className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell" onClick={() => toggleSort('trophies')}>
+                                                        Trophies {sortField === 'trophies' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                                    </th>
+                                                    <th className="px-3 py-2 cursor-pointer select-none text-center hidden md:table-cell" onClick={() => toggleSort('donations')}>
+                                                        Don&nbsp;/&nbsp;Rec {sortField === 'donations' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                                    </th>
+                                                    <th className="px-3 py-2 cursor-pointer select-none text-center hidden sm:table-cell" onClick={() => toggleSort('loyalty')}>
+                                                        Days in Clan {sortField === 'loyalty' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                                    </th>
+                                                    <th className="px-3 py-2 cursor-pointer select-none text-center" onClick={() => toggleSort('risk')}>
+                                                        Risk {sortField === 'risk' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                                                    </th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {sortedMembers.map((m) => (
+                                                    <tr
+                                                        key={m.tag}
+                                                        className="border-b last:border-none hover:bg-slate-50 cursor-pointer"
+                                                        onClick={() => setSelected(m.tag)}
+                                                    >
+                                                        <td data-label="Player" className="px-3 py-2 font-medium">
+                                                            <div className="flex flex-col">
+                                                                <span className="flex items-center gap-2">
+                                                                    {m.leagueIcon && (
+                                                                        <CachedImage src={m.leagueIcon} alt="league" className="w-5 h-5" />
+                                                                    )}
+                                                                    <img
+                                                                        src={getTownHallIcon(m.townHallLevel)}
+                                                                        alt={`TH${m.townHallLevel}`}
+                                                                        className="w-5 h-5"
+                                                                    />
+                                                                    {m.name}
+                                                                </span>
+                                                                <span className="text-xs text-slate-500">
+                                                                    {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Role" className="px-3 py-2 hidden sm:table-cell">{m.role}</td>
+                                                        <td data-label="TH" className="px-3 py-2 text-center">{m.townHallLevel}</td>
+                                                        <td data-label="Trophies" className="px-3 py-2 text-center hidden md:table-cell">{m.trophies}</td>
+                                                        <td data-label="Don/Rec" className="px-3 py-2 text-center hidden md:table-cell">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                {m.donations}/{m.donationsReceived}
+                                                                <DonationRing donations={m.donations} received={m.donationsReceived} size={36} />
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Days in Clan" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
+                                                        <td data-label="Risk" className="px-3 py-2 text-center">
+                                                            {refreshing && !loading ? (
+                                                                <Loading size={36} />
+                                                            ) : (
+                                                                <RiskRing score={m.risk_score} size={36} />
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                </tbody>
+                                            </table>
+                                        </ErrorBoundary>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="text-xl font-semibold text-slate-700">Top 5 At-Risk</h2>
+                                    <div className="flex overflow-x-auto gap-3 px-4 py-3 scroller">
+                                        {topRisk.map((m) => (
+                                            <ProfileCard
+                                                key={m.tag}
+                                                member={m}
+                                                refreshing={refreshing && !loading}
+                                                onClick={() => setSelected(m.tag)}
+                                            />
+                                        ))}
+                                    </div>
+                                    <h2 className="text-xl font-semibold text-slate-700">All Members</h2>
+                                    <div className="bg-white rounded shadow" style={{ height: listHeight }}>
+                                        <ErrorBoundary fallback={<p className="p-4">Unable to display members.</p>}>
+                                            <MemberList
+                                                members={sortedMembers}
+                                                height={listHeight}
+                                                onSelect={setSelected}
+                                                refreshing={refreshing && !loading}
+                                            />
+                                        </ErrorBoundary>
+                                    </div>
+                                </>
                             )}
                         </>
+                    )}
+
+                    {activeSection === 'intel' && (
+                        <div className="py-8 text-center text-slate-500">Coming soon...</div>
                     )}
                 </>
             )}
