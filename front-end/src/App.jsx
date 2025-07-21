@@ -11,6 +11,7 @@ import DesktopNav from './components/DesktopNav.jsx';
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
+const LegalModal = lazy(() => import('./components/LegalModal.jsx'));
 const DashboardPage = lazy(() => import('./pages/Dashboard.jsx'));
 const ChatPage = lazy(() => import('./pages/ChatPage.jsx'));
 const ScoutPage = lazy(() => import('./pages/Scout.jsx'));
@@ -59,6 +60,7 @@ export default function App() {
   const [clanTag, setClanTag] = useState(null);
   const [clanInfo, setClanInfo] = useState(null);
   const [showClanInfo, setShowClanInfo] = useState(false);
+  const [showLegal, setShowLegal] = useState(false);
   const [loadingUser, setLoadingUser] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const { enabled: hasFeature } = useFeatures(token);
@@ -190,23 +192,20 @@ export default function App() {
 
   return (
     <Router>
-      <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white p-4 flex items-center justify-between shadow-md sticky top-0 z-50">
-        <h1
-          className="flex flex-row items-center gap-1 sm:flex-col sm:items-start sm:gap-0 text-left"
-          onClick={() => setShowClanInfo(true)}
-        >
-          <span className="text-lg font-semibold">Clan Boards</span>
-          <span className="flex items-center gap-1 text-sm hover:underline hidden sm:flex">
+      <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white px-4 py-2 flex items-center justify-between shadow-md sticky top-0 z-50">
+        <h1 className="flex flex-row items-center gap-1 sm:flex-col sm:items-start sm:gap-0 text-left">
+          <span className="text-lg font-semibold cursor-pointer" onClick={() => setShowLegal(true)}>Clan Boards</span>
+          <span className="flex items-center gap-1 text-sm hover:underline hidden sm:flex cursor-pointer" onClick={() => setShowClanInfo(true)}>
             {clanInfo?.badgeUrls?.small && (
-              <CachedImage src={clanInfo.badgeUrls.small} alt="clan" className="w-4 h-4" />
+              <CachedImage src={clanInfo.badgeUrls.small} alt="clan" className="w-5 h-5" />
             )}
             {clanInfo?.name || 'Clan Dashboard'}
           </span>
         </h1>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-sm hover:underline sm:hidden" onClick={() => setShowClanInfo(true)}>
+          <span className="flex items-center gap-1 text-sm hover:underline sm:hidden cursor-pointer" onClick={() => setShowClanInfo(true)}>
             {clanInfo?.badgeUrls?.small && (
-              <CachedImage src={clanInfo.badgeUrls.small} alt="clan" className="w-4 h-4" />
+              <CachedImage src={clanInfo.badgeUrls.small} alt="clan" className="w-5 h-5" />
             )}
             {clanInfo?.name || 'Clan Dashboard'}
           </span>
@@ -282,6 +281,11 @@ export default function App() {
       {showClanInfo && (
         <Suspense fallback={<Loading className="h-screen" />}>
           <ClanModal clan={clanInfo} onClose={() => setShowClanInfo(false)} />
+        </Suspense>
+      )}
+      {showLegal && (
+        <Suspense fallback={<Loading className="h-screen" />}>
+          <LegalModal onClose={() => setShowLegal(false)} />
         </Suspense>
       )}
     </Router>
