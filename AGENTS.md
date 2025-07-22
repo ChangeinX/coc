@@ -3,9 +3,8 @@
 This monorepo hosts several microservices and a front-end that make up a Clash of Clans dashboard. The key directories are:
 
 - `back-end/` – Flask API service, generic routes
-- `sync/` – service used to synchronize data from Clash of Clans
 - `front-end/` – React dashboard built with Vite
-- `coclib/` – shared Python modules for both services
+- `coclib/` – shared Python modules for the project
 - `db/` – minimal Flask app used solely for running migrations
 - `migrations/` – Alembic migration scripts
 - `messages-java/` - Chat service implemented in Spring Boot
@@ -25,7 +24,7 @@ Validate changes using:
 nox -s lint tests
 
 # Lint Python sources manually if needed
-ruff back-end sync coclib db
+ruff back-end coclib db
 
 # Install deps and run front-end tests and build
 cd front-end
