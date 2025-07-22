@@ -1,7 +1,7 @@
 # Database Utilities
 
 This directory contains a minimal Flask application used for running
-Alembic migrations. It is independent from the API and sync services.
+Alembic migrations. It is independent from the API.
 
 Usage:
 
