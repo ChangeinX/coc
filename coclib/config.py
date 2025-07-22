@@ -16,6 +16,7 @@ class Config:
 
     # Clash of Clans API
     COC_TOKEN = os.getenv("COC_API_TOKEN")  # required
+    COC_TOKENS = [t.strip() for t in (COC_TOKEN or "").split(",") if t.strip()]
     COC_BASE = "https://api.clashofclans.com/v1"
 
     # Cache (SimpleCache by default; swap config for redis if wanted)
