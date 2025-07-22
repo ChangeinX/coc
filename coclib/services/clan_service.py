@@ -78,7 +78,7 @@ async def get_clan(tag: str) -> dict:
         # Schedule a full get_player() to also write a snapshot
         member_tasks.append(get_player(member["tag"]))
     if member_tasks:
-        # Run them concurrently; httpx handles connection pooling.
+        # Run them concurrently while reusing the client session.
         await gather(*member_tasks)
 
     db.session.commit()
