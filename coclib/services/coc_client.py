@@ -60,7 +60,7 @@ class CoCClient:
         except coc.NotFound:
             return await self._handle_not_found()
 
-    async def _wrap(self, obj):
+    def _wrap(self, obj):
         if hasattr(obj, "_raw_data"):
             return obj._raw_data
         return obj
