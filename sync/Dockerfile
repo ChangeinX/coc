@@ -6,6 +6,7 @@ FROM python:3.11-slim
 WORKDIR /opt/app
 
 COPY sync/requirements.txt ./requirements.txt
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY sync/ ./sync
