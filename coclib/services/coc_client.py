@@ -60,9 +60,12 @@ class CoCClient:
         except coc.NotFound:
             return await self._handle_not_found()
 
-    def _wrap(self, obj):
+    async def _wrap(self, obj):
         if hasattr(obj, "_raw_data"):
-            return obj._raw_data
+            raw = obj._raw_data
+            if asyncio.iscoroutine(raw):
+                raw = await raw
+            return raw
         return obj
 
     @rate_limited
@@ -70,7 +73,7 @@ class CoCClient:
         await self._ensure_login()
         coro = self._client.get_clan(encode_tag(tag))
         result = await self._safe(coro, f"/clans/{encode_tag(tag)}")
-        return self._wrap(result)
+        return await self._wrap(result)
 
     @rate_limited
     async def clan_members(self, tag: str):
@@ -78,15 +81,15 @@ class CoCClient:
         coro = self._client.get_members(encode_tag(tag))
         result = await self._safe(coro, f"/clans/{encode_tag(tag)}/members")
         if isinstance(result, list):
-            return [self._wrap(m) for m in result]
-        return result
+            return [await self._wrap(m) for m in result]
+        return await self._wrap(result)
 
     @rate_limited
     async def player(self, tag: str):
         await self._ensure_login()
         coro = self._client.get_player(encode_tag(tag))
         result = await self._safe(coro, f"/players/{encode_tag(tag)}")
-        return self._wrap(result)
+        return await self._wrap(result)
 
     @rate_limited
     async def current_war(self, tag: str):
@@ -95,16 +98,14 @@ class CoCClient:
         result = await self._safe(coro, f"/clans/{encode_tag(tag)}/currentwar")
         if result is None:
             return {"state": "notInWar"}
-        return self._wrap(result)
+        return await self._wrap(result)
 
     @rate_limited
     async def capital_raid_seasons(self, tag: str):
         await self._ensure_login()
-        coro = self._client.get_raid_log(encode_tag(tag))
+        coro = self._client.get_raid_log(clan_tag=encode_tag(tag), limit=1)
         result = await self._safe(coro, f"/clans/{encode_tag(tag)}/capitalraidseasons")
-        if hasattr(result, "_raw_data"):
-            return result._raw_data
-        return result
+        return await self._wrap(result)
 
     @rate_limited
     async def verify_token(self, tag: str, token: str):
