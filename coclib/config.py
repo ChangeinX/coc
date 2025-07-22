@@ -15,6 +15,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Clash of Clans API
+    COC_EMAIL = os.getenv("COC_EMAIL")  # required
+    COC_PASSWORD = os.getenv("COC_PASSWORD")
     COC_TOKEN = os.getenv("COC_API_TOKEN")  # required
     COC_BASE = "https://api.clashofclans.com/v1"
 
