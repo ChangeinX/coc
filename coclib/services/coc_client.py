@@ -3,7 +3,8 @@ import logging
 from functools import wraps
 from datetime import datetime, timedelta
 import os
-import httpx
+
+import coc
 
 from coclib.utils import encode_tag
 
@@ -13,7 +14,6 @@ _last_reset = datetime.utcnow()
 _req_count = 0
 _lock = asyncio.Lock()
 
-COC_BASE = os.getenv("COC_BASE", "https://api.clashofclans.com/v1")
 COC_TOKEN = os.getenv("COC_API_TOKEN")
 COC_REQS_PER_DAY = int(os.getenv("COC_REQS_PER_DAY", "5000"))
 
@@ -35,69 +35,60 @@ def rate_limited(fn):
 
 
 class CoCClient:
-    def __init__(self, base: str, token: str):
-        self.base = base
-        self.headers = {"Authorization": f"Bearer {token}"}
+    def __init__(self, token: str):
+        self._client = coc.Client(raw_attribute=True)
+        self._login_task = asyncio.create_task(self._client.login_with_tokens(token))
 
-    async def request(self, method: str, path: str, **kwargs):
-        async with httpx.AsyncClient(
-            base_url=self.base,
-            headers=self.headers,
-            timeout=10,
-            http2=True,
-        ) as client:
-            resp = await client.request(method, path, **kwargs)
-
-            if resp.status_code in (403, 404) and method == "GET":
-                try:
-                    payload = resp.json()
-                    reason = payload.get("reason", "")
-                except ValueError:
-                    reason = ""
-                if resp.status_code == 403 and reason.startswith("accessDenied"):
-                    logger.warning("Access denied for %s: %s", path, reason)
-                    return {"state": "accessDenied"}
-                return {"state": "notInWar"}
-
-            resp.raise_for_status()
-            return resp.json()
-
-    async def get(self, path: str):
-        return await self.request("GET", path)
+    async def _ready(self) -> None:
+        if self._login_task is not None:
+            await self._login_task
+            self._login_task = None
 
     @rate_limited
     async def clan(self, tag: str):
-        return await self.get(f"/clans/{encode_tag(tag)}")
+        await self._ready()
+        data = await self._client.get_clan(encode_tag(tag))
+        return getattr(data, "_raw_data", data)
 
     @rate_limited
     async def clan_members(self, tag: str):
-        return await self.get(f"/clans/{encode_tag(tag)}/members")
+        await self._ready()
+        members = await self._client.get_members(encode_tag(tag))
+        return [getattr(m, "_raw_data", m) for m in members]
 
     @rate_limited
     async def player(self, tag: str):
-        return await self.get(f"/players/{encode_tag(tag)}")
+        await self._ready()
+        data = await self._client.get_player(encode_tag(tag))
+        return getattr(data, "_raw_data", data)
 
     @rate_limited
     async def current_war(self, tag: str):
-        return await self.get(f"/clans/{encode_tag(tag)}/currentwar")
+        await self._ready()
+        war = await self._client.get_current_war(encode_tag(tag))
+        if war is None:
+            return {"state": "notInWar"}
+        return getattr(war, "_raw_data", war)
 
     @rate_limited
     async def capital_raid_seasons(self, tag: str):
-        return await self.get(f"/clans/{encode_tag(tag)}/capitalraidseasons")
+        await self._ready()
+        raid_log = await self._client.get_raid_log(encode_tag(tag))
+        return [entry._raw_data for entry in raid_log]
 
     @rate_limited
     async def verify_token(self, tag: str, token: str):
-        data = {"token": token}
-        return await self.request("POST", f"/players/{encode_tag(tag)}/verifytoken", json=data)
+        await self._ready()
+        return await self._client.verify_player_token(encode_tag(tag), token)
 
 
 _client: CoCClient | None = None
 
 
-def get_client() -> CoCClient:
+async def get_client() -> CoCClient:
     global _client
     if _client is None:
         if not COC_TOKEN:
             raise RuntimeError("COC_API_TOKEN environment variable not set")
-        _client = CoCClient(COC_BASE, COC_TOKEN)
+        _client = CoCClient(COC_TOKEN)
     return _client

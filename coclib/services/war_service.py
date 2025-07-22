@@ -16,7 +16,8 @@ STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 async def current_war(clan_tag: str) -> dict:
     clan_tag = normalize_tag(clan_tag)
-    data = await get_client().current_war(clan_tag)
+    client = await get_client()
+    data = await client.current_war(clan_tag)
 
     last = (
         WarSnapshot.query.filter_by(clan_tag=clan_tag)

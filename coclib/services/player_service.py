@@ -16,12 +16,13 @@ STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 
 async def _fetch_player(tag: str) -> dict:
-    return await get_client().player(tag)
+    client = await get_client()
+    return await client.player(tag)
 
 
 async def verify_token(tag: str, token: str) -> dict:
     """Verify a player's API token via the Clash of Clans API."""
-    client = get_client()
+    client = await get_client()
     return await client.verify_token(tag, token)
 
 
