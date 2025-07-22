@@ -1,6 +1,6 @@
 # Clash of Clans Dashboard
 
-This monorepo contains a Flask API, a data sync service and a React dashboard.
+This monorepo contains a Flask API and a React dashboard.
 
 ## Google Sign-In setup
 

@@ -17,13 +17,11 @@ jobs:
       ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
       APP_REPOSITORY: ${{ secrets.APP_REPOSITORY }}
       WORKER_REPOSITORY: ${{ secrets.WORKER_REPOSITORY }}
-      STATIC_REPOSITORY: ${{ secrets.STATIC_REPOSITORY }}
       MESSAGES_REPOSITORY: ${{ secrets.MESSAGES_REPOSITORY }}
       FRONTEND_BUCKET: ${{ secrets.FRONTEND_BUCKET }}
       CLUSTER: ${{ secrets.CLUSTER }}
       APP_SERVICE: ${{ secrets.APP_SERVICE }}
       WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
-      STATIC_SERVICE: ${{ secrets.STATIC_SERVICE }}
       MESSAGES_SERVICE: ${{ secrets.MESSAGES_SERVICE }}
       VITE_API_URL: ${{ secrets.VITE_API_URL }}
       VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
@@ -44,8 +42,6 @@ jobs:
               - front-end/**
             worker:
               - back-end/**
-            static:
-              - sync/**
             messages:
               - messages-java/**
 
@@ -103,20 +99,6 @@ jobs:
           new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
           aws ecs update-service --cluster $CLUSTER --service $WORKER_SERVICE --task-definition "$new_def"
 
-      - name: Build and push static image
-        if: steps.changes.outputs.static_any_changed == 'true'
-        run: |
-          docker buildx build \
-            --platform linux/arm64 \
-            -f sync/Dockerfile \
-            -t $ECR_REGISTRY/$STATIC_REPOSITORY:latest \
-            -t $ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }} \
-            --push .
-          task_def=$(aws ecs describe-services --cluster $CLUSTER --services $STATIC_SERVICE --query 'services[0].taskDefinition' --output text)
-          aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
-          jq --arg IMAGE "$ECR_REGISTRY/$STATIC_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
-          new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
-          aws ecs update-service --cluster $CLUSTER --service $STATIC_SERVICE --task-definition "$new_def"
 
       - name: Build and push messages image
         if: steps.changes.outputs.messages_any_changed == 'true'
