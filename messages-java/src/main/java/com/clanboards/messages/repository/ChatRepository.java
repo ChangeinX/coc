@@ -14,12 +14,19 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.lang.Math;
 
 public class ChatRepository {
     private final DynamoDbTable<MessageItem> table;
 
+    public static final int SHARD_COUNT = 20;
+
     public ChatRepository(DynamoDbEnhancedClient client, String tableName) {
         this.table = client.table(tableName, software.amazon.awssdk.enhanced.dynamodb.TableSchema.fromBean(MessageItem.class));
+    }
+
+    public static String globalShardKey(String userId) {
+        return "global#shard-" + Math.floorMod(userId.hashCode(), SHARD_COUNT);
     }
 
     static String pk(String chatId) {
@@ -30,15 +37,23 @@ public class ChatRepository {
         return "MSG#" + ts.toString() + "#" + uuid;
     }
 
-    public void saveMessage(ChatMessage msg) {
+    public void saveGlobalMessage(ChatMessage msg) {
+        saveMessageInternal(globalShardKey(msg.userId()), msg);
+    }
+
+    private void saveMessageInternal(String chatId, ChatMessage msg) {
         MessageItem item = new MessageItem();
-        item.setPK(pk(msg.channel()));
+        item.setPK(pk(chatId));
         item.setSK(sk(msg.ts(), UUID.randomUUID().toString()));
-        item.setChatId(msg.channel());
+        item.setChatId(chatId);
         item.setSenderId(msg.userId());
         item.setContent(msg.content());
         item.setTs(msg.ts().toString());
         table.putItem(item);
+    }
+
+    public void saveMessage(ChatMessage msg) {
+        saveMessageInternal(msg.channel(), msg);
     }
 
     public List<ChatMessage> listMessages(String chatId, int limit, Instant before) {

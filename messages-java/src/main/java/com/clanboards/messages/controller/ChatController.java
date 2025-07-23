@@ -33,6 +33,18 @@ public class ChatController {
         return ResponseEntity.ok(Map.of("status", "ok", "ts", msg.ts().toString()));
     }
 
+    @PostMapping("/publish/global")
+    public ResponseEntity<Map<String, String>> publishGlobal(@RequestBody GlobalRequest req) {
+        ChatMessage msg = chatService.publishGlobal(req.text(), req.userId());
+        messaging.convertAndSend("/topic/chat/" + msg.channel(), Map.of(
+                "channel", msg.channel(),
+                "userId", msg.userId(),
+                "content", msg.content(),
+                "ts", msg.ts().toString()
+        ));
+        return ResponseEntity.ok(Map.of("status", "ok", "ts", msg.ts().toString()));
+    }
+
     @GetMapping("/history/{chatId}")
     public ResponseEntity<List<Map<String, String>>> history(
             @PathVariable String chatId,
@@ -53,4 +65,5 @@ public class ChatController {
     }
 
     public static record PublishRequest(String chatId, String text, String userId) {}
+    public static record GlobalRequest(String text, String userId) {}
 }
