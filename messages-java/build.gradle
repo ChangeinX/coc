@@ -23,6 +23,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation platform('software.amazon.awssdk:bom:2.25.32')
     implementation 'software.amazon.awssdk:dynamodb'
+    implementation 'software.amazon.awssdk:dynamodb-enhanced'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 

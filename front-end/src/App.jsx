@@ -268,7 +268,7 @@ export default function App() {
           <Suspense fallback={<Loading className="py-20" />}>
             <Routes>
               <Route path="/" element={<DashboardPage defaultTag={clanTag} showSearchForm={false} onClanLoaded={setClanInfo} />} />
-              <Route path="/chat" element={<ChatPage verified={verified} groupId={homeClanTag || '1'} userId={playerTag || ''} />} />
+              <Route path="/chat" element={<ChatPage verified={verified} chatId={homeClanTag || '1'} userId={playerTag || ''} />} />
               <Route path="/scout" element={<ScoutPage />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/account" element={<AccountPage onVerified={() => setVerified(true)} />} />
