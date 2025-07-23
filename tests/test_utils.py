@@ -1,6 +1,5 @@
 import asyncio
-import pytest
-from coclib.utils import normalize_tag, encode_tag, safe_to_thread
+from coclib.utils import encode_tag, normalize_tag, safe_to_thread
 
 
 def test_normalize_tag_strip_and_upper():
