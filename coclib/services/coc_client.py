@@ -66,30 +66,8 @@ class CoCClient:
         return await self.request("GET", path)
 
     @rate_limited
-    async def clan(self, tag: str):
-        return await self.get(f"/clans/{encode_tag(tag)}")
-
-    @rate_limited
-    async def clan_members(self, tag: str):
-        return await self.get(f"/clans/{encode_tag(tag)}/members")
-
-    @rate_limited
-    async def player(self, tag: str):
-        return await self.get(f"/players/{encode_tag(tag)}")
-
-    @rate_limited
     async def current_war(self, tag: str):
         return await self.get(f"/clans/{encode_tag(tag)}/currentwar")
-
-    @rate_limited
-    async def capital_raid_seasons(self, tag: str):
-        return await self.get(f"/clans/{encode_tag(tag)}/capitalraidseasons")
-
-    @rate_limited
-    async def verify_token(self, tag: str, token: str):
-        data = {"token": token}
-        return await self.request("POST", f"/players/{encode_tag(tag)}/verifytoken", json=data)
-
 
 _client: CoCClient | None = None
 
