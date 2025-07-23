@@ -3,7 +3,6 @@
 Looks for a personal-access token in **GH_TOKEN**
 
 Example:
-
     python create_issues.py create bug --title "Login spinner" \
         --summary "Full-page spinner" --steps "1. Open" --expected "Modal only"
 """
