@@ -5,7 +5,7 @@ This monorepo hosts several microservices and a front-end that make up a Clash o
 - `back-end/` – Flask API service, generic routes
 - `front-end/` – React dashboard built with Vite
 - `coclib/` – shared Python modules for the project
-- `db/` – minimal Flask app used solely for running migrations
+- `db/` – minimal Flask app used solely for running migrations. Also holds graphql schema for messages.
 - `migrations/` – Alembic migration scripts
 - `messages-java/` - Chat service implemented in Spring Boot
 
