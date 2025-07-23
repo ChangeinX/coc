@@ -1,4 +1,4 @@
-# Phase 3 Complete
+# Phase 4 In Progress
 
 ## Completed
 - [x] ChatRepository using DynamoDbEnhancedClient
@@ -8,5 +8,10 @@
 - [x] DomainEvent WebSocket flow
 - [x] Additional repository methods (createIfAbsent, TTL)
 - [x] CI workflows run Gradle tests and deploy all services
+- [x] GraphQL client utilities and offline outbox added
+- [x] Chat UI now sends GraphQL mutations and retries from IndexedDB
 
-Phase 3 tasks are finished. Proceed to Phase 4 for client updates.
+## Remaining
+- [ ] Subscribe service worker to all chat/shard IDs after login
+- [ ] Render global and friend chats using aggregated subscriptions
+- [ ] Expose friend request actions in UI
