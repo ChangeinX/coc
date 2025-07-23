@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from coclib.extensions import cache
 from coclib.extensions import db
 from coclib.models import WarSnapshot
-from coclib.client import CoCPyClient
+from coclib.api import get_client
 from coclib.utils import normalize_tag
 
 
@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 async def current_war(clan_tag: str) -> dict:
-    client = CoCPyClient()
+    client = await get_client()
     clan_tag = normalize_tag(clan_tag)
-    data = await client.current_war(clan_tag)
+    data = (await client.get_current_war(clan_tag))._raw_data
 
     last = (
         WarSnapshot.query.filter_by(clan_tag=clan_tag)
