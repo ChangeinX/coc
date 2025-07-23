@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from coclib.extensions import db, cache
 from sqlalchemy.dialects.postgresql import insert
 from coclib.models import ClanSnapshot, Clan, LoyaltyMembership
-from coclib.client import CoCPyClient
+from coclib.api import get_client
 from .player_cache import upsert_player
 from .player_service import get_player
 from .loyalty_service import ensure_membership
@@ -18,8 +18,8 @@ STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 
 async def fetch_clan(tag: str) -> dict:
-    client = CoCPyClient()
-    return await client.clan(tag)
+    client = await get_client()
+    return (await client.get_clan(tag))._raw_data
 
 
 async def get_clan(tag: str) -> dict:
