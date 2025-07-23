@@ -23,8 +23,8 @@ public class ChatController {
 
     @PostMapping("/publish")
     public ResponseEntity<Map<String, String>> publish(@RequestBody PublishRequest req) {
-        ChatMessage msg = chatService.publish(req.groupId(), req.text(), req.userId());
-        messaging.convertAndSend("/topic/chat/" + req.groupId(), Map.of(
+        ChatMessage msg = chatService.publish(req.chatId(), req.text(), req.userId());
+        messaging.convertAndSend("/topic/chat/" + req.chatId(), Map.of(
                 "channel", msg.channel(),
                 "userId", msg.userId(),
                 "content", msg.content(),
@@ -33,13 +33,13 @@ public class ChatController {
         return ResponseEntity.ok(Map.of("status", "ok", "ts", msg.ts().toString()));
     }
 
-    @GetMapping("/history/{groupId}")
+    @GetMapping("/history/{chatId}")
     public ResponseEntity<List<Map<String, String>>> history(
-            @PathVariable String groupId,
+            @PathVariable String chatId,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(required = false) String before) {
         List<ChatMessage> msgs = chatService.history(
-                groupId,
+                chatId,
                 Math.min(limit, 100),
                 before != null ? Instant.parse(before) : null
         );
@@ -52,5 +52,5 @@ public class ChatController {
         return ResponseEntity.ok(body);
     }
 
-    public static record PublishRequest(String groupId, String text, String userId) {}
+    public static record PublishRequest(String chatId, String text, String userId) {}
 }

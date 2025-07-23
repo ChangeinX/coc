@@ -4,8 +4,8 @@ import useChat from '../hooks/useChat.js';
 import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
 
-export default function ChatPanel({ groupId = '1', userId = '' }) {
-  const { messages, loadMore, hasMore } = useChat(groupId);
+export default function ChatPanel({ chatId = '1', userId = '' }) {
+  const { messages, loadMore, hasMore } = useChat(chatId);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState('Clan');
@@ -61,12 +61,12 @@ useEffect(() => {
     const trimmed = text.trim();
     if (!trimmed) return;
     setSending(true);
-    console.log('Publishing message', trimmed, 'to', groupId);
+    console.log('Publishing message', trimmed, 'to', chatId);
     try {
       await fetchJSON('/chat/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId, userId, text: trimmed }),
+        body: JSON.stringify({ chatId, userId, text: trimmed }),
       });
       setText('');
     } catch (err) {
