@@ -26,7 +26,7 @@ def test_player_not_found_returns_404(monkeypatch):
         return None
 
     monkeypatch.setattr(
-        "coclib.services.player_service.get_player_snapshot",
+        "app.api.player_routes.get_player_snapshot",
         dummy,
     )
     _mock_verify(monkeypatch)

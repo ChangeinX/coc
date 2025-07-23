@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from coclib.extensions import db, cache
 from coclib.models import PlayerSnapshot, Player
-from .coc_client import get_client
+from coclib.client import CoCPyClient
 from .player_cache import upsert_player
 from coclib.services.loyalty_service import ensure_membership
 from coclib.utils import normalize_tag
@@ -16,13 +16,14 @@ STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 
 async def _fetch_player(tag: str) -> dict:
-    return await get_client().player(tag)
+    client = CoCPyClient()
+    return await client.get_player(tag)
 
 
 async def verify_token(tag: str, token: str) -> dict:
     """Verify a player's API token via the Clash of Clans API."""
-    client = get_client()
-    return await client.verify_token(tag, token)
+    client = CoCPyClient()
+    return await client.verify_player_token(player_tag=tag, token=token)
 
 
 def _resolve_last_seen(
