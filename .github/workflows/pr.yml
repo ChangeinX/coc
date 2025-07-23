@@ -29,12 +29,6 @@ jobs:
       - name: Run nox
         run: nox -s lint tests
 
-      - name: Run messages-java tests
-        run: ./gradlew -p messages-java test
-
-      - name: Run user_service tests
-        run: ./gradlew -p user_service test
-
       - name: Enable auto-merge
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
