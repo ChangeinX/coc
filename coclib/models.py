@@ -157,3 +157,13 @@ class ChatGroupMember(db.Model):
     group = db.relationship("ChatGroup", backref=db.backref("members", lazy="dynamic"))
     user = db.relationship("User", backref=db.backref("chat_groups", lazy="dynamic"))
 
+
+class FriendRequest(db.Model):
+    __tablename__ = "friend_requests"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    from_user_id = db.Column(db.BigInteger, index=True)
+    to_user_id = db.Column(db.BigInteger, index=True)
+    status = db.Column(db.String(20), nullable=False, default="PENDING")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
