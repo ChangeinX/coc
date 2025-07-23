@@ -35,7 +35,7 @@ class ChatControllerTest {
 
         mvc.perform(post("/api/v1/chat/publish")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"groupId\":\"1\",\"text\":\"hi\",\"userId\":\"u\"}"))
+                .content("{\"chatId\":\"1\",\"text\":\"hi\",\"userId\":\"u\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"))
                 .andExpect(jsonPath("$.ts").value(ts.toString()));
