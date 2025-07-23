@@ -8,6 +8,7 @@ This monorepo hosts several microservices and a front-end that make up a Clash o
 - `db/` – minimal Flask app used solely for running migrations. Also holds graphql schema for messages.
 - `migrations/` – Alembic migration scripts
 - `messages-java/` - Chat service implemented in Spring Boot
+- `user_service/` - Friend service implemented in Spring Boot
 
 Each directory contains its own `AGENTS.md` with project specific notes. Check those files when working in a subfolder.
 
