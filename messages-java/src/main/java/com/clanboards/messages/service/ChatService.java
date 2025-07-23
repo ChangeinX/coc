@@ -64,13 +64,16 @@ public class ChatService {
             legacy.put("ts", AttributeValue.fromS(ts.toString()));
             legacy.put("userId", AttributeValue.fromS(userId));
             legacy.put("content", AttributeValue.fromS(text));
+            System.out.println("Attempting to write to legacy table: " + legacyTableName);
+            logger.info("Attempting to write to legacy table (logger): {}", legacyTableName);
             try {
                 dynamoDb.putItem(PutItemRequest.builder()
                         .tableName(legacyTableName)
                         .item(legacy)
                         .build());
             } catch (DynamoDbException ex) {
-                LOG.warn("Failed to write to legacy table {}: {}", legacyTableName, ex.getMessage());
+                logger.warn("Failed to write to legacy table (logger) {}: {}", legacyTableName, ex.getMessage());
+                System.err.println("Failed to write to legacy table " + legacyTableName + ": " + ex.getMessage());
             }
         }
         return new ChatMessage(groupId, userId, text, ts);
