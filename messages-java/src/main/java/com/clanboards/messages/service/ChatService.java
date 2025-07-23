@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
-    private static final Logger LOG = LoggerFactory.getLogger(ChatService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
     private final DynamoDbClient dynamoDb;
     private final String tableName;
     private final String legacyTableName;
@@ -46,12 +46,16 @@ public class ChatService {
         item.put("userId", AttributeValue.fromS(userId));
         item.put("content", AttributeValue.fromS(text));
         try {
+        System.out.println("Attempting to write to table: " + tableName);
+        logger.info("Attempting to write to table (logger): {}", tableName);
             dynamoDb.putItem(PutItemRequest.builder()
                     .tableName(tableName)
                     .item(item)
                     .build());
         } catch (DynamoDbException ex) {
-            LOG.warn("Failed to write to table {}: {}", tableName, ex.getMessage());
+//             to stdout as well for testing println
+            System.err.println("Failed to write to table " + tableName + ": " + ex.getMessage());
+            logger.error("Failed to write to table (logger) {}: {}", tableName, ex.getMessage());
         }
 
         if (legacyTableName != null && !legacyTableName.isBlank() && !legacyTableName.equals(tableName)) {
