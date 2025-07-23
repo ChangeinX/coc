@@ -3,11 +3,14 @@ package com.clanboards.messages.service;
 import com.clanboards.messages.model.ChatMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -18,14 +21,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
+    private static final Logger LOG = LoggerFactory.getLogger(ChatService.class);
     private final DynamoDbClient dynamoDb;
     private final String tableName;
     private final String legacyTableName;
 
     public ChatService(
             DynamoDbClient dynamoDb,
-            @Value("${messages.table:webapp-chat-messages}") String tableName,
-            @Value("${messages.legacy-table:webapp-chat}") String legacyTableName) {
+            @Value("${messages.table:webapp-chat}") String tableName,
+            @Value("${messages.legacy-table:webapp-chat-messages}") String legacyTableName) {
         this.dynamoDb = dynamoDb;
         this.tableName = tableName;
         this.legacyTableName = legacyTableName;
@@ -41,10 +45,14 @@ public class ChatService {
         item.put("ts", AttributeValue.fromS(ts.toString()));
         item.put("userId", AttributeValue.fromS(userId));
         item.put("content", AttributeValue.fromS(text));
-        dynamoDb.putItem(PutItemRequest.builder()
-                .tableName(tableName)
-                .item(item)
-                .build());
+        try {
+            dynamoDb.putItem(PutItemRequest.builder()
+                    .tableName(tableName)
+                    .item(item)
+                    .build());
+        } catch (DynamoDbException ex) {
+            LOG.warn("Failed to write to table {}: {}", tableName, ex.getMessage());
+        }
 
         if (legacyTableName != null && !legacyTableName.isBlank() && !legacyTableName.equals(tableName)) {
             Map<String, AttributeValue> legacy = new HashMap<>();
@@ -52,10 +60,14 @@ public class ChatService {
             legacy.put("ts", AttributeValue.fromS(ts.toString()));
             legacy.put("userId", AttributeValue.fromS(userId));
             legacy.put("content", AttributeValue.fromS(text));
-            dynamoDb.putItem(PutItemRequest.builder()
-                    .tableName(legacyTableName)
-                    .item(legacy)
-                    .build());
+            try {
+                dynamoDb.putItem(PutItemRequest.builder()
+                        .tableName(legacyTableName)
+                        .item(legacy)
+                        .build());
+            } catch (DynamoDbException ex) {
+                LOG.warn("Failed to write to legacy table {}: {}", legacyTableName, ex.getMessage());
+            }
         }
         return new ChatMessage(groupId, userId, text, ts);
     }
