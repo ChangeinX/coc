@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -30,6 +31,19 @@ class ChatServiceTest {
         List<PutItemRequest> calls = captor.getAllValues();
         assertTrue(calls.stream().anyMatch(r -> r.tableName().equals("new")));
         assertTrue(calls.stream().anyMatch(r -> r.tableName().equals("old")));
+    }
+
+    @Test
+    void publishContinuesWhenPrimaryWriteFails() {
+        DynamoDbClient dynamoDb = Mockito.mock(DynamoDbClient.class);
+        Mockito.doThrow(DynamoDbException.builder().message("fail").build())
+                .when(dynamoDb)
+                .putItem(Mockito.<PutItemRequest>argThat(r -> r.tableName().equals("new")));
+
+        ChatService service = new ChatService(dynamoDb, "new", "old");
+        ChatMessage msg = service.publish("1", "hi", "u");
+        assertNotNull(msg);
+        Mockito.verify(dynamoDb, Mockito.times(2)).putItem(Mockito.any(PutItemRequest.class));
     }
     @Test
     void historyParsesTimestampsWithoutZone() {
