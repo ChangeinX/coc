@@ -65,10 +65,6 @@ class CoCClient:
     async def get(self, path: str):
         return await self.request("GET", path)
 
-    @rate_limited
-    async def current_war(self, tag: str):
-        return await self.get(f"/clans/{encode_tag(tag)}/currentwar")
-
 _client: CoCClient | None = None
 
 
