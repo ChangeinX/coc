@@ -32,4 +32,14 @@ class ChatServiceTest {
         List<ChatMessage> result = service.history("1", 2, null);
         assertSame(expected, result);
     }
+
+    @Test
+    void publishGlobalUsesShardKey() {
+        ChatRepository repo = Mockito.mock(ChatRepository.class);
+        ChatService service = new ChatService(repo);
+
+        ChatMessage msg = service.publishGlobal("hi", "user1");
+        assertEquals(ChatRepository.globalShardKey("user1"), msg.channel());
+        Mockito.verify(repo).saveGlobalMessage(Mockito.any(ChatMessage.class));
+    }
 }

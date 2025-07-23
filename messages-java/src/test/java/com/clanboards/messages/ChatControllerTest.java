@@ -52,4 +52,17 @@ class ChatControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].content").value("hi"));
     }
+
+    @Test
+    void publishGlobalReturnsOk() throws Exception {
+        Instant ts = Instant.parse("2024-01-01T00:00:00Z");
+        Mockito.when(chatService.publishGlobal("hi", "u"))
+                .thenReturn(new ChatMessage("global#shard-1", "u", "hi", ts));
+
+        mvc.perform(post("/api/v1/chat/publish/global")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"text\":\"hi\",\"userId\":\"u\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+    }
 }

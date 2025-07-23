@@ -22,6 +22,14 @@ public class ChatService {
         return msg;
     }
 
+    public ChatMessage publishGlobal(String text, String userId) {
+        Instant ts = Instant.now();
+        String shard = ChatRepository.globalShardKey(userId);
+        ChatMessage msg = new ChatMessage(shard, userId, text, ts);
+        repository.saveGlobalMessage(msg);
+        return msg;
+    }
+
     public List<ChatMessage> history(String chatId, int limit) {
         return history(chatId, limit, null);
     }
