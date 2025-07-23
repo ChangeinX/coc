@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import useGoogleIdToken from './useGoogleIdToken.js';
-import { API_URL, fetchJSON } from '../lib/api.js';
+import { API_URL } from '../lib/api.js';
+import { graphqlRequest } from '../lib/gql.js';
+import {
+  getOutboxMessages,
+  removeOutboxMessage,
+} from '../lib/db.js';
 
 const PAGE_SIZE = 20;
 
@@ -10,18 +15,37 @@ export default function useChat(chatId) {
   const token = useGoogleIdToken();
   const [messages, setMessages] = useState([]);
   const [hasMore, setHasMore] = useState(true);
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     if (!chatId || !token) return;
     let ignore = false;
     let client;
 
+    async function flushOutbox() {
+      const pending = (await getOutboxMessages()).filter((m) => m.chatId === chatId);
+      for (const msg of pending) {
+        try {
+          await graphqlRequest(
+            `mutation($chatId: ID!, $content: String!) { sendMessage(chatId:$chatId, content:$content){ id } }`,
+            { chatId: msg.chatId, content: msg.content },
+          );
+          await removeOutboxMessage(msg.id);
+        } catch (err) {
+          console.error('Failed to resend message', err);
+          break;
+        }
+      }
+    }
+
     async function setup() {
       console.log('Fetching history for chat', chatId);
       try {
-        const data = await fetchJSON(
-          `/chat/history/${encodeURIComponent(chatId)}?limit=${PAGE_SIZE}`,
+        const resp = await graphqlRequest(
+          `query($id: ID!, $limit: Int) { getMessages(chatId: $id, limit: $limit) { id chatId ts senderId content } }`,
+          { id: chatId, limit: PAGE_SIZE },
         );
+        const data = resp.getMessages || [];
         if (!ignore) {
           console.log('History loaded', data);
           setMessages(data);
@@ -37,6 +61,8 @@ export default function useChat(chatId) {
       client = new Client({
         webSocketFactory: () => new SockJS(`${base}/api/v1/chat/socket`),
         onConnect: () => {
+          setConnected(true);
+          flushOutbox();
           client.subscribe(`/topic/chat/${chatId}`, (frame) => {
             try {
               const msg = JSON.parse(frame.body);
@@ -60,16 +86,18 @@ export default function useChat(chatId) {
         console.log('Closing socket for chat', chatId);
         client.deactivate();
       }
+      setConnected(false);
   };
   }, [chatId, token]);
 
   async function loadMore() {
     if (!hasMore || messages.length === 0) return;
-    const before = encodeURIComponent(messages[0].ts);
     try {
-      const older = await fetchJSON(
-        `/chat/history/${encodeURIComponent(chatId)}?limit=${PAGE_SIZE}&before=${before}`,
+      const resp = await graphqlRequest(
+        `query($id: ID!, $after: AWSDateTime, $limit: Int) { getMessages(chatId:$id, after:$after, limit:$limit) { id chatId ts senderId content } }`,
+        { id: chatId, after: messages[0].ts, limit: PAGE_SIZE },
       );
+      const older = resp.getMessages || [];
       setMessages((m) => [...older, ...m]);
       if (older.length < PAGE_SIZE) setHasMore(false);
     } catch (err) {
