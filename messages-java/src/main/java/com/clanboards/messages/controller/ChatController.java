@@ -3,7 +3,6 @@ package com.clanboards.messages.controller;
 import com.clanboards.messages.model.ChatMessage;
 import com.clanboards.messages.service.ChatService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -15,33 +14,20 @@ import java.util.Map;
 public class ChatController {
 
     private final ChatService chatService;
-    private final SimpMessagingTemplate messaging;
-    public ChatController(ChatService chatService, SimpMessagingTemplate messaging) {
+
+    public ChatController(ChatService chatService) {
         this.chatService = chatService;
-        this.messaging = messaging;
     }
 
     @PostMapping("/publish")
     public ResponseEntity<Map<String, String>> publish(@RequestBody PublishRequest req) {
         ChatMessage msg = chatService.publish(req.chatId(), req.text(), req.userId());
-        messaging.convertAndSend("/topic/chat/" + req.chatId(), Map.of(
-                "channel", msg.channel(),
-                "userId", msg.userId(),
-                "content", msg.content(),
-                "ts", msg.ts().toString()
-        ));
         return ResponseEntity.ok(Map.of("status", "ok", "ts", msg.ts().toString()));
     }
 
     @PostMapping("/publish/global")
     public ResponseEntity<Map<String, String>> publishGlobal(@RequestBody GlobalRequest req) {
         ChatMessage msg = chatService.publishGlobal(req.text(), req.userId());
-        messaging.convertAndSend("/topic/chat/" + msg.channel(), Map.of(
-                "channel", msg.channel(),
-                "userId", msg.userId(),
-                "content", msg.content(),
-                "ts", msg.ts().toString()
-        ));
         return ResponseEntity.ok(Map.of("status", "ok", "ts", msg.ts().toString()));
     }
 

@@ -12,6 +12,7 @@ public class MessageItem {
     private String senderId;
     private String content;
     private String ts;
+    private Long ttl;
 
     @DynamoDbPartitionKey
     public String getPK() { return PK; }
@@ -32,4 +33,7 @@ public class MessageItem {
 
     public String getTs() { return ts; }
     public void setTs(String ts) { this.ts = ts; }
+
+    public Long getTtl() { return ttl; }
+    public void setTtl(Long ttl) { this.ttl = ttl; }
 }
