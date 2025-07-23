@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 
-const dbPromise = openDB('coc-cache', 4, {
+const dbPromise = openDB('coc-cache', 5, {
   upgrade(db, oldVersion, newVersion, transaction) {
     if (oldVersion < 1) {
       db.createObjectStore('api', { keyPath: 'path' });
@@ -14,6 +14,9 @@ const dbPromise = openDB('coc-cache', 4, {
     }
     if (oldVersion < 4) {
       transaction.objectStore('icons').clear();
+    }
+    if (oldVersion < 5) {
+      db.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true });
     }
   },
 });
@@ -40,4 +43,16 @@ export async function getIconCache(url) {
 
 export async function putIconCache(record) {
   return (await dbPromise).put('icons', record);
+}
+
+export async function addOutboxMessage(record) {
+  return (await dbPromise).add('outbox', record);
+}
+
+export async function getOutboxMessages() {
+  return (await dbPromise).getAll('outbox');
+}
+
+export async function removeOutboxMessage(id) {
+  return (await dbPromise).delete('outbox', id);
 }

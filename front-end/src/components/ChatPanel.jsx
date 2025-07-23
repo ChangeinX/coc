@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { fetchJSON, fetchJSONCached } from '../lib/api.js';
+import { fetchJSONCached } from '../lib/api.js';
+import { graphqlRequest } from '../lib/gql.js';
+import { addOutboxMessage } from '../lib/db.js';
 import useChat from '../hooks/useChat.js';
 import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
@@ -63,14 +65,14 @@ useEffect(() => {
     setSending(true);
     console.log('Publishing message', trimmed, 'to', chatId);
     try {
-      await fetchJSON('/chat/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chatId, userId, text: trimmed }),
-      });
+      await graphqlRequest(
+        `mutation($chatId: ID!, $content: String!) { sendMessage(chatId:$chatId, content:$content){ id } }`,
+        { chatId, content: trimmed },
+      );
       setText('');
     } catch (err) {
       console.error('Failed to publish message', err);
+      await addOutboxMessage({ chatId, content: trimmed });
     }
     setSending(false);
   };
