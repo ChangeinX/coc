@@ -47,6 +47,26 @@ class CoCPyClient:
         client = await self._ensure_login()
         return (await client.get_clan(tag))._raw_data
 
+    async def clan_members(self, tag: str) -> dict:
+        client = await self._ensure_login()
+        data = (await client.get_clan(tag))._raw_data
+
+        # swap name for backwards compatibility
+        members = data.get("memberList", data.get("items", []))
+        return {"items": members, "state": data.get("state", "ok")}
+
+    async def get_player(self, player_tag: str) -> dict:
+        client = await self._ensure_login()
+        return (await client.get_player(player_tag))._raw_data
+
+    async def verify_player_token(self, player_tag, token):
+        client = await self._ensure_login()
+        return await client.verify_player_token(player_tag=player_tag, token=token)
+
+    async def current_war(self, tag: str) -> dict:
+        client = await self._ensure_login()
+        return (await client.get_current_war(tag))._raw_data
+
 
 def _sync_close(wrapper: "CoCPyClient"):
     """

@@ -14,7 +14,7 @@ class TestConfig(Config):
     GOOGLE_CLIENT_ID = "dummy"
 
 
-def test_old_war_attacks_returned():
+def test_old_war_attacks_returned(monkeypatch):
     app = create_app(TestConfig)
     with app.app_context():
         db.create_all()
@@ -53,11 +53,19 @@ def test_old_war_attacks_returned():
         db.session.add_all([player, ps_old, ps_new])
         db.session.commit()
 
+        async def dummy_player(tag: str, war_attacks_used=None):
+            raise RuntimeError("offline")
+
+        monkeypatch.setattr(
+            "coclib.services.player_service.get_player",
+            dummy_player,
+        )
+
         result = asyncio.run(get_player_snapshot("ABC"))
         assert result["warAttacksUsed"] == 2
 
 
-def test_war_attacks_reset_after_grace():
+def test_war_attacks_reset_after_grace(monkeypatch):
     app = create_app(TestConfig)
     with app.app_context():
         db.create_all()
@@ -96,12 +104,20 @@ def test_war_attacks_reset_after_grace():
         db.session.add_all([player, ps_old, ps_new])
         db.session.commit()
 
+        async def dummy_player(tag: str, war_attacks_used=None):
+            raise RuntimeError("offline")
+
+        monkeypatch.setattr(
+            "coclib.services.player_service.get_player",
+            dummy_player,
+        )
+
         result = asyncio.run(get_player_snapshot("XYZ"))
         assert result["warAttacksUsed"] is None
 
 
 # Regression test for issue #117
-def test_labels_returned_from_player_data():
+def test_labels_returned_from_player_data(monkeypatch):
     app = create_app(TestConfig)
     with app.app_context():
         db.create_all()
@@ -127,6 +143,14 @@ def test_labels_returned_from_player_data():
         )
         db.session.add_all([player, ps])
         db.session.commit()
+
+        async def dummy_player(tag: str, war_attacks_used=None):
+            raise RuntimeError("offline")
+
+        monkeypatch.setattr(
+            "coclib.services.player_service.get_player",
+            dummy_player,
+        )
 
         result = asyncio.run(get_player_snapshot("LAB"))
         assert result["labels"] == labels
