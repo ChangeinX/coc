@@ -3,8 +3,10 @@ package com.clanboards.messages.service;
 import com.clanboards.messages.model.ChatMessage;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
 
@@ -18,9 +20,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ChatServiceTest {
     @Test
+    void publishWritesToBothTables() {
+        DynamoDbClient dynamoDb = Mockito.mock(DynamoDbClient.class);
+        ChatService service = new ChatService(dynamoDb, "new", "old");
+
+        service.publish("1", "hello", "u");
+        ArgumentCaptor<PutItemRequest> captor = ArgumentCaptor.forClass(PutItemRequest.class);
+        Mockito.verify(dynamoDb, Mockito.times(2)).putItem(captor.capture());
+        List<PutItemRequest> calls = captor.getAllValues();
+        assertTrue(calls.stream().anyMatch(r -> r.tableName().equals("new")));
+        assertTrue(calls.stream().anyMatch(r -> r.tableName().equals("old")));
+    }
+    @Test
     void historyParsesTimestampsWithoutZone() {
         DynamoDbClient dynamoDb = Mockito.mock(DynamoDbClient.class);
-        ChatService service = new ChatService(dynamoDb, "chat");
+        ChatService service = new ChatService(dynamoDb, "chat", "legacy");
         String ts = "2025-07-19T06:55:24.755730";
         Map<String, AttributeValue> item = Map.of(
                 "channel", AttributeValue.fromS("1"),
@@ -40,7 +54,7 @@ class ChatServiceTest {
     @Test
     void historySortsByTimestamp() {
         DynamoDbClient dynamoDb = Mockito.mock(DynamoDbClient.class);
-        ChatService service = new ChatService(dynamoDb, "chat");
+        ChatService service = new ChatService(dynamoDb, "chat", "legacy");
         Map<String, AttributeValue> item1 = Map.of(
                 "channel", AttributeValue.fromS("1"),
                 "userId", AttributeValue.fromS("u"),
