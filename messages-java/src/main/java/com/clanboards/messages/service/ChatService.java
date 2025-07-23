@@ -25,7 +25,7 @@ public class ChatService {
     public ChatService(
             DynamoDbClient dynamoDb,
             @Value("${messages.table:webapp-chat-messages}") String tableName,
-            @Value("${messages.legacy-table:chat_messages}") String legacyTableName) {
+            @Value("${messages.legacy-table:webapp-chat}") String legacyTableName) {
         this.dynamoDb = dynamoDb;
         this.tableName = tableName;
         this.legacyTableName = legacyTableName;
