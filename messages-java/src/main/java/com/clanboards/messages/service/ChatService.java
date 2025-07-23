@@ -20,17 +20,23 @@ import java.util.stream.Collectors;
 public class ChatService {
     private final DynamoDbClient dynamoDb;
     private final String tableName;
+    private final String legacyTableName;
 
     public ChatService(
             DynamoDbClient dynamoDb,
-            @Value("${messages.table:webapp-chat-messages}") String tableName) {
+            @Value("${messages.table:webapp-chat-messages}") String tableName,
+            @Value("${messages.legacy-table:chat_messages}") String legacyTableName) {
         this.dynamoDb = dynamoDb;
         this.tableName = tableName;
+        this.legacyTableName = legacyTableName;
     }
 
     public ChatMessage publish(String groupId, String text, String userId) {
         Instant ts = Instant.now();
         Map<String, AttributeValue> item = new HashMap<>();
+        item.put("PK", AttributeValue.fromS(groupId));
+        item.put("SK", AttributeValue.fromS(ts.toString()));
+        item.put("GSI1PK", AttributeValue.fromS(userId));
         item.put("channel", AttributeValue.fromS(groupId));
         item.put("ts", AttributeValue.fromS(ts.toString()));
         item.put("userId", AttributeValue.fromS(userId));
@@ -39,6 +45,18 @@ public class ChatService {
                 .tableName(tableName)
                 .item(item)
                 .build());
+
+        if (legacyTableName != null && !legacyTableName.isBlank() && !legacyTableName.equals(tableName)) {
+            Map<String, AttributeValue> legacy = new HashMap<>();
+            legacy.put("channel", AttributeValue.fromS(groupId));
+            legacy.put("ts", AttributeValue.fromS(ts.toString()));
+            legacy.put("userId", AttributeValue.fromS(userId));
+            legacy.put("content", AttributeValue.fromS(text));
+            dynamoDb.putItem(PutItemRequest.builder()
+                    .tableName(legacyTableName)
+                    .item(legacy)
+                    .build());
+        }
         return new ChatMessage(groupId, userId, text, ts);
     }
 
