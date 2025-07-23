@@ -3,6 +3,10 @@ package com.clanboards.messages.repository;
 import com.clanboards.messages.model.ChatMessage;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
+import software.amazon.awssdk.enhanced.dynamodb.Expression;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
@@ -15,13 +19,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.lang.Math;
+import java.time.Duration;
 
 public class ChatRepository {
+    private final DynamoDbEnhancedClient client;
     private final DynamoDbTable<MessageItem> table;
 
     public static final int SHARD_COUNT = 20;
+    private static final Duration MESSAGE_TTL = Duration.ofDays(30);
 
     public ChatRepository(DynamoDbEnhancedClient client, String tableName) {
+        this.client = client;
         this.table = client.table(tableName, software.amazon.awssdk.enhanced.dynamodb.TableSchema.fromBean(MessageItem.class));
     }
 
@@ -38,18 +46,51 @@ public class ChatRepository {
     }
 
     public void saveGlobalMessage(ChatMessage msg) {
-        saveMessageInternal(globalShardKey(msg.userId()), msg);
+        String uuid = UUID.randomUUID().toString();
+        WriteBatch.Builder<MessageItem> batch = WriteBatch.builder(MessageItem.class)
+                .mappedTableResource(table);
+        for (int i = 0; i < SHARD_COUNT; i++) {
+            String shard = "global#shard-" + i;
+            batch.addPutItem(toItem(shard, msg, uuid));
+        }
+        BatchWriteItemEnhancedRequest req = BatchWriteItemEnhancedRequest.builder()
+                .writeBatches(batch.build())
+                .build();
+        client.batchWriteItem(req);
     }
 
-    private void saveMessageInternal(String chatId, ChatMessage msg) {
+    private MessageItem toItem(String chatId, ChatMessage msg, String uuid) {
         MessageItem item = new MessageItem();
         item.setPK(pk(chatId));
-        item.setSK(sk(msg.ts(), UUID.randomUUID().toString()));
+        item.setSK(sk(msg.ts(), uuid));
         item.setChatId(chatId);
         item.setSenderId(msg.userId());
         item.setContent(msg.content());
         item.setTs(msg.ts().toString());
+        item.setTtl(msg.ts().plus(MESSAGE_TTL).getEpochSecond());
+        return item;
+    }
+
+    private void saveMessageInternal(String chatId, ChatMessage msg) {
+        MessageItem item = toItem(chatId, msg, UUID.randomUUID().toString());
         table.putItem(item);
+    }
+
+    public void createChatIfAbsent(String chatId) {
+        MessageItem meta = new MessageItem();
+        meta.setPK(pk(chatId));
+        meta.setSK("META");
+        Expression expr = Expression.builder()
+                .expression("attribute_not_exists(PK)")
+                .build();
+        PutItemEnhancedRequest<MessageItem> req = PutItemEnhancedRequest.builder(MessageItem.class)
+                .item(meta)
+                .conditionExpression(expr)
+                .build();
+        try {
+            table.putItem(req);
+        } catch (software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException ignored) {
+        }
     }
 
     public void saveMessage(ChatMessage msg) {
