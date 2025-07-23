@@ -1,0 +1,40 @@
+enum ChatKind { CLAN GLOBAL DIRECT }
+
+type Chat {
+  id: ID!
+  kind: ChatKind!
+  name: String          # null for DMs
+  members: [User!]!
+  createdAt: AWSDateTime!
+  lastMessage: Message
+}
+
+type Message {
+  id: ID!
+  chatId: ID!
+  ts: AWSDateTime!
+  senderId: ID!
+  content: String!
+}
+
+type Friend {
+  userId: ID!
+  since: AWSDateTime!
+}
+
+type Query {
+  listChats: [Chat!]!
+  getMessages(chatId: ID!, after: AWSDateTime, limit: Int = 50): [Message!]!
+  listFriends: [Friend!]!
+}
+
+type Mutation {
+  createDirectChat(recipientId: ID!): Chat!
+  sendMessage(chatId: ID!, content: String!): Message!
+  sendFriendRequest(to: ID!): ID!                # returns requestId
+  respondFriendRequest(requestId: ID!, accept: Boolean!): Boolean!
+}
+
+type Subscription {
+  onMessage(chatId: ID!): Message
+}
