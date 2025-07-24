@@ -57,6 +57,7 @@ export default function App() {
   });
   const [initials, setInitials] = useState(() => (token ? getInitials(token) : ''));
   const [userId, setUserId] = useState(() => (token ? getSub(token) : ''));
+  const [numericId, setNumericId] = useState(null);
   const [playerTag, setPlayerTag] = useState(null);
   const [verified, setVerified] = useState(false);
   const [homeClanTag, setHomeClanTag] = useState(null);
@@ -116,6 +117,8 @@ export default function App() {
         const me = await fetchJSON('/user/me');
         setPlayerTag(me.player_tag);
         setVerified(me.verified);
+        setUserId(me.sub);
+        setNumericId(me.id);
         if (me.player_tag) {
           const player = await fetchJSON(`/player/${encodeURIComponent(me.player_tag)}`);
           if (player.clanTag) {

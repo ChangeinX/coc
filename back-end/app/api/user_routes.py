@@ -18,6 +18,7 @@ def me():
     return jsonify(
         {
             "id": g.user.id,
+            "sub": g.user.sub,
             "email": g.user.email,
             "name": g.user.name,
             "player_tag": g.user.player_tag,

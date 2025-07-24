@@ -15,8 +15,9 @@ export default function Account({ onVerified }) {
   const [chatEnabled, setChatEnabled] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [friends, setFriends] = useState([]);
-  const [newFriendId, setNewFriendId] = useState('');
+  const [newFriendTag, setNewFriendTag] = useState('');
   const [selfId, setSelfId] = useState(null);
+  const [selfSub, setSelfSub] = useState('');
 
 
 
@@ -25,6 +26,7 @@ export default function Account({ onVerified }) {
       try {
         const me = await fetchJSON('/user/me');
         setSelfId(me.id);
+        setSelfSub(me.sub);
         const data = await fetchJSON('/user/profile');
         setProfile(data);
         const features = await fetchJSON('/user/features');
@@ -137,24 +139,24 @@ export default function Account({ onVerified }) {
           <div className="flex gap-2">
             <input
               className="flex-1 border rounded px-2 py-1"
-              placeholder="User ID"
-              value={newFriendId}
-              onChange={(e) => setNewFriendId(e.target.value)}
+              placeholder="Player Tag"
+              value={newFriendTag}
+              onChange={(e) => setNewFriendTag(e.target.value)}
             />
             <button
               type="button"
               onClick={async () => {
-                if (!newFriendId.trim() || selfId === null) return;
+                if (!newFriendTag.trim() || !selfSub) return;
                 try {
                   await fetchJSON('/friends/request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      fromUserId: selfId,
-                      toUserId: Number(newFriendId.trim()),
+                      fromSub: selfSub,
+                      toTag: newFriendTag.trim(),
                     }),
                   });
-                  setNewFriendId('');
+                  setNewFriendTag('');
                   alert('Request sent');
                 } catch (err) {
                   console.error('Failed to send friend request', err);
