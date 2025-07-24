@@ -1,4 +1,4 @@
-package com.clanboards.messages.config;
+package com.clanboards.users.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
