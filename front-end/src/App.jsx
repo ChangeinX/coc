@@ -5,6 +5,7 @@ import CachedImage from './components/CachedImage.jsx';
 import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';
 import { fetchJSON } from './lib/api.js';
+import { getSub } from './lib/auth.js';
 import useFeatures from './hooks/useFeatures.js';
 import BottomNav from './components/BottomNav.jsx';
 import DesktopNav from './components/DesktopNav.jsx';
@@ -44,6 +45,7 @@ function getInitials(tok) {
   }
 }
 
+
 export default function App() {
   const [token, setToken] = useState(() => {
     const stored = localStorage.getItem('token');
@@ -54,6 +56,7 @@ export default function App() {
     return stored;
   });
   const [initials, setInitials] = useState(() => (token ? getInitials(token) : ''));
+  const [userId, setUserId] = useState(() => (token ? getSub(token) : ''));
   const [playerTag, setPlayerTag] = useState(null);
   const [verified, setVerified] = useState(false);
   const [homeClanTag, setHomeClanTag] = useState(null);
@@ -102,6 +105,7 @@ export default function App() {
 
   useEffect(() => {
     setInitials(token ? getInitials(token) : '');
+    setUserId(token ? getSub(token) : '');
   }, [token]);
 
   useEffect(() => {
@@ -268,7 +272,7 @@ export default function App() {
           <Suspense fallback={<Loading className="py-20" />}>
             <Routes>
               <Route path="/" element={<DashboardPage defaultTag={clanTag} showSearchForm={false} onClanLoaded={setClanInfo} />} />
-              <Route path="/chat" element={<ChatPage verified={verified} chatId={homeClanTag || '1'} userId={playerTag || ''} />} />
+              <Route path="/chat" element={<ChatPage verified={verified} chatId={homeClanTag || '1'} userId={userId} />} />
               <Route path="/scout" element={<ScoutPage />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/account" element={<AccountPage onVerified={() => setVerified(true)} />} />

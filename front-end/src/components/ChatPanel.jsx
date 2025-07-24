@@ -32,7 +32,7 @@ useEffect(() => {
     let ignore = false;
 
     async function loadInfo() {
-      const ids = [...new Set(messages.map((m) => m.userId).filter(Boolean))];
+      const ids = [...new Set(messages.map((m) => m.senderId).filter(Boolean))];
       const missing = ids.filter((id) => !infoMap[id]);
       if (missing.length === 0) {
         setLoading(false);
@@ -117,16 +117,14 @@ useEffect(() => {
               </div>
             </div>
           ) : (
-            messages.map((m, idx) =>
-              infoMap[m.userId] ? (
-                <ChatMessage
-                  key={m.ts || idx}
-                  message={m}
-                  info={infoMap[m.userId]}
-                  isSelf={m.userId === userId}
-                />
-              ) : null
-            )
+            messages.map((m, idx) => (
+              <ChatMessage
+                key={m.ts || idx}
+                message={m}
+                info={infoMap[m.senderId]}
+                isSelf={m.senderId === userId}
+              />
+            ))
           )}
           <div ref={endRef} />
         </div>
