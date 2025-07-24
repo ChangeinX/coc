@@ -16,12 +16,15 @@ export default function Account({ onVerified }) {
   const [showInfo, setShowInfo] = useState(false);
   const [friends, setFriends] = useState([]);
   const [newFriendId, setNewFriendId] = useState('');
+  const [selfId, setSelfId] = useState(null);
 
 
 
   useEffect(() => {
     const load = async () => {
       try {
+        const me = await fetchJSON('/user/me');
+        setSelfId(me.id);
         const data = await fetchJSON('/user/profile');
         setProfile(data);
         const features = await fetchJSON('/user/features');
@@ -141,15 +144,14 @@ export default function Account({ onVerified }) {
             <button
               type="button"
               onClick={async () => {
-                if (!newFriendId.trim()) return;
+                if (!newFriendId.trim() || selfId === null) return;
                 try {
-                  const token = localStorage.getItem('token');
                   await fetchJSON('/friends/request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      fromUserId: getSub(token || ''),
-                      toUserId: newFriendId.trim(),
+                      fromUserId: selfId,
+                      toUserId: Number(newFriendId.trim()),
                     }),
                   });
                   setNewFriendId('');

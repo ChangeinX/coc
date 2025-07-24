@@ -10,19 +10,19 @@ public class FriendRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String fromUserId;
-    private String toUserId;
+    private Long fromUserId;
+    private Long toUserId;
     private String status;
     private Instant createdAt = Instant.now();
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getFromUserId() { return fromUserId; }
-    public void setFromUserId(String fromUserId) { this.fromUserId = fromUserId; }
+    public Long getFromUserId() { return fromUserId; }
+    public void setFromUserId(Long fromUserId) { this.fromUserId = fromUserId; }
 
-    public String getToUserId() { return toUserId; }
-    public void setToUserId(String toUserId) { this.toUserId = toUserId; }
+    public Long getToUserId() { return toUserId; }
+    public void setToUserId(Long toUserId) { this.toUserId = toUserId; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

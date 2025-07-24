@@ -27,6 +27,6 @@ public class FriendController {
         return ResponseEntity.ok(Map.of("ok", result));
     }
 
-    public record RequestPayload(String fromUserId, String toUserId) {}
+    public record RequestPayload(Long fromUserId, Long toUserId) {}
     public record RespondPayload(Long requestId, boolean accept) {}
 }

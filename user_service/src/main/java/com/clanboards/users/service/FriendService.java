@@ -18,7 +18,7 @@ public class FriendService {
         this.table = client.table("chat-friends", TableSchema.fromBean(FriendshipItem.class));
     }
 
-    public Long sendRequest(String fromUserId, String toUserId) {
+    public Long sendRequest(Long fromUserId, Long toUserId) {
         FriendRequest req = new FriendRequest();
         req.setFromUserId(fromUserId);
         req.setToUserId(toUserId);
