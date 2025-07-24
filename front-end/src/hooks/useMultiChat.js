@@ -4,9 +4,15 @@ import SockJS from 'sockjs-client';
 import useGoogleIdToken from './useGoogleIdToken.js';
 import { API_URL } from '../lib/api.js';
 import { graphqlRequest } from '../lib/gql.js';
-import { getOutboxMessages, removeOutboxMessage } from '../lib/db.js';
+import {
+  getOutboxMessages,
+  removeOutboxMessage,
+  getMessageCache,
+  putMessageCache,
+} from '../lib/db.js';
 
 const PAGE_SIZE = 20;
+const CACHE_LIMIT = 50;
 const SHARD_COUNT = 20;
 
 function javaHashCode(str) {
@@ -29,6 +35,14 @@ export default function useMultiChat(ids = []) {
   const [hasMore, setHasMore] = useState(true);
   const [connected, setConnected] = useState(false);
 
+  function appendMessage(msg) {
+    setMessages((m) => {
+      const arr = [...m, msg];
+      arr.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+      return arr;
+    });
+  }
+
   useEffect(() => {
     if (!token || ids.length === 0) return;
     let ignore = false;
@@ -43,6 +57,7 @@ export default function useMultiChat(ids = []) {
             { chatId: msg.chatId, content: msg.content },
           );
           await removeOutboxMessage(msg.id);
+          setMessages((m) => m.filter((x) => x.ts !== msg.ts));
         } catch (err) {
           console.error('Failed to resend message', err);
           break;
@@ -51,6 +66,20 @@ export default function useMultiChat(ids = []) {
     }
 
     async function loadHistory() {
+      let merged = [];
+      for (const id of ids) {
+        const cached = await getMessageCache(id);
+        if (cached) {
+          merged.push(...cached.messages);
+        }
+      }
+      const pending = (await getOutboxMessages()).filter((m) => ids.includes(m.chatId));
+      if (pending.length) merged.push(...pending);
+      if (!ignore && merged.length) {
+        merged.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+        setMessages(merged);
+        setHasMore(merged.length >= PAGE_SIZE);
+      }
       try {
         const all = await Promise.all(
           ids.map((id) =>
@@ -61,7 +90,7 @@ export default function useMultiChat(ids = []) {
           ),
         );
         if (ignore) return;
-        const merged = all.flatMap((r) => r.getMessages || []);
+        merged = all.flatMap((r) => r.getMessages || []);
         merged.sort((a, b) => new Date(a.ts) - new Date(b.ts));
         setMessages(merged);
         setHasMore(merged.length >= PAGE_SIZE);
@@ -125,6 +154,21 @@ export default function useMultiChat(ids = []) {
     }
   }
 
-  return { messages, loadMore, hasMore, connected };
+  useEffect(() => {
+    const grouped = {};
+    for (const m of messages) {
+      if (!grouped[m.chatId]) grouped[m.chatId] = [];
+      grouped[m.chatId].push(m);
+    }
+    for (const id of Object.keys(grouped)) {
+      try {
+        putMessageCache({ chatId: id, messages: grouped[id].slice(-CACHE_LIMIT) });
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [messages]);
+
+  return { messages, loadMore, hasMore, connected, appendMessage };
 }
 

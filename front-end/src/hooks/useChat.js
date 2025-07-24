@@ -7,15 +7,22 @@ import { graphqlRequest } from '../lib/gql.js';
 import {
   getOutboxMessages,
   removeOutboxMessage,
+  getMessageCache,
+  putMessageCache,
 } from '../lib/db.js';
 
 const PAGE_SIZE = 20;
+const CACHE_LIMIT = 50;
 
 export default function useChat(chatId) {
   const token = useGoogleIdToken();
   const [messages, setMessages] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [connected, setConnected] = useState(false);
+
+  function appendMessage(msg) {
+    setMessages((m) => [...m, msg]);
+  }
 
   useEffect(() => {
     if (!chatId || !token) return;
@@ -31,6 +38,7 @@ export default function useChat(chatId) {
             { chatId: msg.chatId, content: msg.content },
           );
           await removeOutboxMessage(msg.id);
+          setMessages((m) => m.filter((x) => x.ts !== msg.ts));
         } catch (err) {
           console.error('Failed to resend message', err);
           break;
@@ -39,6 +47,16 @@ export default function useChat(chatId) {
     }
 
     async function setup() {
+      const cached = await getMessageCache(chatId);
+      let initial = cached ? cached.messages || [] : [];
+      const pending = (await getOutboxMessages()).filter((m) => m.chatId === chatId);
+      if (pending.length) {
+        initial = [...initial, ...pending];
+      }
+      if (!ignore && initial.length) {
+        setMessages(initial);
+        setHasMore(initial.length >= PAGE_SIZE);
+      }
       console.log('Fetching history for chat', chatId);
       try {
         const resp = await graphqlRequest(
@@ -105,5 +123,14 @@ export default function useChat(chatId) {
     }
   }
 
-  return { messages, loadMore, hasMore };
+  useEffect(() => {
+    if (!chatId) return;
+    try {
+      putMessageCache({ chatId, messages: messages.slice(-CACHE_LIMIT) });
+    } catch {
+      /* ignore */
+    }
+  }, [chatId, messages]);
+
+  return { messages, loadMore, hasMore, appendMessage };
 }
