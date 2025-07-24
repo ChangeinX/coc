@@ -1,17 +1,23 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import Loading from '../components/Loading.jsx';
-import { useEffect } from 'react';
 import { graphqlRequest } from '../lib/gql.js';
 
 const ChatPanel = lazy(() => import('../components/ChatPanel.jsx'));
 
 export default function ChatPage({ verified, chatId, userId }) {
+  const [globalIds, setGlobalIds] = useState([]);
+  const [friendIds, setFriendIds] = useState([]);
+
   useEffect(() => {
     if (!verified) return;
     (async () => {
       try {
-        const data = await graphqlRequest('query { listChats { id } }');
+        const data = await graphqlRequest('query { listChats { id kind } }');
         const ids = data.listChats.map((c) => c.id);
+        const globals = data.listChats.filter((c) => c.kind === 'GLOBAL').map((c) => c.id);
+        const directs = data.listChats.filter((c) => c.kind === 'DIRECT').map((c) => c.id);
+        setGlobalIds(globals);
+        setFriendIds(directs);
         console.log('Subscribed chats', ids);
         if (navigator.serviceWorker?.controller) {
           navigator.serviceWorker.controller.postMessage({
@@ -29,7 +35,7 @@ export default function ChatPage({ verified, chatId, userId }) {
     <div className="h-[calc(100dvh-8rem)] flex flex-col overflow-y-auto overscroll-y-contain">
       <Suspense fallback={<Loading className="py-20" />}>
         {verified ? (
-          <ChatPanel chatId={chatId} userId={userId} />
+          <ChatPanel chatId={chatId} userId={userId} globalIds={globalIds} friendIds={friendIds} />
         ) : (
           <div className="p-4">Verify your account to chat.</div>
         )}

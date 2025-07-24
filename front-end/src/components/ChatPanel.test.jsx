@@ -5,6 +5,10 @@ import { vi } from 'vitest';
 vi.mock('../hooks/useChat.js', () => ({
   default: () => ({ messages: [], loadMore: vi.fn(), hasMore: false }),
 }));
+vi.mock('../hooks/useMultiChat.js', () => ({
+  default: () => ({ messages: [], loadMore: vi.fn(), hasMore: false }),
+  globalShardFor: () => 'global#shard-0',
+}));
 vi.mock('../lib/api.js', () => ({ fetchJSON: vi.fn(), fetchJSONCached: vi.fn() }));
 
 import ChatPanel from './ChatPanel.jsx';
@@ -15,10 +19,10 @@ describe('ChatPanel component', () => {
     expect(screen.getByPlaceholderText('Type a message…')).toBeInTheDocument();
   });
 
-  it('shows coming soon on Friends tab', () => {
+  it('hides input on Friends tab', () => {
     render(<ChatPanel />);
     const friendsTab = screen.getByText('Friends');
     fireEvent.click(friendsTab);
-    expect(screen.getByText('Coming soon...')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Type a message…')).not.toBeInTheDocument();
   });
 });
