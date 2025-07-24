@@ -194,3 +194,5 @@ fabric.properties
 messages-java/build/
 messages-java/.gradle/
 messages-java/gradle/wrapper/gradle-wrapper.jar
+user_service/build/
+user_service/.gradle/
