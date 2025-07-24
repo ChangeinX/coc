@@ -11,7 +11,6 @@
 - [x] GraphQL client utilities and offline outbox added
 - [x] Chat UI now sends GraphQL mutations and retries from IndexedDB
 
-## Remaining
-- [ ] Subscribe service worker to all chat/shard IDs after login
+- [x] Subscribe service worker to all chat/shard IDs after login
 - [ ] Render global and friend chats using aggregated subscriptions
 - [ ] Expose friend request actions in UI

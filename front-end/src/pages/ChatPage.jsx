@@ -11,8 +11,14 @@ export default function ChatPage({ verified, chatId, userId }) {
     (async () => {
       try {
         const data = await graphqlRequest('query { listChats { id } }');
-        console.log('Subscribed chats', data.listChats.map((c) => c.id));
-        // In a real implementation we'd notify the service worker here
+        const ids = data.listChats.map((c) => c.id);
+        console.log('Subscribed chats', ids);
+        if (navigator.serviceWorker?.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'subscribe-chats',
+            ids,
+          });
+        }
       } catch (err) {
         console.error('Failed to fetch chat list', err);
       }

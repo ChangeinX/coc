@@ -10,6 +10,17 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+const subscribedChats = new Set();
+
+self.addEventListener('message', (event) => {
+  const msg = event.data;
+  if (!msg || msg.type !== 'subscribe-chats' || !Array.isArray(msg.ids)) return;
+  for (const id of msg.ids) {
+    if (typeof id === 'string') subscribedChats.add(id);
+  }
+  console.log('Subscribed chats updated', [...subscribedChats]);
+});
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
