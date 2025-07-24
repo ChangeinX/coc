@@ -3,10 +3,10 @@ import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
 vi.mock('../hooks/useChat.js', () => ({
-  default: () => ({ messages: [], loadMore: vi.fn(), hasMore: false }),
+  default: () => ({ messages: [], loadMore: vi.fn(), hasMore: false, appendMessage: vi.fn() }),
 }));
 vi.mock('../hooks/useMultiChat.js', () => ({
-  default: () => ({ messages: [], loadMore: vi.fn(), hasMore: false }),
+  default: () => ({ messages: [], loadMore: vi.fn(), hasMore: false, appendMessage: vi.fn() }),
   globalShardFor: () => 'global#shard-0',
 }));
 vi.mock('../lib/api.js', () => ({ fetchJSON: vi.fn(), fetchJSONCached: vi.fn() }));
@@ -23,6 +23,14 @@ describe('ChatPanel component', () => {
     render(<ChatPanel />);
     const friendsTab = screen.getByText('Friends');
     fireEvent.click(friendsTab);
+    expect(screen.queryByPlaceholderText('Type a message…')).not.toBeInTheDocument();
+  });
+
+  it('shows join message when no clan', () => {
+    render(<ChatPanel />);
+    const clanTab = screen.getByText('Clan');
+    fireEvent.click(clanTab);
+    expect(screen.getByText('Please join a clan to chat…')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Type a message…')).not.toBeInTheDocument();
   });
 });
