@@ -15,7 +15,7 @@ export default function Account({ onVerified }) {
   const [chatEnabled, setChatEnabled] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [friends, setFriends] = useState([]);
-  const [newFriendSub, setNewFriendSub] = useState('');
+  const [newFriendTag, setNewFriendTag] = useState('');
   const [selfId, setSelfId] = useState(null);
   const [selfSub, setSelfSub] = useState('');
 
@@ -139,24 +139,24 @@ export default function Account({ onVerified }) {
           <div className="flex gap-2">
             <input
               className="flex-1 border rounded px-2 py-1"
-              placeholder="User Sub"
-              value={newFriendSub}
-              onChange={(e) => setNewFriendSub(e.target.value)}
+              placeholder="Player Tag"
+              value={newFriendTag}
+              onChange={(e) => setNewFriendTag(e.target.value)}
             />
             <button
               type="button"
               onClick={async () => {
-                if (!newFriendSub.trim() || !selfSub) return;
+                if (!newFriendTag.trim() || !selfSub) return;
                 try {
                   await fetchJSON('/friends/request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       fromSub: selfSub,
-                      toSub: newFriendSub.trim(),
+                      toTag: newFriendTag.trim(),
                     }),
                   });
-                  setNewFriendSub('');
+                  setNewFriendTag('');
                   alert('Request sent');
                 } catch (err) {
                   console.error('Failed to send friend request', err);

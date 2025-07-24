@@ -33,11 +33,11 @@ class FriendServiceTest {
         from.setSub("a");
         User to = new User();
         to.setId(2L);
-        to.setSub("b");
+        to.setPlayerTag("B");
         Mockito.when(userRepo.findBySub("a")).thenReturn(Optional.of(from));
-        Mockito.when(userRepo.findBySub("b")).thenReturn(Optional.of(to));
+        Mockito.when(userRepo.findByPlayerTag("B")).thenReturn(Optional.of(to));
         FriendService svc = new FriendService(repo, userRepo, client);
-        Long id = svc.sendRequest("a", "b");
+        Long id = svc.sendRequest("a", "B");
         assertEquals(1L, id);
         ArgumentCaptor<FriendRequest> captor = ArgumentCaptor.forClass(FriendRequest.class);
         Mockito.verify(repo).save(captor.capture());
