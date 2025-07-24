@@ -16,7 +16,7 @@ describe('graphqlRequest', () => {
     global.fetch = fetchMock;
     await graphqlRequest('query { test }');
     expect(fetchMock).toHaveBeenCalledWith(
-      `${API_URL}/api/v1/graphql`,
+      `${API_URL}/api/v1/chat/graphql`,
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: 'Bearer abc123' }),
       })
