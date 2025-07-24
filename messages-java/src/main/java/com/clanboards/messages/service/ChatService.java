@@ -31,7 +31,7 @@ public class ChatService {
         Instant ts = Instant.now();
         String shard = ChatRepository.globalShardKey(userId);
         ChatMessage msg = new ChatMessage(shard, userId, text, ts);
-        repository.saveGlobalMessage(msg);
+        repository.saveMessage(msg);
         events.publishEvent(new MessageSavedEvent(msg));
         return msg;
     }

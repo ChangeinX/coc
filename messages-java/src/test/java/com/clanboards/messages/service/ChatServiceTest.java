@@ -46,6 +46,6 @@ class ChatServiceTest {
 
         ChatMessage msg = service.publishGlobal("hi", "user1");
         assertEquals(ChatRepository.globalShardKey("user1"), msg.channel());
-        Mockito.verify(repo).saveGlobalMessage(Mockito.any(ChatMessage.class));
+        Mockito.verify(repo).saveMessage(Mockito.any(ChatMessage.class));
     }
 }
