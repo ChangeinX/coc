@@ -17,7 +17,7 @@ public class FriendController {
 
     @PostMapping("/request")
     public ResponseEntity<Map<String, Long>> request(@RequestBody RequestPayload payload) {
-        Long id = service.sendRequest(payload.fromUserId(), payload.toUserId());
+        Long id = service.sendRequest(payload.fromSub(), payload.toSub());
         return ResponseEntity.ok(Map.of("id", id));
     }
 
@@ -27,6 +27,6 @@ public class FriendController {
         return ResponseEntity.ok(Map.of("ok", result));
     }
 
-    public record RequestPayload(Long fromUserId, Long toUserId) {}
+    public record RequestPayload(String fromSub, String toSub) {}
     public record RespondPayload(Long requestId, boolean accept) {}
 }
