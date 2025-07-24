@@ -17,6 +17,7 @@ async def _verify_player_token(tag: str, token: str) -> dict:
 def me():
     return jsonify(
         {
+            "id": g.user.id,
             "email": g.user.email,
             "name": g.user.name,
             "player_tag": g.user.player_tag,

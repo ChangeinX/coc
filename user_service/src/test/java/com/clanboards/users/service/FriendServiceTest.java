@@ -26,7 +26,7 @@ class FriendServiceTest {
         Mockito.when(repo.save(Mockito.any())).thenReturn(saved);
 
         FriendService svc = new FriendService(repo, client);
-        Long id = svc.sendRequest("a", "b");
+        Long id = svc.sendRequest(1L, 2L);
         assertEquals(1L, id);
         ArgumentCaptor<FriendRequest> captor = ArgumentCaptor.forClass(FriendRequest.class);
         Mockito.verify(repo).save(captor.capture());
@@ -37,8 +37,8 @@ class FriendServiceTest {
     void acceptRequestWritesFriends() {
         FriendRequest req = new FriendRequest();
         req.setId(2L);
-        req.setFromUserId("a");
-        req.setToUserId("b");
+        req.setFromUserId(1L);
+        req.setToUserId(2L);
         req.setStatus("PENDING");
 
         FriendRequestRepository repo = Mockito.mock(FriendRequestRepository.class);
