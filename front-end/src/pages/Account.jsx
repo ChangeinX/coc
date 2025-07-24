@@ -6,6 +6,7 @@ import VerifiedBadge from '../components/VerifiedBadge.jsx';
 import ChatBadge from '../components/ChatBadge.jsx';
 import RiskPrioritySelect, { PRESETS } from '../components/RiskPrioritySelect.jsx';
 import { graphqlRequest } from '../lib/gql.js';
+import { getSub } from '../lib/auth.js';
 
 export default function Account({ onVerified }) {
   const [profile, setProfile] = useState(null);
@@ -142,13 +143,19 @@ export default function Account({ onVerified }) {
               onClick={async () => {
                 if (!newFriendId.trim()) return;
                 try {
-                  await graphqlRequest(
-                    `mutation($id: ID!) { sendFriendRequest(to:$id) }`,
-                    { id: newFriendId.trim() },
-                  );
+                  const token = localStorage.getItem('token');
+                  await fetchJSON('/friends/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      fromUserId: getSub(token || ''),
+                      toUserId: newFriendId.trim(),
+                    }),
+                  });
                   setNewFriendId('');
                   alert('Request sent');
-                } catch {
+                } catch (err) {
+                  console.error('Failed to send friend request', err);
                   alert('Failed to send request');
                 }
               }}
