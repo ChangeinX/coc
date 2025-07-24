@@ -10,10 +10,14 @@ public class User {
     @Id
     private Long id;
     private String sub;
+    private String playerTag;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public String getSub() { return sub; }
     public void setSub(String sub) { this.sub = sub; }
+
+    public String getPlayerTag() { return playerTag; }
+    public void setPlayerTag(String playerTag) { this.playerTag = playerTag; }
 }
