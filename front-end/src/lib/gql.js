@@ -4,7 +4,7 @@ export async function graphqlRequest(query, variables = {}) {
   const token = localStorage.getItem('token');
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const url = `${API_URL}/api/v1/graphql`;
+  const url = `${API_URL}/api/v1/chat/graphql`;
   const res = await fetch(url, {
     method: 'POST',
     headers,
