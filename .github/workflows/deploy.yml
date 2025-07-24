@@ -5,35 +5,39 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-    types:
-      - closed
+    types: [closed]
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+  CLUSTER: ${{ secrets.CLUSTER }}
+  APP_REPOSITORY: ${{ secrets.APP_REPOSITORY }}
+  WORKER_REPOSITORY: ${{ secrets.WORKER_REPOSITORY }}
+  MESSAGES_REPOSITORY: ${{ secrets.MESSAGES_REPOSITORY }}
+  USER_REPOSITORY: ${{ secrets.USER_REPOSITORY }}
+  FRONTEND_BUCKET: ${{ secrets.FRONTEND_BUCKET }}
+  APP_SERVICE: ${{ secrets.APP_SERVICE }}
+  WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
+  MESSAGES_SERVICE: ${{ secrets.MESSAGES_SERVICE }}
+  USER_SERVICE: ${{ secrets.USER_SERVICE }}
+  VITE_API_URL: ${{ secrets.VITE_API_URL }}
+  VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+  VITE_APPSYNC_EVENTS_URL: ${{ secrets.VITE_APPSYNC_EVENTS_URL }}
+  APP_SYNC_API_KEY: ${{ secrets.VITE_API_KEY }}
 
 jobs:
-  deploy:
+  detect:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-      APP_REPOSITORY: ${{ secrets.APP_REPOSITORY }}
-      WORKER_REPOSITORY: ${{ secrets.WORKER_REPOSITORY }}
-      MESSAGES_REPOSITORY: ${{ secrets.MESSAGES_REPOSITORY }}
-      USER_REPOSITORY: ${{ secrets.USER_REPOSITORY }}
-      FRONTEND_BUCKET: ${{ secrets.FRONTEND_BUCKET }}
-      CLUSTER: ${{ secrets.CLUSTER }}
-      APP_SERVICE: ${{ secrets.APP_SERVICE }}
-      WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
-      MESSAGES_SERVICE: ${{ secrets.MESSAGES_SERVICE }}
-      USER_SERVICE: ${{ secrets.USER_SERVICE }}
-      VITE_API_URL: ${{ secrets.VITE_API_URL }}
-      VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-      VITE_APPSYNC_EVENTS_URL: ${{ secrets.VITE_APPSYNC_EVENTS_URL }}
-      APP_SYNC_API_KEY: ${{ secrets.VITE_API_KEY }}
-
+    outputs:
+      app_any_changed: ${{ steps.changes.outputs.app_any_changed }}
+      worker_any_changed: ${{ steps.changes.outputs.worker_any_changed }}
+      messages_any_changed: ${{ steps.changes.outputs.messages_any_changed }}
+      user_any_changed: ${{ steps.changes.outputs.user_any_changed }}
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || github.sha }}
+          fetch-depth: 1
 
       - name: Detect changes
         id: changes
@@ -49,6 +53,35 @@ jobs:
             user:
               - user_service/**
 
+  front-end:
+    needs: detect
+    if: needs.detect.outputs.app_any_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            front-end/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('front-end/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Prep Front End for S3
+        run: |
+          npm ci --prefix front-end
+          VITE_API_URL=$VITE_API_URL \
+          VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
+          VITE_APPSYNC_EVENTS_URL=$VITE_APPSYNC_EVENTS_URL \
+          VITE_AWS_REGION=$AWS_REGION \
+          VITE_API_KEY=$APP_SYNC_API_KEY \
+          npm run --prefix front-end build
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -56,9 +89,31 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
+      - name: Sync front-end to S3
+        run: aws s3 sync front-end/dist s3://$FRONTEND_BUCKET --delete
+
+      - name: Invalidate CloudFront cache
         run: |
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.DISTRIBUTION_ID }} --paths "/*"
+
+  build-push:
+    needs: detect
+    if: needs.detect.outputs.worker_any_changed == 'true' || needs.detect.outputs.messages_any_changed == 'true' || needs.detect.outputs.user_any_changed == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [worker, messages, user]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -68,69 +123,61 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Prep Front End for S3
-        if: steps.changes.outputs.app_any_changed == 'true'
+      - name: Login to Amazon ECR
         run: |
-          npm ci --prefix front-end
-          VITE_API_URL=$VITE_API_URL \
-          VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
-          VITE_APPSYNC_EVENTS_URL=$VITE_APPSYNC_EVENTS_URL \
-          VITE_AWS_REGION=$AWS_REGION \
-          VITE_API_KEY=$VITE_API_KEY \
-          npm run --prefix front-end build
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-      - name: Sync front-end to S3
-        if: steps.changes.outputs.app_any_changed == 'true'
-        run: aws s3 sync front-end/dist s3://$FRONTEND_BUCKET --delete
+      - name: Cache Maven dependencies (messages service only)
+        if: matrix.service == 'messages'
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('messages-java/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
 
-      - name: Invalidate CloudFront cache
-        if: steps.changes.outputs.app_any_changed == 'true'
+      - name: Build & push ${{ matrix.service }} image
+        env:
+          SERVICE: ${{ matrix.service }}
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.DISTRIBUTION_ID }} --paths "/*"
+          case "$SERVICE" in
+            worker)
+              DOCKERFILE=back-end/Dockerfile
+              REPOSITORY=$WORKER_REPOSITORY
+              SERVICE_NAME=$WORKER_SERVICE
+              CHANGED=${{ needs.detect.outputs.worker_any_changed }}
+              ;;
+            messages)
+              DOCKERFILE=messages-java/Dockerfile
+              REPOSITORY=$MESSAGES_REPOSITORY
+              SERVICE_NAME=$MESSAGES_SERVICE
+              CHANGED=${{ needs.detect.outputs.messages_any_changed }}
+              ;;
+            user)
+              DOCKERFILE=user_service/Dockerfile
+              REPOSITORY=$USER_REPOSITORY
+              SERVICE_NAME=$USER_SERVICE
+              CHANGED=${{ needs.detect.outputs.user_any_changed }}
+              ;;
+          esac
 
-      - name: Build and push worker image
-        if: steps.changes.outputs.worker_any_changed == 'true'
-        run: |
+          if [ "$CHANGED" != "true" ]; then
+            echo "No changes in $SERVICE, skipping build."
+            exit 0
+          fi
+
           docker buildx build \
             --platform linux/arm64 \
-            -f back-end/Dockerfile \
-            -t $ECR_REGISTRY/$WORKER_REPOSITORY:latest \
-            -t $ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }} \
+            -f "$DOCKERFILE" \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            -t "$ECR_REGISTRY/$REPOSITORY:latest" \
+            -t "$ECR_REGISTRY/$REPOSITORY:${{ github.sha }}" \
             --push .
-          task_def=$(aws ecs describe-services --cluster $CLUSTER --services $WORKER_SERVICE --query 'services[0].taskDefinition' --output text)
+
+          task_def=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE_NAME --query 'services[0].taskDefinition' --output text)
           aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
-          jq --arg IMAGE "$ECR_REGISTRY/$WORKER_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
+          jq --arg IMAGE "$ECR_REGISTRY/$REPOSITORY:${{ github.sha }}" \
+            'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
           new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
-          aws ecs update-service --cluster $CLUSTER --service $WORKER_SERVICE --task-definition "$new_def"
-
-
-      - name: Build and push messages image
-        if: steps.changes.outputs.messages_any_changed == 'true'
-        run: |
-          docker buildx build \
-            --platform linux/arm64 \
-            -f messages-java/Dockerfile \
-            -t $ECR_REGISTRY/$MESSAGES_REPOSITORY:latest \
-            -t $ECR_REGISTRY/$MESSAGES_REPOSITORY:${{ github.sha }} \
-            --push .
-          task_def=$(aws ecs describe-services --cluster $CLUSTER --services $MESSAGES_SERVICE --query 'services[0].taskDefinition' --output text)
-          aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
-          jq --arg IMAGE "$ECR_REGISTRY/$MESSAGES_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
-          new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
-          aws ecs update-service --cluster $CLUSTER --service $MESSAGES_SERVICE --task-definition "$new_def"
-
-
-      - name: Build and push user service image
-        if: steps.changes.outputs.user_any_changed == 'true'
-        run: |
-          docker buildx build \
-            --platform linux/arm64 \
-            -f user_service/Dockerfile \
-            -t $ECR_REGISTRY/$USER_REPOSITORY:latest \
-            -t $ECR_REGISTRY/$USER_REPOSITORY:${{ github.sha }} \
-            --push .
-          task_def=$(aws ecs describe-services --cluster $CLUSTER --services $USER_SERVICE --query 'services[0].taskDefinition' --output text)
-          aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
-          jq --arg IMAGE "$ECR_REGISTRY/$USER_REPOSITORY:${{ github.sha }}" 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt) | .containerDefinitions[].image=$IMAGE' taskdef.json > new-taskdef.json
-          new_def=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
-          aws ecs update-service --cluster $CLUSTER --service $USER_SERVICE --task-definition "$new_def"
+          aws ecs update-service --cluster $CLUSTER --service $SERVICE_NAME --task-definition "$new_def"
