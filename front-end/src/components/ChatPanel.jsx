@@ -41,7 +41,7 @@ useEffect(() => {
       setLoading(true);
       const fetched = await Promise.all(
         missing.map((id) =>
-          fetchJSONCached(`/player/${encodeURIComponent(id)}`).catch(() => null)
+          fetchJSONCached(`/player/by-user/${encodeURIComponent(id)}`).catch(() => null)
         )
       );
       if (ignore) return;
