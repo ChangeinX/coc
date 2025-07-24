@@ -5,6 +5,7 @@ import Loading from '../components/Loading.jsx';
 import VerifiedBadge from '../components/VerifiedBadge.jsx';
 import ChatBadge from '../components/ChatBadge.jsx';
 import RiskPrioritySelect, { PRESETS } from '../components/RiskPrioritySelect.jsx';
+import { graphqlRequest } from '../lib/gql.js';
 
 export default function Account({ onVerified }) {
   const [profile, setProfile] = useState(null);
@@ -12,6 +13,8 @@ export default function Account({ onVerified }) {
   const [token, setToken] = useState('');
   const [chatEnabled, setChatEnabled] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [friends, setFriends] = useState([]);
+  const [newFriendId, setNewFriendId] = useState('');
 
 
 
@@ -28,6 +31,23 @@ export default function Account({ onVerified }) {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (!chatEnabled) return;
+    let ignore = false;
+    const load = async () => {
+      try {
+        const data = await graphqlRequest('query { listFriends { userId since } }');
+        if (!ignore) setFriends(data.listFriends);
+      } catch {
+        if (!ignore) setFriends([]);
+      }
+    };
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [chatEnabled]);
 
   const handleChange = (key, value) => {
     setProfile((p) => ({ ...p, [key]: value }));
@@ -99,6 +119,46 @@ export default function Account({ onVerified }) {
           <span className="text-sm">Enable Chat</span>
         </label>
       </div>
+      {chatEnabled && (
+        <div className="space-y-2">
+          <h4 className="text-lg font-medium">Friends</h4>
+          <div className="space-y-1">
+            {friends.map((f) => (
+              <div key={f.userId} className="text-sm text-slate-700">{f.userId}</div>
+            ))}
+            {friends.length === 0 && (
+              <div className="text-sm text-slate-500">No friends yet</div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <input
+              className="flex-1 border rounded px-2 py-1"
+              placeholder="User ID"
+              value={newFriendId}
+              onChange={(e) => setNewFriendId(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                if (!newFriendId.trim()) return;
+                try {
+                  await graphqlRequest(
+                    `mutation($id: ID!) { sendFriendRequest(to:$id) }`,
+                    { id: newFriendId.trim() },
+                  );
+                  setNewFriendId('');
+                  alert('Request sent');
+                } catch {
+                  alert('Failed to send request');
+                }
+              }}
+              className="px-3 py-1 rounded bg-blue-600 text-white"
+            >
+              Add Friend
+            </button>
+          </div>
+        </div>
+      )}
       {!profile.verified && (
         <>
           <label className="block">
