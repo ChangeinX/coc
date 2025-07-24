@@ -12,5 +12,5 @@
 - [x] Chat UI now sends GraphQL mutations and retries from IndexedDB
 
 - [x] Subscribe service worker to all chat/shard IDs after login
-- [ ] Render global and friend chats using aggregated subscriptions
-- [ ] Expose friend request actions in UI
+- [x] Render global and friend chats using aggregated subscriptions
+- [x] Expose friend request actions in UI

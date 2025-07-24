@@ -3,14 +3,19 @@ import { fetchJSONCached } from '../lib/api.js';
 import { graphqlRequest } from '../lib/gql.js';
 import { addOutboxMessage } from '../lib/db.js';
 import useChat from '../hooks/useChat.js';
+import useMultiChat, { globalShardFor } from '../hooks/useMultiChat.js';
 import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
 
-export default function ChatPanel({ chatId = '1', userId = '' }) {
-  const { messages, loadMore, hasMore } = useChat(chatId);
+export default function ChatPanel({ chatId = '1', userId = '', globalIds = [], friendIds = [] }) {
+  const [tab, setTab] = useState('Clan');
+  const clanChat = useChat(chatId);
+  const globalChat = useMultiChat(globalIds);
+  const friendChat = useMultiChat(friendIds);
+  const current = tab === 'Clan' ? clanChat : tab === 'All' ? globalChat : friendChat;
+  const { messages, loadMore, hasMore } = current;
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
-  const [tab, setTab] = useState('Clan');
   const [infoMap, setInfoMap] = useState({});
   const [loading, setLoading] = useState(true);
   const endRef = useRef(null);
@@ -63,16 +68,20 @@ useEffect(() => {
     const trimmed = text.trim();
     if (!trimmed) return;
     setSending(true);
-    console.log('Publishing message', trimmed, 'to', chatId);
+    let targetId = chatId;
+    if (tab === 'All') {
+      targetId = globalShardFor(userId);
+    }
+    console.log('Publishing message', trimmed, 'to', targetId);
     try {
       await graphqlRequest(
         `mutation($chatId: ID!, $content: String!) { sendMessage(chatId:$chatId, content:$content){ id } }`,
-        { chatId, content: trimmed },
+        { chatId: targetId, content: trimmed },
       );
       setText('');
     } catch (err) {
       console.error('Failed to publish message', err);
-      await addOutboxMessage({ chatId, content: trimmed });
+      await addOutboxMessage({ chatId: targetId, content: trimmed });
     }
     setSending(false);
   };
@@ -90,38 +99,38 @@ useEffect(() => {
           </button>
         ))}
       </div>
-      {tab === 'Clan' ? (
-        <>
-          <div className="flex-1 overflow-y-auto min-h-0 space-y-2 p-4 pt-4">
-            {hasMore && !loading && (
-              <button
-                onClick={loadMore}
-                className="block mx-auto mb-2 text-sm text-blue-600 underline"
-              >
-                Load earlier messages
-              </button>
-            )}
-            {loading ? (
-              <div className="py-20">
-                <Loading />
-                <div className="text-center text-sm text-slate-500 mt-2">
-                  Loading messages…
-                </div>
+      <>
+        <div className="flex-1 overflow-y-auto min-h-0 space-y-2 p-4 pt-4">
+          {hasMore && !loading && (
+            <button
+              onClick={loadMore}
+              className="block mx-auto mb-2 text-sm text-blue-600 underline"
+            >
+              Load earlier messages
+            </button>
+          )}
+          {loading ? (
+            <div className="py-20">
+              <Loading />
+              <div className="text-center text-sm text-slate-500 mt-2">
+                Loading messages…
               </div>
-            ) : (
-              messages.map((m, idx) =>
-                infoMap[m.userId] ? (
-                  <ChatMessage
-                    key={m.ts || idx}
-                    message={m}
-                    info={infoMap[m.userId]}
-                    isSelf={m.userId === userId}
-                  />
-                ) : null
-              )
-            )}
-            <div ref={endRef} />
-          </div>
+            </div>
+          ) : (
+            messages.map((m, idx) =>
+              infoMap[m.userId] ? (
+                <ChatMessage
+                  key={m.ts || idx}
+                  message={m}
+                  info={infoMap[m.userId]}
+                  isSelf={m.userId === userId}
+                />
+              ) : null
+            )
+          )}
+          <div ref={endRef} />
+        </div>
+        {tab !== 'Friends' && (
           <form onSubmit={handleSubmit} className="flex gap-2 p-2 border-t">
             <input
               className="flex-1 border rounded px-2 py-1"
@@ -137,10 +146,8 @@ useEffect(() => {
               {sending ? 'Sending…' : 'Send'}
             </button>
           </form>
-        </>
-      ) : (
-        <div className="flex-1 p-4">Coming soon...</div>
-      )}
+        )}
+      </>
     </div>
   );
 }
