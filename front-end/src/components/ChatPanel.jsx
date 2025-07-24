@@ -31,8 +31,16 @@ useEffect(() => {
   useEffect(() => {
     let ignore = false;
 
+    function getSender(msg) {
+      return msg.senderId ?? msg.userId;
+    }
+
+    function isPlayerTag(id) {
+      return id?.startsWith('#');
+    }
+
     async function loadInfo() {
-      const ids = [...new Set(messages.map((m) => m.senderId).filter(Boolean))];
+      const ids = [...new Set(messages.map(getSender).filter(Boolean))];
       const missing = ids.filter((id) => !infoMap[id]);
       if (missing.length === 0) {
         setLoading(false);
@@ -40,9 +48,12 @@ useEffect(() => {
       }
       setLoading(true);
       const fetched = await Promise.all(
-        missing.map((id) =>
-          fetchJSONCached(`/player/by-user/${encodeURIComponent(id)}`).catch(() => null)
-        )
+        missing.map((id) => {
+          const path = isPlayerTag(id)
+            ? `/player/${encodeURIComponent(id)}`
+            : `/player/by-user/${encodeURIComponent(id)}`;
+          return fetchJSONCached(path).catch(() => null);
+        })
       );
       if (ignore) return;
       const updated = { ...infoMap };
@@ -117,14 +128,17 @@ useEffect(() => {
               </div>
             </div>
           ) : (
-            messages.map((m, idx) => (
-              <ChatMessage
-                key={m.ts || idx}
-                message={m}
-                info={infoMap[m.senderId]}
-                isSelf={m.senderId === userId}
-              />
-            ))
+            messages.map((m, idx) => {
+              const sender = m.senderId ?? m.userId;
+              return (
+                <ChatMessage
+                  key={m.ts || idx}
+                  message={m}
+                  info={infoMap[sender]}
+                  isSelf={sender === userId}
+                />
+              );
+            })
           )}
           <div ref={endRef} />
         </div>
