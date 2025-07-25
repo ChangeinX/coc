@@ -35,4 +35,18 @@ describe('ChatMessage', () => {
     expect(handler).toHaveBeenCalledTimes(1);
     window.removeEventListener('open-friend-add', handler);
   });
+
+  it('dispatches add friend event on click', () => {
+    const handler = vi.fn();
+    window.addEventListener('open-friend-add', handler);
+    render(
+      <ChatMessage
+        message={{ content: 'yo', senderId: '123' }}
+        info={{ ...sample, tag: '#TAG' }}
+      />,
+    );
+    fireEvent.click(screen.getByText('yo'));
+    expect(handler).toHaveBeenCalledTimes(1);
+    window.removeEventListener('open-friend-add', handler);
+  });
 });
