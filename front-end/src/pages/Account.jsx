@@ -15,6 +15,7 @@ export default function Account({ onVerified }) {
   const [chatEnabled, setChatEnabled] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [friends, setFriends] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [newFriendTag, setNewFriendTag] = useState('');
   const [selfId, setSelfId] = useState(null);
   const [selfSub, setSelfSub] = useState('');
@@ -55,6 +56,23 @@ export default function Account({ onVerified }) {
     };
   }, [chatEnabled]);
 
+  useEffect(() => {
+    if (!chatEnabled || !selfSub) return;
+    let ignore = false;
+    const load = async () => {
+      try {
+        const data = await fetchJSON(`/friends/requests?sub=${selfSub}`);
+        if (!ignore) setRequests(data);
+      } catch {
+        if (!ignore) setRequests([]);
+      }
+    };
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [chatEnabled, selfSub]);
+
   const handleChange = (key, value) => {
     setProfile((p) => ({ ...p, [key]: value }));
   };
@@ -89,7 +107,10 @@ export default function Account({ onVerified }) {
   if (!profile) return <Loading className="py-20" />;
 
   return (
-    <form className="max-w-md mx-auto space-y-6 pt-4" onSubmit={handleSubmit}>
+    <form
+      className="container mx-auto p-4 sm:p-6 space-y-6 max-w-md"
+      onSubmit={handleSubmit}
+    >
       <h3 className="text-xl font-semibold flex items-center gap-2">
         Profile
         {profile.verified && <VerifiedBadge />}
@@ -136,6 +157,42 @@ export default function Account({ onVerified }) {
               <div className="text-sm text-slate-500">No friends yet</div>
             )}
           </div>
+          {requests.length > 0 && (
+            <div className="space-y-1">
+              <h5 className="text-sm font-medium mt-2">Requests</h5>
+              {requests.map((r) => (
+                <div key={r.id} className="flex items-center gap-2 text-sm">
+                  <span className="flex-1">{r.fromUserId}</span>
+                  <button
+                    className="px-2 py-0.5 rounded bg-green-600 text-white"
+                    onClick={async () => {
+                      await fetchJSON('/friends/respond', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ requestId: r.id, accept: true }),
+                      });
+                      setRequests((reqs) => reqs.filter((x) => x.id !== r.id));
+                    }}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    className="px-2 py-0.5 rounded bg-red-600 text-white"
+                    onClick={async () => {
+                      await fetchJSON('/friends/respond', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ requestId: r.id, accept: false }),
+                      });
+                      setRequests((reqs) => reqs.filter((x) => x.id !== r.id));
+                    }}
+                  >
+                    Reject
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex gap-2">
             <input
               className="flex-1 border rounded px-2 py-1"
