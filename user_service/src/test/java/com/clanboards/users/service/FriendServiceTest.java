@@ -13,6 +13,7 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,5 +66,29 @@ class FriendServiceTest {
         Mockito.verify(table, Mockito.times(2)).putItem(Mockito.any(FriendshipItem.class));
         Mockito.verify(repo).save(req);
         assertEquals("ACCEPTED", req.getStatus());
+    }
+
+    @Test
+    void listRequestsGetsPending() {
+        FriendRequestRepository repo = Mockito.mock(FriendRequestRepository.class);
+        UserRepository userRepo = Mockito.mock(UserRepository.class);
+        DynamoDbEnhancedClient client = Mockito.mock(DynamoDbEnhancedClient.class);
+        DynamoDbTable<FriendshipItem> table = Mockito.mock(DynamoDbTable.class);
+        Mockito.when(client.table(Mockito.anyString(), Mockito.any(TableSchema.class))).thenReturn(table);
+
+        User user = new User();
+        user.setId(1L);
+        user.setSub("abc");
+        Mockito.when(userRepo.findBySub("abc")).thenReturn(Optional.of(user));
+
+        FriendRequest req = new FriendRequest();
+        req.setId(5L);
+        req.setFromUserId(2L);
+        Mockito.when(repo.findByToUserIdAndStatus(1L, "PENDING")).thenReturn(List.of(req));
+
+        FriendService svc = new FriendService(repo, userRepo, client);
+        List<FriendRequest> list = svc.listRequests("abc");
+        assertEquals(1, list.size());
+        assertEquals(5L, list.get(0).getId());
     }
 }

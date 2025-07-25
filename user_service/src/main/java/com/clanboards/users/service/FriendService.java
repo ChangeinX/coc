@@ -4,6 +4,7 @@ import com.clanboards.users.model.FriendRequest;
 import com.clanboards.users.model.FriendshipItem;
 import com.clanboards.users.repository.FriendRequestRepository;
 import com.clanboards.users.repository.UserRepository;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -48,5 +49,10 @@ public class FriendService {
         }
         repo.save(req);
         return accept;
+    }
+
+    public List<FriendRequest> listRequests(String toSub) {
+        Long userId = userRepo.findBySub(toSub).orElseThrow().getId();
+        return repo.findByToUserIdAndStatus(userId, "PENDING");
     }
 }
