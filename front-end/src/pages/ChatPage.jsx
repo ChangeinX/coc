@@ -1,12 +1,16 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Loading from '../components/Loading.jsx';
 import { graphqlRequest } from '../lib/gql.js';
 
 const ChatPanel = lazy(() => import('../components/ChatPanel.jsx'));
 
 export default function ChatPage({ verified, chatId, userId }) {
+  const location = useLocation();
   const [globalIds, setGlobalIds] = useState([]);
   const [friendIds, setFriendIds] = useState([]);
+  const search = new URLSearchParams(location.search);
+  const initialTab = search.get('tab');
 
   useEffect(() => {
     if (!verified) return;
@@ -35,7 +39,13 @@ export default function ChatPage({ verified, chatId, userId }) {
     <div className="h-[calc(100dvh-8rem)] flex flex-col overflow-y-auto overscroll-y-contain">
       <Suspense fallback={<Loading className="py-20" />}>
         {verified ? (
-          <ChatPanel chatId={chatId} userId={userId} globalIds={globalIds} friendIds={friendIds} />
+          <ChatPanel
+            chatId={chatId}
+            userId={userId}
+            globalIds={globalIds}
+            friendIds={friendIds}
+            initialTab={initialTab ? initialTab.charAt(0).toUpperCase() + initialTab.slice(1) : undefined}
+          />
         ) : (
           <div className="p-4">Verify your account to chat.</div>
         )}

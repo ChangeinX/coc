@@ -125,7 +125,7 @@ export default function FriendsPanel() {
     } catch {
       /* ignore */
     }
-    window.location.hash = '#/chat';
+    window.location.hash = '#/chat?tab=friends';
     setSelected(null);
   };
 
@@ -194,12 +194,12 @@ export default function FriendsPanel() {
             </>
           ) : (
             <>
-              <div className="text-center text-sm">Remove {newTag}?</div>
+              <div className="text-center text-sm">Unfriend {newTag}?</div>
               <button
                 className="w-full px-4 py-2 rounded bg-red-600 text-white"
                 onClick={() => removeFriend(newTag)}
               >
-                Remove
+                Unfriend
               </button>
             </>
           )}
@@ -223,7 +223,7 @@ export default function FriendsPanel() {
                 className="w-full px-4 py-2 rounded bg-red-600 text-white"
                 onClick={() => removeFriend(selected.playerTag)}
               >
-                Remove
+                Unfriend
               </button>
             </>
           )}
