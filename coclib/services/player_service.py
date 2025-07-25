@@ -41,7 +41,7 @@ def _resolve_last_seen(
     else:
         prev_seen = prev_snapshot.last_seen
         changed = (
-            data.get("trophies") != prev_snapshot.trophies
+            data.get("trophies", 0) > prev_snapshot.trophies
             or data.get("donations", 0) != prev_snapshot.donations
             or data.get("donationsReceived", 0) != prev_snapshot.donations_received
             or attacks_used != prev_snapshot.war_attacks_used
