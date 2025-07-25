@@ -152,7 +152,9 @@ export default function Account({ onVerified }) {
           <h4 className="text-lg font-medium">Friends</h4>
           <div className="space-y-1">
             {friends.map((f) => (
-              <div key={f.userId} className="text-sm text-slate-700">{f.userId}</div>
+              <div key={f.userId} className="text-sm text-slate-700">
+                <PlayerMini tag={f.playerTag} />
+              </div>
             ))}
             {friends.length === 0 && (
               <div className="text-sm text-slate-500">No friends yet</div>

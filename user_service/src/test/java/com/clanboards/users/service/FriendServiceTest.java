@@ -77,4 +77,33 @@ class FriendServiceTest {
         assertEquals(1, list.size());
         assertEquals(5L, list.get(0).getId());
     }
+
+    @Test
+    void listFriendsIncludesPlayerTag() {
+        FriendRequestRepository repo = Mockito.mock(FriendRequestRepository.class);
+        UserRepository userRepo = Mockito.mock(UserRepository.class);
+
+        User user = new User();
+        user.setId(1L);
+        user.setSub("abc");
+        Mockito.when(userRepo.findBySub("abc")).thenReturn(Optional.of(user));
+
+        User friend = new User();
+        friend.setId(2L);
+        friend.setPlayerTag("#AAA");
+        Mockito.when(userRepo.findById(2L)).thenReturn(Optional.of(friend));
+
+        FriendRequest req = new FriendRequest();
+        req.setId(5L);
+        req.setFromUserId(1L);
+        req.setToUserId(2L);
+        req.setStatus("ACCEPTED");
+        Mockito.when(repo.findFriends(1L, "ACCEPTED")).thenReturn(List.of(req));
+
+        FriendService svc = new FriendService(repo, userRepo);
+        List<FriendService.FriendDto> list = svc.listFriends("abc");
+        assertEquals(1, list.size());
+        assertEquals(2L, list.get(0).userId());
+        assertEquals("#AAA", list.get(0).playerTag());
+    }
 }
