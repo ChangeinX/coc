@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import BottomSheet from './BottomSheet.jsx';
 import PlayerMini from './PlayerMini.jsx';
 import { fetchJSON } from '../lib/api.js';
@@ -8,13 +8,8 @@ export default function FriendsPanel() {
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState([]);
   const [sub, setSub] = useState('');
-  const [showAdd, setShowAdd] = useState(false);
-  const [mode, setMode] = useState('add'); // 'add' or 'remove'
   const [selected, setSelected] = useState(null);
   const [showReqs, setShowReqs] = useState(false);
-  const [newTag, setNewTag] = useState('');
-  const inputRef = useRef(null);
-  const prevRequests = useRef([]);
 
   useEffect(() => {
     fetchJSON('/user/me')
@@ -34,54 +29,13 @@ export default function FriendsPanel() {
       try {
         const reqs = await fetchJSON(`/friends/requests?sub=${sub}`);
         setRequests(reqs);
-        prevRequests.current = reqs;
       } catch {
         setRequests([]);
-        prevRequests.current = [];
       }
     };
     load();
   }, [sub]);
 
-  useEffect(() => {
-    if (showAdd && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [showAdd]);
-
-  useEffect(() => {
-    const handler = (e) => {
-      const tag = e.detail || '';
-      setNewTag(tag);
-      if (tag && friends.some((f) => f.playerTag === tag)) {
-        setMode('remove');
-      } else {
-        setMode('add');
-      }
-      setShowAdd(true);
-    };
-    window.addEventListener('open-friend-add', handler);
-    return () => window.removeEventListener('open-friend-add', handler);
-  }, [friends]);
-
-  const sendRequest = async () => {
-    const trimmed = newTag.trim();
-    if (!trimmed || !sub) return;
-    const temp = { id: Date.now(), playerTag: trimmed };
-    setRequests((r) => [...r, temp]);
-    setShowAdd(false);
-    setNewTag('');
-    try {
-      await fetchJSON('/friends/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fromSub: sub, toTag: trimmed }),
-      });
-    } catch {
-      setRequests((r) => r.filter((x) => x.id !== temp.id));
-      alert('Failed to send request');
-    }
-  };
 
   const respond = async (req, accept) => {
     try {
@@ -111,7 +65,6 @@ export default function FriendsPanel() {
     } catch {
       alert('Failed to remove friend');
     }
-    setShowAdd(false);
     setSelected(null);
   };
 
@@ -146,9 +99,7 @@ export default function FriendsPanel() {
         <button
           className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"
           onClick={() => {
-            setMode('add');
-            setNewTag('');
-            setShowAdd(true);
+            window.dispatchEvent(new CustomEvent('open-friend-add'));
           }}
         >
           +
@@ -173,38 +124,6 @@ export default function FriendsPanel() {
           <div className="text-sm text-slate-500">No friends yet</div>
         )}
       </div>
-
-      <BottomSheet open={showAdd} onClose={() => setShowAdd(false)}>
-        <div className="p-4 space-y-2">
-          {mode === 'add' ? (
-            <>
-              <input
-                ref={inputRef}
-                className="w-full border rounded px-3 py-2"
-                placeholder="Player Tag"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-              />
-              <button
-                className="w-full px-4 py-2 rounded bg-blue-600 text-white"
-                onClick={sendRequest}
-              >
-                Send
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="text-center text-sm">Unfriend {newTag}?</div>
-              <button
-                className="w-full px-4 py-2 rounded bg-red-600 text-white"
-                onClick={() => removeFriend(newTag)}
-              >
-                Unfriend
-              </button>
-            </>
-          )}
-        </div>
-      </BottomSheet>
 
       <BottomSheet open={!!selected} onClose={() => setSelected(null)}>
         <div className="p-4 space-y-2">
