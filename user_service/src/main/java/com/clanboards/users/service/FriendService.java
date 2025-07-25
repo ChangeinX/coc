@@ -1,10 +1,13 @@
 package com.clanboards.users.service;
 
+import com.clanboards.users.exception.ResourceNotFoundException;
 import com.clanboards.users.model.FriendRequest;
 import com.clanboards.users.model.FriendshipItem;
 import com.clanboards.users.repository.FriendRequestRepository;
 import com.clanboards.users.repository.UserRepository;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -15,6 +18,7 @@ public class FriendService {
     private final FriendRequestRepository repo;
     private final UserRepository userRepo;
     private final DynamoDbTable<FriendshipItem> table;
+    private static final Logger logger = LoggerFactory.getLogger(FriendService.class);
 
     public FriendService(FriendRequestRepository repo, UserRepository userRepo, DynamoDbEnhancedClient client) {
         this.repo = repo;
@@ -23,8 +27,13 @@ public class FriendService {
     }
 
     public Long sendRequest(String fromSub, String toTag) {
-        Long fromUserId = userRepo.findBySub(fromSub).orElseThrow().getId();
-        Long toUserId = userRepo.findByPlayerTag(toTag).orElseThrow().getId();
+        logger.info("Requesting friend from {} to {}", fromSub, toTag);
+        Long fromUserId = userRepo.findBySub(fromSub)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + fromSub))
+                .getId();
+        Long toUserId = userRepo.findByPlayerTag(toTag)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + toTag))
+                .getId();
         FriendRequest req = new FriendRequest();
         req.setFromUserId(fromUserId);
         req.setToUserId(toUserId);
@@ -33,7 +42,9 @@ public class FriendService {
     }
 
     public boolean respond(Long requestId, boolean accept) {
-        FriendRequest req = repo.findById(requestId).orElseThrow();
+        logger.info("Responding to request {} accept={}", requestId, accept);
+        FriendRequest req = repo.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Request not found: " + requestId));
         if (accept) {
             FriendshipItem a = new FriendshipItem();
             a.setPK("FRIEND#" + req.getFromUserId());
@@ -52,7 +63,10 @@ public class FriendService {
     }
 
     public List<FriendRequest> listRequests(String toSub) {
-        Long userId = userRepo.findBySub(toSub).orElseThrow().getId();
+        logger.info("Listing requests for {}", toSub);
+        Long userId = userRepo.findBySub(toSub)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + toSub))
+                .getId();
         return repo.findByToUserIdAndStatus(userId, "PENDING");
     }
 }
