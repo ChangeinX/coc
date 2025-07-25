@@ -48,4 +48,15 @@ class ChatServiceTest {
         assertEquals(ChatRepository.globalShardKey("user1"), msg.channel());
         Mockito.verify(repo).saveMessage(Mockito.any(ChatMessage.class));
     }
+
+    @Test
+    void createDirectChatCreatesChat() {
+        ChatRepository repo = Mockito.mock(ChatRepository.class);
+        ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+        ChatService service = new ChatService(repo, events);
+
+        String id = service.createDirectChat("a", "b");
+        assertEquals(ChatRepository.directChatId("a", "b"), id);
+        Mockito.verify(repo).createChatIfAbsent(id);
+    }
 }

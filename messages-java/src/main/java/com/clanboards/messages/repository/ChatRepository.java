@@ -37,6 +37,13 @@ public class ChatRepository {
         return "global#shard-" + Math.floorMod(userId.hashCode(), SHARD_COUNT);
     }
 
+    public static String directChatId(String a, String b) {
+        if (a.compareTo(b) < 0) {
+            return "direct#" + a + "#" + b;
+        }
+        return "direct#" + b + "#" + a;
+    }
+
     static String pk(String chatId) {
         return "CHAT#" + chatId;
     }

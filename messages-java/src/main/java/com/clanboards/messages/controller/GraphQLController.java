@@ -37,6 +37,16 @@ public class GraphQLController {
                 .toList();
     }
 
+    @MutationMapping
+    public Chat createDirectChat(@Argument String recipientId, @ContextValue("userId") String userId) {
+        if (userId == null || userId.isBlank()) {
+            throw new RuntimeException("Unauthenticated");
+        }
+        log.info("GraphQL createDirectChat {} -> {}", userId, recipientId);
+        String id = chatService.createDirectChat(userId, recipientId);
+        return new Chat(id, ChatKind.DIRECT, null, List.of(userId, recipientId), Instant.now(), null);
+    }
+
     @QueryMapping
     public List<Message> getMessages(@Argument String chatId, @Argument Instant after, @Argument Integer limit) {
         int lim = limit != null ? limit : 50;
