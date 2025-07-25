@@ -98,8 +98,8 @@ jobs:
       shell: bash
       run: |
         gradle -p messages-java wrapper
-        ./messages-java/gradlew -p messages-java test
         gradle -p user_service wrapper
+        ./messages-java/gradlew -p messages-java test
         ./user_service/gradlew -p user_service test
 
     - name: Perform CodeQL Analysis
