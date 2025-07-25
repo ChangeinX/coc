@@ -2,7 +2,6 @@ package com.clanboards.users.service;
 
 import com.clanboards.users.exception.ResourceNotFoundException;
 import com.clanboards.users.model.FriendRequest;
-import com.clanboards.users.model.FriendshipItem;
 import com.clanboards.users.model.User;
 import com.clanboards.users.repository.FriendRequestRepository;
 import com.clanboards.users.repository.UserRepository;
@@ -10,21 +9,16 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 @Service
 public class FriendService {
     private final FriendRequestRepository repo;
     private final UserRepository userRepo;
-    private final DynamoDbTable<FriendshipItem> table;
     private static final Logger logger = LoggerFactory.getLogger(FriendService.class);
 
-    public FriendService(FriendRequestRepository repo, UserRepository userRepo, DynamoDbEnhancedClient client) {
+    public FriendService(FriendRequestRepository repo, UserRepository userRepo) {
         this.repo = repo;
         this.userRepo = userRepo;
-        this.table = client.table("chat-friends", TableSchema.fromBean(FriendshipItem.class));
     }
 
     public String getPlayerTag(Long userId) {
@@ -53,14 +47,6 @@ public class FriendService {
         FriendRequest req = repo.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Request not found: " + requestId));
         if (accept) {
-            FriendshipItem a = new FriendshipItem();
-            a.setPK("FRIEND#" + req.getFromUserId());
-            a.setSK("USER#" + req.getToUserId());
-            FriendshipItem b = new FriendshipItem();
-            b.setPK("FRIEND#" + req.getToUserId());
-            b.setSK("USER#" + req.getFromUserId());
-            table.putItem(a);
-            table.putItem(b);
             req.setStatus("ACCEPTED");
         } else {
             req.setStatus("REJECTED");
