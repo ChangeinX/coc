@@ -41,7 +41,9 @@ jobs:
 
       - name: Detect changes
         id: changes
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@v46
+        env:
+          GH_TOKEN: ${{ github.token }}
         with:
           files_yaml: |
             app:
