@@ -35,6 +35,11 @@ describe('ChatPanel component', () => {
     expect(screen.queryByPlaceholderText('Type a message…')).not.toBeInTheDocument();
   });
 
+  it('uses initialTab when provided', () => {
+    render(<ChatPanel initialTab="Friends" />);
+    expect(screen.queryByPlaceholderText('Type a message…')).not.toBeInTheDocument();
+  });
+
   it('shows join message when no clan', () => {
     render(<ChatPanel />);
     const clanTab = screen.getByText('Clan');
