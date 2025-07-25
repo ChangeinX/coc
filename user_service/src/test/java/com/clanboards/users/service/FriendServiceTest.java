@@ -4,6 +4,7 @@ import com.clanboards.users.model.FriendRequest;
 import com.clanboards.users.repository.FriendRequestRepository;
 import com.clanboards.users.repository.UserRepository;
 import com.clanboards.users.model.User;
+import com.clanboards.users.exception.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -36,6 +37,22 @@ class FriendServiceTest {
         ArgumentCaptor<FriendRequest> captor = ArgumentCaptor.forClass(FriendRequest.class);
         Mockito.verify(repo).save(captor.capture());
         assertEquals("PENDING", captor.getValue().getStatus());
+    }
+
+    @Test
+    void sendRequestToSelfThrows() {
+        FriendRequestRepository repo = Mockito.mock(FriendRequestRepository.class);
+        UserRepository userRepo = Mockito.mock(UserRepository.class);
+
+        User user = new User();
+        user.setId(1L);
+        user.setSub("a");
+        user.setPlayerTag("AA");
+        Mockito.when(userRepo.findBySub("a")).thenReturn(Optional.of(user));
+        Mockito.when(userRepo.findByPlayerTag("AA")).thenReturn(Optional.of(user));
+
+        FriendService svc = new FriendService(repo, userRepo);
+        assertThrows(InvalidRequestException.class, () -> svc.sendRequest("a", "AA"));
     }
 
     @Test

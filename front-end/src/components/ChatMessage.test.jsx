@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 vi.mock('../hooks/useCachedIcon.js', () => ({
@@ -20,5 +20,19 @@ describe('ChatMessage', () => {
     expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.getByAltText('league')).toHaveAttribute('src', sample.icon);
     expect(screen.queryByText('#A1B2C')).not.toBeInTheDocument();
+  });
+
+  it('dispatches add friend event on context menu', () => {
+    const handler = vi.fn();
+    window.addEventListener('open-friend-add', handler);
+    render(
+      <ChatMessage
+        message={{ content: 'yo', senderId: '123' }}
+        info={{ ...sample, tag: '#TAG' }}
+      />,
+    );
+    fireEvent.contextMenu(screen.getByText('yo'));
+    expect(handler).toHaveBeenCalledTimes(1);
+    window.removeEventListener('open-friend-add', handler);
   });
 });

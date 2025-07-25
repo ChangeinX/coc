@@ -1,6 +1,7 @@
 package com.clanboards.users.service;
 
 import com.clanboards.users.exception.ResourceNotFoundException;
+import com.clanboards.users.exception.InvalidRequestException;
 import com.clanboards.users.model.FriendRequest;
 import com.clanboards.users.model.User;
 import com.clanboards.users.repository.FriendRequestRepository;
@@ -35,6 +36,9 @@ public class FriendService {
         Long toUserId = userRepo.findByPlayerTag(toTag)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + toTag))
                 .getId();
+        if (fromUserId.equals(toUserId)) {
+            throw new InvalidRequestException("Cannot send friend request to yourself");
+        }
         FriendRequest req = new FriendRequest();
         req.setFromUserId(fromUserId);
         req.setToUserId(toUserId);
