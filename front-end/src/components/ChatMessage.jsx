@@ -19,6 +19,7 @@ export default function ChatMessage({ message, info, isSelf }) {
   return (
     <div
       className={`flex ${isSelf ? 'justify-end' : 'justify-start'} select-none`}
+      onClick={() => triggerAddFriend()}
       onContextMenu={(e) => {
         e.preventDefault();
         triggerAddFriend();
