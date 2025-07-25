@@ -19,6 +19,7 @@ export default function ChatMessage({ message, info, isSelf }) {
           <div className="mt-1 text-xs text-slate-500">
             <PlayerMini
               player={{ name: info.name, tag: senderTag, leagueIcon: info.icon }}
+              showTag={false}
             />
           </div>
         )}

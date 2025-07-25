@@ -289,7 +289,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                                 alt={`TH${m.townHallLevel}`}
                                                                 className="w-5 h-5"
                                                             />
-                                                            <PlayerMini player={m} />
+                                                            <PlayerMini player={m} showTag={false} />
                                                         </span>
                                                     </td>
                                                     <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
@@ -357,7 +357,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                                         alt={`TH${m.townHallLevel}`}
                                                                         className="w-5 h-5"
                                                                     />
-                                                                    <PlayerMini player={m} />
+                                                                    <PlayerMini player={m} showTag={false} />
                                                                 </span>
                                                                 <span className="text-xs text-slate-500">
                                                                     {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
