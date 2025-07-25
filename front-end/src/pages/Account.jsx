@@ -4,10 +4,7 @@ import { fetchJSON } from '../lib/api.js';
 import Loading from '../components/Loading.jsx';
 import VerifiedBadge from '../components/VerifiedBadge.jsx';
 import ChatBadge from '../components/ChatBadge.jsx';
-import PlayerMini from '../components/PlayerMini.jsx';
-import RiskPrioritySelect, { PRESETS } from '../components/RiskPrioritySelect.jsx';
-import { graphqlRequest } from '../lib/gql.js';
-import { getSub } from '../lib/auth.js';
+import RiskPrioritySelect from '../components/RiskPrioritySelect.jsx';
 
 export default function Account({ onVerified }) {
   const [profile, setProfile] = useState(null);
@@ -15,20 +12,12 @@ export default function Account({ onVerified }) {
   const [token, setToken] = useState('');
   const [chatEnabled, setChatEnabled] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [friends, setFriends] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [newFriendTag, setNewFriendTag] = useState('');
-  const [selfId, setSelfId] = useState(null);
-  const [selfSub, setSelfSub] = useState('');
 
 
 
   useEffect(() => {
     const load = async () => {
       try {
-        const me = await fetchJSON('/user/me');
-        setSelfId(me.id);
-        setSelfSub(me.sub);
         const data = await fetchJSON('/user/profile');
         setProfile(data);
         const features = await fetchJSON('/user/features');
@@ -40,39 +29,6 @@ export default function Account({ onVerified }) {
     load();
   }, []);
 
-  useEffect(() => {
-    if (!chatEnabled || !selfSub) return;
-    let ignore = false;
-    const load = async () => {
-      try {
-        const data = await fetchJSON(`/friends/list?sub=${selfSub}`);
-        if (!ignore) setFriends(data);
-      } catch {
-        if (!ignore) setFriends([]);
-      }
-    };
-    load();
-    return () => {
-      ignore = true;
-    };
-  }, [chatEnabled, selfSub]);
-
-  useEffect(() => {
-    if (!chatEnabled || !selfSub) return;
-    let ignore = false;
-    const load = async () => {
-      try {
-        const data = await fetchJSON(`/friends/requests?sub=${selfSub}`);
-        if (!ignore) setRequests(data);
-      } catch {
-        if (!ignore) setRequests([]);
-      }
-    };
-    load();
-    return () => {
-      ignore = true;
-    };
-  }, [chatEnabled, selfSub]);
 
   const handleChange = (key, value) => {
     setProfile((p) => ({ ...p, [key]: value }));
@@ -147,91 +103,6 @@ export default function Account({ onVerified }) {
           <span className="text-sm">Enable Chat</span>
         </label>
       </div>
-      {chatEnabled && (
-        <div className="space-y-2">
-          <h4 className="text-lg font-medium">Friends</h4>
-          <div className="space-y-1">
-            {friends.map((f) => (
-              <div key={f.userId} className="text-sm text-slate-700">
-                <PlayerMini tag={f.playerTag} />
-              </div>
-            ))}
-            {friends.length === 0 && (
-              <div className="text-sm text-slate-500">No friends yet</div>
-            )}
-          </div>
-          {requests.length > 0 && (
-            <div className="space-y-1">
-              <h5 className="text-sm font-medium mt-2">Requests</h5>
-              {requests.map((r) => (
-                <div key={r.id} className="flex items-center gap-2 text-sm">
-                  <span className="flex-1">
-                    <PlayerMini tag={r.playerTag} />
-                  </span>
-                  <button
-                    className="px-2 py-0.5 rounded bg-green-600 text-white"
-                    onClick={async () => {
-                      await fetchJSON('/friends/respond', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ requestId: r.id, accept: true }),
-                      });
-                      setRequests((reqs) => reqs.filter((x) => x.id !== r.id));
-                    }}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    className="px-2 py-0.5 rounded bg-red-600 text-white"
-                    onClick={async () => {
-                      await fetchJSON('/friends/respond', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ requestId: r.id, accept: false }),
-                      });
-                      setRequests((reqs) => reqs.filter((x) => x.id !== r.id));
-                    }}
-                  >
-                    Reject
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="flex gap-2">
-            <input
-              className="flex-1 border rounded px-2 py-1"
-              placeholder="Player Tag"
-              value={newFriendTag}
-              onChange={(e) => setNewFriendTag(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={async () => {
-                if (!newFriendTag.trim() || !selfSub) return;
-                try {
-                  await fetchJSON('/friends/request', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      fromSub: selfSub,
-                      toTag: newFriendTag.trim(),
-                    }),
-                  });
-                  setNewFriendTag('');
-                  alert('Request sent');
-                } catch (err) {
-                  console.error('Failed to send friend request', err);
-                  alert('Failed to send request');
-                }
-              }}
-              className="px-3 py-1 rounded bg-blue-600 text-white"
-            >
-              Add Friend
-            </button>
-          </div>
-        </div>
-      )}
       {!profile.verified && (
         <>
           <label className="block">
