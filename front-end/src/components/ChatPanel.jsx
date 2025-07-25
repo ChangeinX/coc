@@ -8,6 +8,7 @@ import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
 import FriendsPanel from './FriendsPanel.jsx';
 import AddFriendDialog from './AddFriendDialog.jsx';
+import DirectChatDrawer from './DirectChatDrawer.jsx';
 
 export default function ChatPanel({
   chatId = null,
@@ -27,8 +28,18 @@ export default function ChatPanel({
   const [infoMap, setInfoMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [directChatId, setDirectChatId] = useState(null);
   const endRef = useRef(null);
   const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      setDirectChatId(e.detail);
+      setTab('Friends');
+    };
+    window.addEventListener('open-direct-chat', handler);
+    return () => window.removeEventListener('open-direct-chat', handler);
+  }, []);
 
   async function handleScroll(e) {
     const el = e.target;
@@ -212,6 +223,12 @@ useEffect(() => {
         )}
         </>
       )}
+      <DirectChatDrawer
+        chatId={directChatId}
+        userId={userId}
+        open={!!directChatId}
+        onClose={() => setDirectChatId(null)}
+      />
       <AddFriendDialog />
     </div>
   );
