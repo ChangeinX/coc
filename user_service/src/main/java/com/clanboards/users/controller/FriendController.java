@@ -4,6 +4,7 @@ import com.clanboards.users.service.FriendService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,6 +28,15 @@ public class FriendController {
         return ResponseEntity.ok(Map.of("ok", result));
     }
 
+    @GetMapping("/requests")
+    public ResponseEntity<List<PendingPayload>> list(@RequestParam String sub) {
+        var list = service.listRequests(sub).stream()
+                .map(r -> new PendingPayload(r.getId(), r.getFromUserId()))
+                .toList();
+        return ResponseEntity.ok(list);
+    }
+
     public record RequestPayload(String fromSub, String toTag) {}
     public record RespondPayload(Long requestId, boolean accept) {}
+    public record PendingPayload(Long id, Long fromUserId) {}
 }
