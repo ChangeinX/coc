@@ -46,4 +46,18 @@ class GraphQLControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.getMessages[0].content").value("hi"));
     }
+
+    @Test
+    void createDirectChatWorks() throws Exception {
+        Mockito.when(chatService.createDirectChat("u", "v")).thenReturn("direct#u#v");
+
+        String query = "mutation($id:ID!){ createDirectChat(recipientId:$id){ id } }";
+        mvc.perform(post("/api/v1/chat/graphql")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token("u"))
+                .content("{\"query\":\""+query+"\",\"variables\":{\"id\":\"v\"}}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.createDirectChat.id").value("direct#u#v"));
+        Mockito.verify(chatService).createDirectChat("u", "v");
+    }
 }
