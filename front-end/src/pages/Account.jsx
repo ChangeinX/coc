@@ -4,6 +4,7 @@ import { fetchJSON } from '../lib/api.js';
 import Loading from '../components/Loading.jsx';
 import VerifiedBadge from '../components/VerifiedBadge.jsx';
 import ChatBadge from '../components/ChatBadge.jsx';
+import PlayerMini from '../components/PlayerMini.jsx';
 import RiskPrioritySelect, { PRESETS } from '../components/RiskPrioritySelect.jsx';
 import { graphqlRequest } from '../lib/gql.js';
 import { getSub } from '../lib/auth.js';
@@ -162,7 +163,9 @@ export default function Account({ onVerified }) {
               <h5 className="text-sm font-medium mt-2">Requests</h5>
               {requests.map((r) => (
                 <div key={r.id} className="flex items-center gap-2 text-sm">
-                  <span className="flex-1">{r.fromUserId}</span>
+                  <span className="flex-1">
+                    <PlayerMini tag={r.playerTag} />
+                  </span>
                   <button
                     className="px-2 py-0.5 rounded bg-green-600 text-white"
                     onClick={async () => {
