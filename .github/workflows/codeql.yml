@@ -97,6 +97,8 @@ jobs:
     - if: matrix.build-mode == 'manual' && matrix.language == 'java-kotlin'
       shell: bash
       run: |
+        gradle -p messages-java wrapper
+        gradle -p user_service wrapper
         ./messages-java/gradlew -p messages-java test
         ./user_service/gradlew -p user_service test
 
