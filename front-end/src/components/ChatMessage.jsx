@@ -27,6 +27,8 @@ export default function ChatMessage({ message, info, isSelf }) {
         timer.current = setTimeout(triggerAddFriend, 600);
       }}
       onTouchEnd={() => clearTimeout(timer.current)}
+      onTouchMove={() => clearTimeout(timer.current)}
+      onTouchCancel={() => clearTimeout(timer.current)}
     >
       <div
         className={`max-w-[80%] rounded px-2 py-1 ${isSelf ? 'bg-blue-100' : 'bg-slate-100'}`}

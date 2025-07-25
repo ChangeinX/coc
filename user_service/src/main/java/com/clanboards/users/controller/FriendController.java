@@ -52,7 +52,15 @@ public class FriendController {
         return ResponseEntity.ok(list);
     }
 
+    @PostMapping("/remove")
+    public ResponseEntity<Map<String, Boolean>> remove(@RequestBody RemovePayload payload) {
+        logger.info("POST /remove from {} to {}", payload.fromSub(), payload.toTag());
+        boolean ok = service.removeFriend(payload.fromSub(), payload.toTag());
+        return ResponseEntity.ok(Map.of("ok", ok));
+    }
+
     public record RequestPayload(String fromSub, String toTag) {}
     public record RespondPayload(Long requestId, boolean accept) {}
     public record PendingPayload(Long id, Long fromUserId, String playerTag) {}
+    public record RemovePayload(String fromSub, String toTag) {}
 }
