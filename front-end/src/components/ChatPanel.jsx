@@ -6,13 +6,14 @@ import useChat from '../hooks/useChat.js';
 import useMultiChat, { globalShardFor } from '../hooks/useMultiChat.js';
 import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
+import FriendsPanel from './FriendsPanel.jsx';
 
 export default function ChatPanel({ chatId = null, userId = '', globalIds = [], friendIds = [] }) {
-  const [tab, setTab] = useState(chatId ? 'Clan' : 'All');
+  const [tab, setTab] = useState(chatId ? 'Clan' : 'Global');
   const clanChat = chatId ? useChat(chatId) : { messages: [], loadMore: () => {}, hasMore: false, appendMessage: () => {} };
   const globalChat = useMultiChat(globalIds);
   const friendChat = useMultiChat(friendIds);
-  const current = tab === 'Clan' ? clanChat : tab === 'All' ? globalChat : friendChat;
+  const current = tab === 'Clan' ? clanChat : tab === 'Global' ? globalChat : friendChat;
   const { messages, loadMore, hasMore, appendMessage } = current;
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -99,7 +100,7 @@ useEffect(() => {
     if (tab === 'Clan' && !chatId) return;
     setSending(true);
     let targetId = chatId;
-    if (tab === 'All') {
+    if (tab === 'Global') {
       targetId = globalShardFor(userId);
     }
     const localMsg = {
@@ -126,7 +127,7 @@ useEffect(() => {
   return (
     <div className="flex flex-col h-full">
       <div className="flex border-b sticky top-0 bg-white z-10">
-        {['Clan', 'Friends', 'All'].map((t) => (
+        {['Clan', 'Friends', 'Global'].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -136,7 +137,10 @@ useEffect(() => {
           </button>
         ))}
       </div>
-      <>
+      {tab === 'Friends' ? (
+        <FriendsPanel />
+      ) : (
+        <>
         <div
           ref={containerRef}
           onScroll={handleScroll}
@@ -195,7 +199,8 @@ useEffect(() => {
             </button>
           </form>
         )}
-      </>
+        </>
+      )}
     </div>
   );
 }

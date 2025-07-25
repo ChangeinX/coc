@@ -11,7 +11,10 @@ vi.mock('../hooks/useMultiChat.js', () => ({
   default: () => ({ messages: [], loadMore: loadMoreMock, hasMore: true, appendMessage: vi.fn() }),
   globalShardFor: () => 'global#shard-0',
 }));
-vi.mock('../lib/api.js', () => ({ fetchJSON: vi.fn(), fetchJSONCached: vi.fn() }));
+vi.mock('../lib/api.js', () => ({
+  fetchJSON: vi.fn(() => Promise.resolve({})),
+  fetchJSONCached: vi.fn(),
+}));
 
 import ChatPanel from './ChatPanel.jsx';
 
