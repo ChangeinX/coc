@@ -16,23 +16,30 @@ export default function ChatMessage({ message, info, isSelf }) {
     }
   }
 
+  function handlePointerDown(e) {
+    if (e.pointerType === 'touch') {
+      timer.current = setTimeout(triggerAddFriend, 600);
+    } else if (e.pointerType === 'mouse' && e.button === 2) {
+      e.preventDefault();
+      triggerAddFriend();
+    }
+  }
+
+  function clearTimer() {
+    clearTimeout(timer.current);
+  }
+
   return (
     <div
+      style={{ touchAction: 'pan-y' }}
       className={`flex ${isSelf ? 'justify-end' : 'justify-start'} select-none`}
-      onClick={() => triggerAddFriend()}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        triggerAddFriend();
-      }}
-      onTouchStart={() => {
-        timer.current = setTimeout(triggerAddFriend, 600);
-      }}
-      onTouchEnd={() => clearTimeout(timer.current)}
-      onTouchMove={() => clearTimeout(timer.current)}
-      onTouchCancel={() => clearTimeout(timer.current)}
+      onPointerDown={handlePointerDown}
+      onPointerUp={clearTimer}
+      onPointerCancel={clearTimer}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div
-        className={`max-w-[80%] rounded px-2 py-1 ${isSelf ? 'bg-blue-100' : 'bg-slate-100'}`}
+        className={`max-w-[80%] rounded px-2 py-1 select-none ${isSelf ? 'bg-blue-100' : 'bg-slate-100'}`}
       >
         {content}
         {info && (
