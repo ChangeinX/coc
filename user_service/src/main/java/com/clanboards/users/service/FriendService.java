@@ -3,6 +3,7 @@ package com.clanboards.users.service;
 import com.clanboards.users.exception.ResourceNotFoundException;
 import com.clanboards.users.model.FriendRequest;
 import com.clanboards.users.model.FriendshipItem;
+import com.clanboards.users.model.User;
 import com.clanboards.users.repository.FriendRequestRepository;
 import com.clanboards.users.repository.UserRepository;
 import java.util.List;
@@ -24,6 +25,12 @@ public class FriendService {
         this.repo = repo;
         this.userRepo = userRepo;
         this.table = client.table("chat-friends", TableSchema.fromBean(FriendshipItem.class));
+    }
+
+    public String getPlayerTag(Long userId) {
+        return userRepo.findById(userId)
+                .map(User::getPlayerTag)
+                .orElse(null);
     }
 
     public Long sendRequest(String fromSub, String toTag) {
