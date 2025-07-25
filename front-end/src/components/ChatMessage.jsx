@@ -17,9 +17,10 @@ export default function ChatMessage({ message, info, isSelf }) {
   }
 
   function handlePointerDown(e) {
-    if (e.pointerType === 'touch') {
+    if (e.pointerType !== 'mouse') {
+      e.preventDefault();
       timer.current = setTimeout(triggerAddFriend, 600);
-    } else if (e.pointerType === 'mouse' && e.button === 2) {
+    } else if (e.button === 2) {
       e.preventDefault();
       triggerAddFriend();
     }
@@ -31,12 +32,15 @@ export default function ChatMessage({ message, info, isSelf }) {
 
   return (
     <div
-      style={{ touchAction: 'pan-y' }}
+      style={{ touchAction: 'none' }}
       className={`flex ${isSelf ? 'justify-end' : 'justify-start'} select-none`}
       onPointerDown={handlePointerDown}
       onPointerUp={clearTimer}
       onPointerCancel={clearTimer}
-      onContextMenu={(e) => e.preventDefault()}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        triggerAddFriend();
+      }}
     >
       <div
         className={`max-w-[80%] rounded px-2 py-1 select-none ${isSelf ? 'bg-blue-100' : 'bg-slate-100'}`}

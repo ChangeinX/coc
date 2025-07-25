@@ -31,10 +31,7 @@ describe('ChatMessage', () => {
         info={{ ...sample, tag: '#TAG' }}
       />,
     );
-    fireEvent.pointerDown(screen.getByText('yo'), {
-      pointerType: 'mouse',
-      button: 2,
-    });
+    fireEvent.contextMenu(screen.getByText('yo'));
     expect(handler).toHaveBeenCalledTimes(1);
     window.removeEventListener('open-friend-add', handler);
   });
