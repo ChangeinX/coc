@@ -11,7 +11,12 @@ const sample = { name: 'Alice', icon: 'http://ex/icon.png' };
 
 describe('ChatMessage', () => {
   it('displays player name and icon', () => {
-    render(<ChatMessage message={{ content: 'hi' }} info={sample} />);
+    render(
+      <ChatMessage
+        message={{ content: 'hi', senderId: '#AAA' }}
+        info={sample}
+      />
+    );
     expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.getByAltText('league')).toHaveAttribute('src', sample.icon);
   });

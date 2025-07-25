@@ -13,5 +13,6 @@ describe('MemberList', () => {
     render(<MemberList members={members} height={400} onSelect={spy} />);
     screen.getByText('Bob').click();
     expect(spy).toHaveBeenCalledWith('#B');
+    expect(screen.getByText('#B')).toBeInTheDocument();
   });
 });
