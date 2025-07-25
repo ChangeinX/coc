@@ -18,7 +18,7 @@ export default function ProfileCard({ member, onClick, refreshing = false }) {
         </div>
       )}
       <div className="flex gap-1 items-center mb-1">
-        <PlayerMini player={member} />
+        <PlayerMini player={member} showTag={false} />
         <img
           src={getTownHallIcon(member.townHallLevel)}
           alt={`TH${member.townHallLevel}`}

@@ -23,7 +23,7 @@ function Row({ index, style, data }) {
             className="w-5 h-5"
           />
           <span className="font-medium">
-            <PlayerMini player={m} />
+            <PlayerMini player={m} showTag={false} />
           </span>
         </div>
         <span className="text-xs text-slate-500">

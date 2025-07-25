@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from '../lib/api.js';
 import CachedImage from './CachedImage.jsx';
 
-export default function PlayerMini({ tag, player: preload }) {
+export default function PlayerMini({ tag, player: preload, showTag = true }) {
   const [player, setPlayer] = useState(preload || null);
 
   useEffect(() => {
@@ -28,8 +28,8 @@ export default function PlayerMini({ tag, player: preload }) {
   }, [tag, preload]);
 
   const displayTag = preload?.tag || tag;
-  if (!displayTag) return null;
-  if (!player) return <span>{displayTag}</span>;
+  if (!tag && !preload) return null;
+  if (!player) return showTag && displayTag ? <span>{displayTag}</span> : null;
 
   return (
     <span className="flex items-center gap-1">
@@ -37,7 +37,9 @@ export default function PlayerMini({ tag, player: preload }) {
         <CachedImage src={player.leagueIcon} alt="league" className="w-4 h-4" />
       )}
       <span>{player.name}</span>
-      <span className="text-xs text-slate-500">{player.tag}</span>
+      {showTag && player.tag && (
+        <span className="text-xs text-slate-500">{player.tag}</span>
+      )}
     </span>
   );
 }
