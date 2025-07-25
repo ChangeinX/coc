@@ -79,7 +79,11 @@ useEffect(() => {
       missing.forEach((id, idx) => {
         const data = fetched[idx];
         if (data) {
-          updated[id] = { name: data.name, icon: data.leagueIcon };
+          updated[id] = {
+            name: data.name,
+            icon: data.leagueIcon,
+            tag: data.tag,
+          };
         }
       });
       setInfoMap(updated);

@@ -7,7 +7,7 @@ export default function ChatMessage({ message, info, isSelf }) {
     ? message.senderId
     : message.userId?.startsWith('#')
     ? message.userId
-    : null;
+    : info?.tag || null;
   const timer = useRef(null);
 
   function triggerAddFriend() {
@@ -18,12 +18,13 @@ export default function ChatMessage({ message, info, isSelf }) {
 
   return (
     <div
-      className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}
+      className={`flex ${isSelf ? 'justify-end' : 'justify-start'} select-none`}
       onContextMenu={(e) => {
         e.preventDefault();
         triggerAddFriend();
       }}
-      onTouchStart={() => {
+      onTouchStart={(e) => {
+        e.preventDefault();
         timer.current = setTimeout(triggerAddFriend, 600);
       }}
       onTouchEnd={() => clearTimeout(timer.current)}
