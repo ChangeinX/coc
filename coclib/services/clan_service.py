@@ -47,11 +47,12 @@ async def get_clan(tag: str) -> dict:
     db.session.execute(stmt)
 
     # Close memberships for players no longer in the clan
-    current_tags = {normalize_tag(m["tag"]) for m in data.get("memberList", [])}
-    active_rows = LoyaltyMembership.query.filter_by(clan_tag=norm_tag, left_at=None).all()
-    for row in active_rows:
-        if row.player_tag not in current_tags:
-            ensure_membership(row.player_tag, None, datetime.utcnow())
+    if data_valid and "memberList" in data:
+        current_tags = {normalize_tag(m["tag"]) for m in data["memberList"]}
+        active_rows = LoyaltyMembership.query.filter_by(clan_tag=norm_tag, left_at=None).all()
+        for row in active_rows:
+            if row.player_tag not in current_tags:
+                ensure_membership(row.player_tag, None, datetime.utcnow())
 
     # Persist minimal snapshot (async context outside of event loop)
     last = (
@@ -60,7 +61,9 @@ async def get_clan(tag: str) -> dict:
         .first()
     )
     if data_valid and (not last or last.data != data):
+        next_id = (db.session.execute(db.select(db.func.max(ClanSnapshot.id))).scalar() or 0) + 1
         snap = ClanSnapshot(
+            id=next_id,
             ts=datetime.utcnow(),
             clan_tag=norm_tag,
             name=data["name"],
