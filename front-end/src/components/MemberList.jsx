@@ -4,7 +4,7 @@ import RiskRing from './RiskRing.jsx';
 import DonationRing from './DonationRing.jsx';
 import { timeAgo } from '../lib/time.js';
 import { getTownHallIcon } from '../lib/townhall.js';
-import CachedImage from './CachedImage.jsx';
+import PlayerMini from './PlayerMini.jsx';
 
 function Row({ index, style, data }) {
   const { members, onSelect, refreshing } = data;
@@ -17,15 +17,14 @@ function Row({ index, style, data }) {
     >
       <div className="flex flex-col">
         <div className="flex items-center gap-2">
-          {m.leagueIcon && (
-            <CachedImage src={m.leagueIcon} alt="league" className="w-5 h-5" />
-          )}
           <img
             src={getTownHallIcon(m.townHallLevel)}
             alt={`TH${m.townHallLevel}`}
             className="w-5 h-5"
           />
-          <span className="font-medium">{m.name}</span>
+          <span className="font-medium">
+            <PlayerMini player={m} />
+          </span>
         </div>
         <span className="text-xs text-slate-500">
           {m.last_seen ? timeAgo(m.last_seen) : '\u2014'}
