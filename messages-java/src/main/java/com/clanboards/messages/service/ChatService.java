@@ -22,6 +22,12 @@ public class ChatService {
         this.events = events;
     }
 
+    public String createDirectChat(String fromUserId, String toUserId) {
+        String id = ChatRepository.directChatId(fromUserId, toUserId);
+        repository.createChatIfAbsent(id);
+        return id;
+    }
+
     public ChatMessage publish(String chatId, String text, String userId) {
         log.info("Publishing message to chat {} by {}", chatId, userId);
         try {
