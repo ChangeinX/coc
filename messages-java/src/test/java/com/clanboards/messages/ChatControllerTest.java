@@ -65,4 +65,16 @@ class ChatControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"));
     }
+
+    @Test
+    void publishHandlesBadRequest() throws Exception {
+        Mockito.when(chatService.publish("1", "hi", "u"))
+                .thenThrow(new IllegalArgumentException("bad"));
+
+        mvc.perform(post("/api/v1/chat/publish")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"chatId\":\"1\",\"text\":\"hi\",\"userId\":\"u\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("bad"));
+    }
 }
