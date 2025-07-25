@@ -45,6 +45,13 @@ public class FriendController {
         return ResponseEntity.ok(list);
     }
 
+    @GetMapping("/list")
+    public ResponseEntity<List<FriendService.FriendDto>> friends(@RequestParam String sub) {
+        logger.info("GET /list sub={}", sub);
+        var list = service.listFriends(sub);
+        return ResponseEntity.ok(list);
+    }
+
     public record RequestPayload(String fromSub, String toTag) {}
     public record RespondPayload(Long requestId, boolean accept) {}
     public record PendingPayload(Long id, Long fromUserId, String playerTag) {}

@@ -41,12 +41,12 @@ export default function Account({ onVerified }) {
   }, []);
 
   useEffect(() => {
-    if (!chatEnabled) return;
+    if (!chatEnabled || !selfSub) return;
     let ignore = false;
     const load = async () => {
       try {
-        const data = await graphqlRequest('query { listFriends { userId since } }');
-        if (!ignore) setFriends(data.listFriends);
+        const data = await fetchJSON(`/friends/list?sub=${selfSub}`);
+        if (!ignore) setFriends(data);
       } catch {
         if (!ignore) setFriends([]);
       }
@@ -55,7 +55,7 @@ export default function Account({ onVerified }) {
     return () => {
       ignore = true;
     };
-  }, [chatEnabled]);
+  }, [chatEnabled, selfSub]);
 
   useEffect(() => {
     if (!chatEnabled || !selfSub) return;
