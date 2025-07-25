@@ -18,7 +18,21 @@ export default function ChatPanel({ chatId = null, userId = '', globalIds = [], 
   const [sending, setSending] = useState(false);
   const [infoMap, setInfoMap] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const endRef = useRef(null);
+  const containerRef = useRef(null);
+
+  async function handleScroll(e) {
+    const el = e.target;
+    if (el.scrollTop < 100 && hasMore && !loadingMore) {
+      setLoadingMore(true);
+      try {
+        await loadMore();
+      } finally {
+        setLoadingMore(false);
+      }
+    }
+  }
 
 useEffect(() => {
   if (endRef.current && typeof endRef.current.scrollIntoView === 'function') {
@@ -123,20 +137,22 @@ useEffect(() => {
         ))}
       </div>
       <>
-        <div className="flex-1 overflow-y-auto min-h-0 space-y-2 p-4 pt-4">
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          data-testid="message-scroll"
+          className="flex-1 overflow-y-auto min-h-0 space-y-2 p-4 pt-4"
+        >
           {tab === 'Clan' && !chatId ? (
             <div className="py-20 text-center text-slate-500 text-sm">
               Please join a clan to chat…
             </div>
           ) : (
             <>
-              {hasMore && !loading && (
-                <button
-                  onClick={loadMore}
-                  className="block mx-auto mb-2 text-sm text-blue-600 underline"
-                >
-                  Load earlier messages
-                </button>
+              {loadingMore && (
+                <div className="text-center text-sm text-slate-500">
+                  Loading more…
+                </div>
               )}
               {loading ? (
                 <div className="py-20">
