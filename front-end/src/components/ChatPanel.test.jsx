@@ -2,16 +2,22 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+const loadMoreMock = vi.fn();
+
 vi.mock('../hooks/useChat.js', () => ({
-  default: () => ({ messages: [], loadMore: vi.fn(), hasMore: false, appendMessage: vi.fn() }),
+  default: () => ({ messages: [], loadMore: loadMoreMock, hasMore: true, appendMessage: vi.fn() }),
 }));
 vi.mock('../hooks/useMultiChat.js', () => ({
-  default: () => ({ messages: [], loadMore: vi.fn(), hasMore: false, appendMessage: vi.fn() }),
+  default: () => ({ messages: [], loadMore: loadMoreMock, hasMore: true, appendMessage: vi.fn() }),
   globalShardFor: () => 'global#shard-0',
 }));
 vi.mock('../lib/api.js', () => ({ fetchJSON: vi.fn(), fetchJSONCached: vi.fn() }));
 
 import ChatPanel from './ChatPanel.jsx';
+
+beforeEach(() => {
+  loadMoreMock.mockClear();
+});
 
 describe('ChatPanel component', () => {
   it('renders input field', () => {
@@ -32,5 +38,12 @@ describe('ChatPanel component', () => {
     fireEvent.click(clanTab);
     expect(screen.getByText('Please join a clan to chat…')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Type a message…')).not.toBeInTheDocument();
+  });
+
+  it('loads more when scrolled near top', () => {
+    render(<ChatPanel />);
+    const container = screen.getByTestId('message-scroll');
+    fireEvent.scroll(container, { target: { scrollTop: 50 } });
+    expect(loadMoreMock).toHaveBeenCalled();
   });
 });
