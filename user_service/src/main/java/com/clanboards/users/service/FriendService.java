@@ -72,10 +72,10 @@ public class FriendService {
         return records.stream()
                 .map(r -> {
                     Long other = r.getFromUserId().equals(userId) ? r.getToUserId() : r.getFromUserId();
-                    return new FriendDto(other, r.getCreatedAt());
+                    return new FriendDto(other, getPlayerTag(other), r.getCreatedAt());
                 })
                 .toList();
     }
 
-    public record FriendDto(Long userId, java.time.Instant since) {}
+    public record FriendDto(Long userId, String playerTag, java.time.Instant since) {}
 }
