@@ -34,7 +34,12 @@ export default function PlayerMini({ tag, player: preload, showTag = true }) {
   return (
     <span className="flex items-center gap-1">
       {player.leagueIcon && (
-        <CachedImage src={player.leagueIcon} alt="league" className="w-4 h-4" />
+        <CachedImage
+          key={player.tag}
+          src={player.leagueIcon}
+          alt="league"
+          className="w-4 h-4"
+        />
       )}
       <span>{player.name}</span>
       {showTag && player.tag && (
