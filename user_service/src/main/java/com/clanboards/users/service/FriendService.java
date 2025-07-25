@@ -77,5 +77,23 @@ public class FriendService {
                 .toList();
     }
 
+    public boolean removeFriend(String fromSub, String toTag) {
+        logger.info("Removing friend from {} to {}", fromSub, toTag);
+        Long fromUserId = userRepo.findBySub(fromSub)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + fromSub))
+                .getId();
+        Long toUserId = userRepo.findByPlayerTag(toTag)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + toTag))
+                .getId();
+        List<FriendRequest> records = repo.findFriends(fromUserId, "ACCEPTED");
+        for (FriendRequest r : records) {
+            if (r.getFromUserId().equals(toUserId) || r.getToUserId().equals(toUserId)) {
+                repo.delete(r);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public record FriendDto(Long userId, String playerTag, java.time.Instant since) {}
 }
