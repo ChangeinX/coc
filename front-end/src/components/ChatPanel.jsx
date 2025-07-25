@@ -7,6 +7,7 @@ import useMultiChat, { globalShardFor } from '../hooks/useMultiChat.js';
 import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
 import FriendsPanel from './FriendsPanel.jsx';
+import AddFriendDialog from './AddFriendDialog.jsx';
 
 export default function ChatPanel({
   chatId = null,
@@ -211,6 +212,7 @@ useEffect(() => {
         )}
         </>
       )}
+      <AddFriendDialog />
     </div>
   );
 }
