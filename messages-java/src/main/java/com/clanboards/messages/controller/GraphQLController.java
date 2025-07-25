@@ -6,6 +6,8 @@ import com.clanboards.messages.graphql.Message;
 import com.clanboards.messages.model.ChatMessage;
 import com.clanboards.messages.repository.ChatRepository;
 import com.clanboards.messages.service.ChatService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.ContextValue;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
@@ -21,6 +23,7 @@ import java.util.stream.IntStream;
 @Controller
 public class GraphQLController {
     private final ChatService chatService;
+    private static final Logger log = LoggerFactory.getLogger(GraphQLController.class);
 
     public GraphQLController(ChatService chatService) {
         this.chatService = chatService;
@@ -28,6 +31,7 @@ public class GraphQLController {
 
     @QueryMapping
     public List<Chat> listChats() {
+        log.debug("Listing global chat shards");
         return IntStream.range(0, ChatRepository.SHARD_COUNT)
                 .mapToObj(i -> new Chat("global#shard-" + i, ChatKind.GLOBAL, null, Collections.emptyList(), Instant.EPOCH, null))
                 .toList();
@@ -36,6 +40,7 @@ public class GraphQLController {
     @QueryMapping
     public List<Message> getMessages(@Argument String chatId, @Argument Instant after, @Argument Integer limit) {
         int lim = limit != null ? limit : 50;
+        log.debug("GraphQL getMessages {} limit {}", chatId, lim);
         List<ChatMessage> msgs = chatService.history(chatId, lim, after);
         return msgs.stream()
                 .map(m -> new Message(UUID.randomUUID().toString(), m.channel(), m.ts(), m.userId(), m.content()))
@@ -47,6 +52,7 @@ public class GraphQLController {
         if (userId == null || userId.isBlank()) {
             throw new RuntimeException("Unauthenticated");
         }
+        log.info("GraphQL sendMessage to {} by {}", chatId, userId);
         ChatMessage saved;
         if (chatId.startsWith("global#")) {
             saved = chatService.publishGlobal(content, userId);
