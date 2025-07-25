@@ -2,15 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from '../lib/api.js';
 import CachedImage from './CachedImage.jsx';
 
-export default function PlayerMini({ tag }) {
-  const [player, setPlayer] = useState(null);
+export default function PlayerMini({ tag, player: preload, showTag = true }) {
+  const [player, setPlayer] = useState(preload || null);
 
   useEffect(() => {
+    if (preload) {
+      setPlayer(preload);
+      return;
+    }
     let ignore = false;
     async function load() {
-      if (!tag) return;
+      const t = tag || preload?.tag;
+      if (!t) return;
       try {
-        const data = await fetchJSONCached(`/player/${encodeURIComponent(tag)}`);
+        const data = await fetchJSONCached(`/player/${encodeURIComponent(t)}`);
         if (!ignore) setPlayer(data);
       } catch {
         if (!ignore) setPlayer(null);
@@ -20,10 +25,11 @@ export default function PlayerMini({ tag }) {
     return () => {
       ignore = true;
     };
-  }, [tag]);
+  }, [tag, preload]);
 
-  if (!tag) return null;
-  if (!player) return <span>#{tag}</span>;
+  const displayTag = preload?.tag || tag;
+  if (!tag && !preload) return null;
+  if (!player) return showTag && displayTag ? <span>{displayTag}</span> : null;
 
   return (
     <span className="flex items-center gap-1">
@@ -31,7 +37,9 @@ export default function PlayerMini({ tag }) {
         <CachedImage src={player.leagueIcon} alt="league" className="w-4 h-4" />
       )}
       <span>{player.name}</span>
-      <span className="text-xs text-slate-500">#{player.tag}</span>
+      {showTag && player.tag && (
+        <span className="text-xs text-slate-500">{player.tag}</span>
+      )}
     </span>
   );
 }
