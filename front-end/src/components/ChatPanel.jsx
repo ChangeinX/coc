@@ -8,8 +8,14 @@ import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
 import FriendsPanel from './FriendsPanel.jsx';
 
-export default function ChatPanel({ chatId = null, userId = '', globalIds = [], friendIds = [] }) {
-  const [tab, setTab] = useState(chatId ? 'Clan' : 'Global');
+export default function ChatPanel({
+  chatId = null,
+  userId = '',
+  globalIds = [],
+  friendIds = [],
+  initialTab = null,
+}) {
+  const [tab, setTab] = useState(initialTab || (chatId ? 'Clan' : 'Global'));
   const clanChat = chatId ? useChat(chatId) : { messages: [], loadMore: () => {}, hasMore: false, appendMessage: () => {} };
   const globalChat = useMultiChat(globalIds);
   const friendChat = useMultiChat(friendIds);

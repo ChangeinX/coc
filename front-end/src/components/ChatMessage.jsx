@@ -24,8 +24,7 @@ export default function ChatMessage({ message, info, isSelf }) {
         e.preventDefault();
         triggerAddFriend();
       }}
-      onTouchStart={(e) => {
-        e.preventDefault();
+      onTouchStart={() => {
         timer.current = setTimeout(triggerAddFriend, 600);
       }}
       onTouchEnd={() => clearTimeout(timer.current)}
