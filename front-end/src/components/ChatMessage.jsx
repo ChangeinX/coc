@@ -2,59 +2,50 @@ import React, { useRef } from 'react';
 import PlayerMini from './PlayerMini.jsx';
 
 export default function ChatMessage({ message, info, isSelf }) {
-  // Resolve a usable sender tag from the available fields
-  const tag =
-    message?.senderId ??
-    message?.userId   ??
-    info?.tag         ??
-    null;
+  const { content } = message;
+  const senderTag = message.senderId?.startsWith('#')
+    ? message.senderId
+    : message.userId?.startsWith('#')
+    ? message.userId
+    : info?.tag || null;
+  const timer = useRef(null);
 
-  // Refs to manage long‑press timing and ensure the menu opens only once
-  const timerRef = useRef(null);
-  const firedRef = useRef(false);
-
-  const showMenu = () => {
-    if (tag && !firedRef.current) {
-      firedRef.current = true;
-      window.dispatchEvent(
-        new CustomEvent('open-friend-add', { detail: tag })
-      );
+  function triggerAddFriend() {
+    if (senderTag) {
+      window.dispatchEvent(new CustomEvent('open-friend-add', { detail: senderTag }));
     }
-  };
+  }
 
-  const handlePointerDown = (e) => {
-    if (e.pointerType !== 'mouse') {
+  function handlePointerDown(e) {
+    if (e.pointerType === 'touch') {
+      timer.current = setTimeout(triggerAddFriend, 600);
+    } else if (e.pointerType === 'mouse' && e.button === 2) {
       e.preventDefault();
-      timerRef.current = setTimeout(showMenu, 600);
+      triggerAddFriend();
     }
-  };
+  }
 
-  const clear = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    firedRef.current = false;
-  };
-
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-    showMenu();
-  };
+  function clearTimer() {
+    clearTimeout(timer.current);
+  }
 
   return (
     <div
-      style={{ touchAction: 'none' }}
-      onPointerDown={handlePointerDown}
-      onPointerUp={clear}
-      onContextMenu={handleContextMenu}
+      style={{ touchAction: 'pan-y' }}
       className={`flex ${isSelf ? 'justify-end' : 'justify-start'} select-none`}
+      onPointerDown={handlePointerDown}
+      onPointerUp={clearTimer}
+      onPointerCancel={clearTimer}
+      onContextMenu={(e) => e.preventDefault()}
     >
-      {/* Message bubble */}
-      <div className="max-w-xs rounded-2xl bg-gray-200 dark:bg-gray-700 p-2">
-        {message?.content}
-
+      <div
+        className={`max-w-[80%] rounded px-2 py-1 select-none ${isSelf ? 'bg-blue-100' : 'bg-slate-100'}`}
+      >
+        {content}
         {info && (
           <div className="mt-1 text-xs text-slate-500">
             <PlayerMini
-              player={{ name: info.name, tag, leagueIcon: info.icon }}
+              player={{ name: info.name, tag: senderTag, leagueIcon: info.icon }}
               showTag={false}
             />
           </div>
