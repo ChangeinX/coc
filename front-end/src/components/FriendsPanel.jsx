@@ -2,12 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import BottomSheet from './BottomSheet.jsx';
 import PlayerMini from './PlayerMini.jsx';
 import { fetchJSON } from '../lib/api.js';
+import { graphqlRequest } from '../lib/gql.js';
 
 export default function FriendsPanel() {
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState([]);
   const [sub, setSub] = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [mode, setMode] = useState('add'); // 'add' or 'remove'
+  const [selected, setSelected] = useState(null);
   const [showReqs, setShowReqs] = useState(false);
   const [newTag, setNewTag] = useState('');
   const inputRef = useRef(null);
@@ -48,12 +51,18 @@ export default function FriendsPanel() {
 
   useEffect(() => {
     const handler = (e) => {
-      setNewTag(e.detail || '');
+      const tag = e.detail || '';
+      setNewTag(tag);
+      if (tag && friends.some((f) => f.playerTag === tag)) {
+        setMode('remove');
+      } else {
+        setMode('add');
+      }
       setShowAdd(true);
     };
     window.addEventListener('open-friend-add', handler);
     return () => window.removeEventListener('open-friend-add', handler);
-  }, []);
+  }, [friends]);
 
   const sendRequest = async () => {
     const trimmed = newTag.trim();
@@ -90,6 +99,36 @@ export default function FriendsPanel() {
     }
   };
 
+  const removeFriend = async (tag) => {
+    if (!sub || !tag) return;
+    try {
+      await fetchJSON('/friends/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromSub: sub, toTag: tag }),
+      });
+      setFriends((f) => f.filter((x) => x.playerTag !== tag));
+    } catch {
+      alert('Failed to remove friend');
+    }
+    setShowAdd(false);
+    setSelected(null);
+  };
+
+  const startChat = async (friend) => {
+    if (!friend?.userId) return;
+    try {
+      await graphqlRequest(
+        `mutation($id: ID!){ createDirectChat(recipientId:$id){ id } }`,
+        { id: friend.userId },
+      );
+    } catch {
+      /* ignore */
+    }
+    window.location.hash = '#/chat';
+    setSelected(null);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-2 border-b">
@@ -106,14 +145,24 @@ export default function FriendsPanel() {
         </h4>
         <button
           className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"
-          onClick={() => setShowAdd(true)}
+          onClick={() => {
+            setMode('add');
+            setNewTag('');
+            setShowAdd(true);
+          }}
         >
           +
         </button>
       </div>
       <div className="p-4 space-y-2 overflow-y-auto flex-1">
         {friends.map((f) => (
-          <div key={f.userId || f.playerTag} className="flex items-center gap-2">
+          <div
+            key={f.userId || f.playerTag}
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => {
+              setSelected(f);
+            }}
+          >
             <PlayerMini tag={f.playerTag} />
             {requests.some((r) => r.playerTag === f.playerTag) && (
               <span className="text-xs text-slate-500">\u23F3 Pending</span>
@@ -127,19 +176,57 @@ export default function FriendsPanel() {
 
       <BottomSheet open={showAdd} onClose={() => setShowAdd(false)}>
         <div className="p-4 space-y-2">
-          <input
-            ref={inputRef}
-            className="w-full border rounded px-3 py-2"
-            placeholder="Player Tag"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-          />
-          <button
-            className="w-full px-4 py-2 rounded bg-blue-600 text-white"
-            onClick={sendRequest}
-          >
-            Send
-          </button>
+          {mode === 'add' ? (
+            <>
+              <input
+                ref={inputRef}
+                className="w-full border rounded px-3 py-2"
+                placeholder="Player Tag"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+              />
+              <button
+                className="w-full px-4 py-2 rounded bg-blue-600 text-white"
+                onClick={sendRequest}
+              >
+                Send
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="text-center text-sm">Remove {newTag}?</div>
+              <button
+                className="w-full px-4 py-2 rounded bg-red-600 text-white"
+                onClick={() => removeFriend(newTag)}
+              >
+                Remove
+              </button>
+            </>
+          )}
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={!!selected} onClose={() => setSelected(null)}>
+        <div className="p-4 space-y-2">
+          {selected && (
+            <>
+              <div className="text-center text-sm">
+                {selected.playerTag}
+              </div>
+              <button
+                className="w-full px-4 py-2 rounded bg-blue-600 text-white"
+                onClick={() => startChat(selected)}
+              >
+                Chat
+              </button>
+              <button
+                className="w-full px-4 py-2 rounded bg-red-600 text-white"
+                onClick={() => removeFriend(selected.playerTag)}
+              >
+                Remove
+              </button>
+            </>
+          )}
         </div>
       </BottomSheet>
 
