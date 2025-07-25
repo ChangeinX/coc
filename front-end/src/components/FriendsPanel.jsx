@@ -70,15 +70,17 @@ export default function FriendsPanel() {
 
   const startChat = async (friend) => {
     if (!friend?.userId) return;
+    let chatId = null;
     try {
-      await graphqlRequest(
+      const resp = await graphqlRequest(
         `mutation($id: ID!){ createDirectChat(recipientId:$id){ id } }`,
         { id: friend.userId },
       );
+      chatId = resp.createDirectChat?.id || null;
     } catch {
       /* ignore */
     }
-    window.location.hash = '#/chat?tab=friends';
+    window.dispatchEvent(new CustomEvent('open-direct-chat', { detail: chatId }));
     setSelected(null);
   };
 
