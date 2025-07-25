@@ -62,4 +62,20 @@ public class FriendService {
                 .getId();
         return repo.findByToUserIdAndStatus(userId, "PENDING");
     }
+
+    public List<FriendDto> listFriends(String sub) {
+        logger.info("Listing friends for {}", sub);
+        Long userId = userRepo.findBySub(sub)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + sub))
+                .getId();
+        List<FriendRequest> records = repo.findFriends(userId, "ACCEPTED");
+        return records.stream()
+                .map(r -> {
+                    Long other = r.getFromUserId().equals(userId) ? r.getToUserId() : r.getFromUserId();
+                    return new FriendDto(other, r.getCreatedAt());
+                })
+                .toList();
+    }
+
+    public record FriendDto(Long userId, java.time.Instant since) {}
 }
