@@ -1,9 +1,27 @@
 import React, { useRef, useState } from 'react';
 import PlayerAvatar from './PlayerAvatar.jsx';
 import PlayerMini from './PlayerMini.jsx';
-import { shortTimeAgo } from '../lib/time.js';
 
-export default function FriendThread({ friend, pending, onSelect, onRemove }) {
+function formatTs(ts) {
+  if (!ts) return '';
+  try {
+    return new Date(ts).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return '';
+  }
+}
+
+export default function FriendThread({
+  friend,
+  pending,
+  onSelect,
+  onRemove,
+  preview,
+  ts,
+}) {
   const longPress = useRef(false);
   const timer = useRef(null);
   const startX = useRef(0);
@@ -51,13 +69,11 @@ export default function FriendThread({ friend, pending, onSelect, onRemove }) {
       </div>
       <div className="meta">
         <div className="name">
-          <PlayerMini tag={friend.playerTag} showTag={false} />
+          <PlayerMini tag={friend.playerTag} showTag={false} showLeague={false} />
         </div>
-        <div className="preview">Tap to chat…</div>
+        <div className="preview">{preview || 'Tap to chat…'}</div>
       </div>
-      <time className="time">
-        {friend.lastSeen ? shortTimeAgo(friend.lastSeen) : ''}
-      </time>
+      <time className="time" dateTime={ts || ''}>{formatTs(ts)}</time>
       <div className="thread-actions">
         <button
           className="text-sm focus:outline-none"

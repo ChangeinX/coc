@@ -116,10 +116,10 @@ body {
 /* Generic spacing and color tokens */
 :root {
     --spacing-unit: 0.75rem;
-    --label-primary: #334155;
+    --label-primary: #1e293b;
     --surface: #ffffff;
-    --surface-dark: #1f2937;
-    --highlight-bg: rgba(0,0,0,0.05);
+    --surface-dark: #0f172a;
+    --highlight-bg: rgba(59,130,246,0.1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -127,7 +127,7 @@ body {
         --label-primary: #e2e8f0;
         --surface: #1f2937;
         --surface-dark: #111827;
-        --highlight-bg: rgba(255,255,255,0.1);
+        --highlight-bg: rgba(59,130,246,0.2);
     }
 }
 
@@ -139,6 +139,11 @@ body {
     align-items: center;
     position: relative;
     background-color: var(--surface);
+    width: 100%;
+    border-bottom: 1px solid #e5e7eb;
+}
+.thread:last-child {
+    border-bottom: none;
 }
 
 .thread .avatar {
@@ -159,12 +164,14 @@ body {
 
 .thread .meta .preview {
     font-size: 0.875rem;
-    color: #64748b;
+    color: #475569;
 }
 
 .thread .time {
     color: #94a3b8;
     font-size: 0.75rem;
+    margin-left: auto;
+    align-self: flex-start;
 }
 
 .thread:active {
