@@ -20,7 +20,7 @@ async def _fetch_player(tag: str) -> dict:
     return (await client.get_player(tag))._raw_data
 
 
-async def verify_token(tag: str, token: str) -> dict:
+async def verify_token(tag: str, token: str) -> bool:
     """Verify a player's API token via the Clash of Clans API."""
     client = await get_client()
     return await client.verify_player_token(player_tag=tag, token=token)

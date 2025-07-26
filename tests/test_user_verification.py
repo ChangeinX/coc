@@ -23,7 +23,7 @@ def _mock_verify(monkeypatch):
 
 
 async def dummy_verify(tag: str, token: str):
-    return {"tag": f"#{tag}", "token": token, "status": "ok"}
+    return True
 
 
 def test_verify_sets_flag(monkeypatch):
