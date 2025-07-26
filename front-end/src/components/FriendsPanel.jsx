@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import BottomSheet from './BottomSheet.jsx';
 import PlayerMini from './PlayerMini.jsx';
 import Loading from './Loading.jsx';
@@ -11,6 +11,8 @@ export default function FriendsPanel({ onSelectChat }) {
   const [sub, setSub] = useState('');
   const [selected, setSelected] = useState(null);
   const [showReqs, setShowReqs] = useState(false);
+  const longPress = useRef(false);
+  const timer = useRef(null);
 
   useEffect(() => {
     fetchJSON('/user/me')
@@ -113,20 +115,53 @@ export default function FriendsPanel({ onSelectChat }) {
         </button>
       </div>
       <div className="p-4 space-y-2 overflow-y-auto flex-1">
-        {friends && friends.map((f) => (
-          <div
-            key={f.userId || f.playerTag}
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => {
-              setSelected(f);
-            }}
-          >
-            <PlayerMini tag={f.playerTag} />
-            {requests && requests.some((r) => r.playerTag === f.playerTag) && (
-              <span className="text-xs text-slate-500">\u23F3 Pending</span>
-            )}
-          </div>
-        ))}
+        {friends &&
+          friends.map((f) => {
+            function handlePointerDown(e) {
+              if (e.pointerType !== 'mouse') {
+                longPress.current = false;
+                timer.current = setTimeout(() => {
+                  longPress.current = true;
+                  setSelected(f);
+                }, 600);
+              } else if (e.button === 2) {
+                e.preventDefault();
+                longPress.current = true;
+                setSelected(f);
+              }
+            }
+
+            function handlePointerUp() {
+              clearTimeout(timer.current);
+              if (!longPress.current) {
+                startChat(f);
+              }
+            }
+
+            function handleCancel() {
+              clearTimeout(timer.current);
+            }
+
+            return (
+              <div
+                key={f.userId || f.playerTag}
+                className="flex items-center gap-2 cursor-pointer select-none"
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handleCancel}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setSelected(f);
+                }}
+              >
+                <PlayerMini tag={f.playerTag} showTag={false} />
+                {requests &&
+                  requests.some((r) => r.playerTag === f.playerTag) && (
+                    <span className="text-xs text-slate-500">\u23F3 Pending</span>
+                  )}
+              </div>
+            );
+          })}
         {friends === null ? (
           <Loading size={24} />
         ) : friends.length === 0 ? (
@@ -138,20 +173,13 @@ export default function FriendsPanel({ onSelectChat }) {
         <div className="p-4 space-y-2">
           {selected && (
             <>
-              <div className="text-center text-sm">
-                {selected.playerTag}
-              </div>
-              <button
-                className="w-full px-4 py-2 rounded bg-blue-600 text-white"
-                onClick={() => startChat(selected)}
-              >
-                Chat
-              </button>
+              <div className="text-center text-sm">Remove friend?</div>
+              <PlayerMini tag={selected.playerTag} showTag={false} />
               <button
                 className="w-full px-4 py-2 rounded bg-red-600 text-white"
                 onClick={() => removeFriend(selected.playerTag)}
               >
-                Unfriend
+                Remove
               </button>
             </>
           )}
@@ -163,7 +191,7 @@ export default function FriendsPanel({ onSelectChat }) {
           {requests && requests.map((r) => (
             <div key={r.id} className="flex items-center gap-2 text-sm">
               <span className="flex-1">
-                <PlayerMini tag={r.playerTag} />
+                <PlayerMini tag={r.playerTag} showTag={false} />
               </span>
               <button
                 className="px-2 py-0.5 rounded bg-green-600 text-white"

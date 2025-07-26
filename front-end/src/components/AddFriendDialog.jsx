@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import BottomSheet from './BottomSheet.jsx';
+import PlayerMini from './PlayerMini.jsx';
 import { fetchJSON, fetchJSONWithError } from '../lib/api.js';
 
 export default function AddFriendDialog({ sub: propSub = null, friends: propFriends = null }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState('add');
   const [tag, setTag] = useState('');
+  const [prepopulated, setPrepopulated] = useState(false);
   const [sub, setSub] = useState(propSub);
   const [friends, setFriends] = useState(propFriends || []);
   const inputRef = useRef(null);
@@ -22,6 +24,7 @@ export default function AddFriendDialog({ sub: propSub = null, friends: propFrie
     const handler = async (e) => {
       const t = e.detail || '';
       setTag(t);
+      setPrepopulated(!!t);
       let curSub = propSub || sub;
       let curFriends = propFriends || friends;
       if (!propSub || !propFriends) {
@@ -61,6 +64,7 @@ export default function AddFriendDialog({ sub: propSub = null, friends: propFrie
     if (!trimmed || !sub) return;
     setOpen(false);
     setTag('');
+    setPrepopulated(false);
     try {
       await fetchJSONWithError('/friends/request', {
         method: 'POST',
@@ -84,27 +88,42 @@ export default function AddFriendDialog({ sub: propSub = null, friends: propFrie
       alert('Failed to remove friend');
     }
     setOpen(false);
+    setPrepopulated(false);
   };
 
   return (
-    <BottomSheet open={open} onClose={() => setOpen(false)}>
+    <BottomSheet open={open} onClose={() => { setOpen(false); setPrepopulated(false); }}>
       <div className="p-4 space-y-2">
         {mode === 'add' ? (
-          <>
-            <input
-              ref={inputRef}
-              className="w-full border rounded px-3 py-2"
-              placeholder="Player Tag"
-              value={tag}
-              onChange={(e) => setTag(e.target.value)}
-            />
-            <button
-              className="w-full px-4 py-2 rounded bg-blue-600 text-white"
-              onClick={sendRequest}
-            >
-              Send
-            </button>
-          </>
+          prepopulated && tag ? (
+            <>
+              <div className="text-center">
+                <PlayerMini tag={tag} showTag={false} />
+              </div>
+              <button
+                className="w-full px-4 py-2 rounded bg-blue-600 text-white"
+                onClick={sendRequest}
+              >
+                Add Friend
+              </button>
+            </>
+          ) : (
+            <>
+              <input
+                ref={inputRef}
+                className="w-full border rounded px-3 py-2"
+                placeholder="Player Tag"
+                value={tag}
+                onChange={(e) => setTag(e.target.value)}
+              />
+              <button
+                className="w-full px-4 py-2 rounded bg-blue-600 text-white"
+                onClick={sendRequest}
+              >
+                Send
+              </button>
+            </>
+          )
         ) : (
           <>
             <div className="text-center text-sm">Unfriend {tag}?</div>
