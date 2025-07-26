@@ -53,7 +53,7 @@ public class ChatRepository {
     }
 
     public void saveGlobalMessage(ChatMessage msg) {
-        String uuid = UUID.randomUUID().toString();
+        String uuid = msg.id() != null ? msg.id() : UUID.randomUUID().toString();
         WriteBatch.Builder<MessageItem> batch = WriteBatch.builder(MessageItem.class)
                 .mappedTableResource(table);
         for (int i = 0; i < SHARD_COUNT; i++) {
@@ -70,6 +70,7 @@ public class ChatRepository {
         MessageItem item = new MessageItem();
         item.setPK(pk(chatId));
         item.setSK(sk(msg.ts(), uuid));
+        item.setId(uuid);
         item.setChatId(chatId);
         item.setSenderId(msg.userId());
         item.setContent(msg.content());
@@ -79,7 +80,8 @@ public class ChatRepository {
     }
 
     private void saveMessageInternal(String chatId, ChatMessage msg) {
-        MessageItem item = toItem(chatId, msg, UUID.randomUUID().toString());
+        String uuid = msg.id() != null ? msg.id() : UUID.randomUUID().toString();
+        MessageItem item = toItem(chatId, msg, uuid);
         table.putItem(item);
     }
 
@@ -127,7 +129,16 @@ public class ChatRepository {
                 if (it.getTs() == null || !it.getSK().startsWith("MSG#")) {
                     continue;
                 }
+                String id = it.getId();
+                if (id == null) {
+                    String sk = it.getSK();
+                    int idx = sk != null ? sk.lastIndexOf('#') : -1;
+                    if (idx != -1) {
+                        id = sk.substring(idx + 1);
+                    }
+                }
                 result.add(new ChatMessage(
+                        id,
                         it.getChatId(),
                         it.getSenderId(),
                         it.getContent(),

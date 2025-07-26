@@ -30,7 +30,7 @@ class ChatServiceTest {
     void historyDelegatesToRepo() {
         ChatRepository repo = Mockito.mock(ChatRepository.class);
         ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
-        List<ChatMessage> expected = List.of(new ChatMessage("1", "u", "hi", Instant.now()));
+        List<ChatMessage> expected = List.of(new ChatMessage("m1", "1", "u", "hi", Instant.now()));
         Mockito.when(repo.listMessages("1", 2, null)).thenReturn(expected);
 
         ChatService service = new ChatService(repo, events);

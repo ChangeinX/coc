@@ -35,7 +35,7 @@ class GraphQLControllerTest {
     @Test
     void getMessagesWorks() throws Exception {
         Instant ts = Instant.parse("2024-01-01T00:00:00Z");
-        List<ChatMessage> msgs = List.of(new ChatMessage("1", "u", "hi", ts));
+        List<ChatMessage> msgs = List.of(new ChatMessage("m1", "1", "u", "hi", ts));
         Mockito.when(chatService.history("1", 2, null)).thenReturn(msgs);
 
         String query = "query($id:ID!,$limit:Int){ getMessages(chatId:$id,limit:$limit){ content } }";
