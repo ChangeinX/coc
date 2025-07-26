@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { LayoutList, LayoutGrid } from 'lucide-react';
 import { FixedSizeList as List } from 'react-window';
 import BottomSheet from './BottomSheet.jsx';
 import FriendThread from './FriendThread.jsx';
@@ -63,7 +64,8 @@ export default function FriendsPanel({ onSelectChat }) {
               `query($id: ID!, $limit: Int){ getMessages(chatId:$id, limit:$limit){ content ts } }`,
               { id: chat, limit: 1 },
             );
-            const m = data.getMessages?.[0];
+            const msgs = data.getMessages || [];
+            const m = msgs[msgs.length - 1];
             return [f.userId, m ? { content: m.content, ts: m.ts } : null];
           } catch {
             return [f.userId, null];
@@ -150,6 +152,17 @@ export default function FriendsPanel({ onSelectChat }) {
       <div className="flex items-center justify-between p-2 border-b">
         <h4 className="font-medium flex items-center gap-2">
           Friends
+          <button
+            aria-label={view === 'row' ? 'Switch to stacked view' : 'Switch to row view'}
+            className="text-blue-600"
+            onClick={() => {
+              const next = view === 'row' ? 'stack' : 'row';
+              setView(next);
+              localStorage.setItem('friends-view', next);
+            }}
+          >
+            {view === 'row' ? <LayoutList className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+          </button>
           {requests && requests.length > 0 && (
             <button
               onClick={() => setShowReqs(true)}
@@ -160,17 +173,6 @@ export default function FriendsPanel({ onSelectChat }) {
           )}
         </h4>
         <div className="flex items-center gap-2">
-          <button
-            aria-label={view === 'row' ? 'Switch to stacked view' : 'Switch to row view'}
-            className="text-sm text-blue-600"
-            onClick={() => {
-              const next = view === 'row' ? 'stack' : 'row';
-              setView(next);
-              localStorage.setItem('friends-view', next);
-            }}
-          >
-            {view === 'row' ? 'Stack' : 'Row'}
-          </button>
           <button
             className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"
             onClick={() => {
@@ -217,7 +219,7 @@ export default function FriendsPanel({ onSelectChat }) {
                 }}
               </List>
             ) : (
-              <ul className="friends-list p-4 space-y-2">
+              <ul className="friends-list py-2 space-y-2">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <SkeletonThread key={i} />
                 ))}
@@ -227,8 +229,8 @@ export default function FriendsPanel({ onSelectChat }) {
             <ul
               className={`friends-list ${
                 view === 'row'
-                  ? 'flex gap-4 p-4 overflow-x-auto scroller'
-                  : 'p-4 space-y-2 overflow-y-auto'
+                  ? 'flex gap-4 px-0 overflow-x-auto scroller'
+                  : 'py-2 space-y-2 overflow-y-auto'
               }`}
               data-testid="friends-container"
             >
