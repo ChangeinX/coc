@@ -167,3 +167,19 @@ class FriendRequest(db.Model):
     status = db.Column(db.String(20), nullable=False, default="PENDING")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+
+
+class PushSubscription(db.Model):
+    __tablename__ = "push_subscriptions"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=False)
+    endpoint = db.Column(db.Text, unique=True, nullable=False)
+    p256dh_key = db.Column(db.Text, nullable=False)
+    auth_key = db.Column(db.Text, nullable=False)
+    last_seen_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    user = db.relationship("User", backref=db.backref("push_subscriptions", lazy="dynamic"))
+
+    __table_args__ = (db.Index("ix_push_subscriptions_user_id", "user_id"),)
+
