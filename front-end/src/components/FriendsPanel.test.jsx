@@ -14,17 +14,21 @@ vi.mock('../lib/api.js', () => ({
     return Promise.resolve({});
   }),
 }));
-vi.mock('../lib/gql.js', () => ({ graphqlRequest: vi.fn() }));
+vi.mock('../lib/gql.js', () => ({
+  graphqlRequest: vi.fn(() =>
+    Promise.resolve({ getMessages: [{ content: 'hi', ts: '2025-07-26T00:00:00Z' }] }),
+  ),
+}));
 
 import FriendsPanel from './FriendsPanel.jsx';
 
 describe('FriendsPanel', () => {
-  it('toggles row view', async () => {
+  it('renders friend threads', async () => {
     render(<FriendsPanel onSelectChat={() => {}} />);
     await screen.findByText('Friends');
-    const toggle = screen.getByRole('button', { name: /row view/i });
-    fireEvent.click(toggle);
-    const container = screen.getByTestId('friends-container');
-    expect(container).toHaveClass('overflow-x-auto');
+    const item = await screen.findByRole('listitem');
+    expect(item).toHaveClass('thread');
+    await screen.findByText('hi');
+    expect(item).toHaveTextContent('hi');
   });
 });

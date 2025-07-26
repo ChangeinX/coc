@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { FixedSizeList as List } from 'react-window';
 import BottomSheet from './BottomSheet.jsx';
+import FriendThread from './FriendThread.jsx';
+import SkeletonThread from './SkeletonThread.jsx';
 import PlayerMini from './PlayerMini.jsx';
 import PlayerAvatar from './PlayerAvatar.jsx';
 import Loading from './Loading.jsx';
@@ -15,8 +18,9 @@ export default function FriendsPanel({ onSelectChat }) {
   const [view, setView] = useState(() =>
     localStorage.getItem('friends-view') || 'stack',
   );
-  const longPress = useRef(false);
-  const timer = useRef(null);
+  const listRef = useRef(null);
+  const [visible, setVisible] = useState(false);
+  const [previews, setPreviews] = useState({});
 
   useEffect(() => {
     fetchJSON('/user/me')
@@ -42,6 +46,37 @@ export default function FriendsPanel({ onSelectChat }) {
     };
     load();
   }, [sub]);
+
+  function directId(a, b) {
+    return a < b ? `direct#${a}#${b}` : `direct#${b}#${a}`;
+  }
+
+  useEffect(() => {
+    if (!friends || !sub) return;
+    let ignore = false;
+    async function loadPreviews() {
+      const entries = await Promise.all(
+        friends.map(async (f) => {
+          const chat = directId(sub, f.userId);
+          try {
+            const data = await graphqlRequest(
+              `query($id: ID!, $limit: Int){ getMessages(chatId:$id, limit:$limit){ content ts } }`,
+              { id: chat, limit: 1 },
+            );
+            const m = data.getMessages?.[0];
+            return [f.userId, m ? { content: m.content, ts: m.ts } : null];
+          } catch {
+            return [f.userId, null];
+          }
+        }),
+      );
+      if (!ignore) setPreviews(Object.fromEntries(entries));
+    }
+    loadPreviews();
+    return () => {
+      ignore = true;
+    };
+  }, [friends, sub]);
 
 
   const respond = async (req, accept) => {
@@ -95,6 +130,21 @@ export default function FriendsPanel({ onSelectChat }) {
     setSelected(null);
   };
 
+  useEffect(() => {
+    if (!friends || friends.length <= 50) {
+      setVisible(true);
+      return;
+    }
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setVisible(true);
+        obs.disconnect();
+      }
+    });
+    if (listRef.current) obs.observe(listRef.current);
+    return () => obs.disconnect();
+  }, [friends]);
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-2 border-b">
@@ -131,84 +181,71 @@ export default function FriendsPanel({ onSelectChat }) {
           </button>
         </div>
       </div>
-      <div
-        className={
-          view === 'row'
-            ? 'p-4 overflow-x-auto flex gap-4 scroller'
-            : 'p-4 space-y-2 overflow-y-auto flex-1'
-        }
-        data-testid="friends-container"
-      >
-        {friends &&
-          friends.map((f) => {
-            function handlePointerDown(e) {
-              if (e.pointerType !== 'mouse') {
-                longPress.current = false;
-                timer.current = setTimeout(() => {
-                  longPress.current = true;
-                  setSelected(f);
-                }, 600);
-              } else if (e.button === 2) {
-                e.preventDefault();
-                longPress.current = true;
-                setSelected(f);
-              }
-            }
-
-            function handlePointerUp() {
-              clearTimeout(timer.current);
-              if (!longPress.current) {
-                startChat(f);
-              }
-            }
-
-            function handleCancel() {
-              clearTimeout(timer.current);
-            }
-
-            return view === 'row' ? (
-              <div
-                key={f.userId || f.playerTag}
-                className="flex flex-col items-center cursor-pointer select-none"
-                onPointerDown={handlePointerDown}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handleCancel}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setSelected(f);
-                }}
+      <div className="friends-wrapper flex-1" ref={listRef}>
+        {friends === null && <div className="p-4"><Loading size={24} /></div>}
+        {friends && friends.length === 0 && (
+          <div className="p-4 text-sm text-slate-500">No friends yet</div>
+        )}
+        {friends && friends.length > 0 && (
+          friends.length > 50 ? (
+            visible ? (
+              <List
+                height={400}
+                itemCount={friends.length}
+                itemSize={72}
+                width="100%"
+                outerElementType="ul"
+                className="friends-list list-none p-0 m-0"
+                itemData={{ friends, previews }}
               >
-                <PlayerAvatar tag={f.playerTag} />
-                {requests &&
-                  requests.some((r) => r.playerTag === f.playerTag) && (
-                    <span className="text-[10px] text-slate-500">\u23F3 Pending</span>
-                  )}
-              </div>
+                {({ index, style, data }) => {
+                  const f = data.friends[index];
+                  const preview = data.previews[f.userId];
+                  const pending = requests?.some((r) => r.playerTag === f.playerTag);
+                  return (
+                    <div style={style}>
+                      <FriendThread
+                        friend={f}
+                        pending={pending}
+                        preview={preview?.content}
+                        ts={preview?.ts}
+                        onSelect={startChat}
+                        onRemove={() => removeFriend(f.playerTag)}
+                      />
+                    </div>
+                  );
+                }}
+              </List>
             ) : (
-              <div
-                key={f.userId || f.playerTag}
-                className="flex items-center gap-2 cursor-pointer select-none"
-                onPointerDown={handlePointerDown}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handleCancel}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setSelected(f);
-                }}
-              >
-                <PlayerMini tag={f.playerTag} showTag={false} />
-                {requests &&
-                  requests.some((r) => r.playerTag === f.playerTag) && (
-                    <span className="text-xs text-slate-500">\u23F3 Pending</span>
-                  )}
-              </div>
-            );
-          })}
-        {friends === null ? (
-          <Loading size={24} />
-        ) : friends.length === 0 ? (
-          <div className="text-sm text-slate-500">No friends yet</div>
-        ) : null}
+              <ul className="friends-list p-4 space-y-2">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <SkeletonThread key={i} />
+                ))}
+              </ul>
+            )
+          ) : (
+            <ul
+              className={`friends-list ${
+                view === 'row'
+                  ? 'flex gap-4 p-4 overflow-x-auto scroller'
+                  : 'p-4 space-y-2 overflow-y-auto'
+              }`}
+              data-testid="friends-container"
+            >
+              {friends.map((f) => (
+                <FriendThread
+                  key={f.userId || f.playerTag}
+                  friend={f}
+                  pending={requests?.some((r) => r.playerTag === f.playerTag)}
+                  preview={previews[f.userId]?.content}
+                  ts={previews[f.userId]?.ts}
+                  onSelect={startChat}
+                  onRemove={() => setSelected(f)}
+                />
+              ))}
+            </ul>
+          )
+        )}
       </div>
 
       <BottomSheet open={!!selected} onClose={() => setSelected(null)}>
