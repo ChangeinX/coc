@@ -19,12 +19,10 @@ vi.mock('../lib/gql.js', () => ({ graphqlRequest: vi.fn() }));
 import FriendsPanel from './FriendsPanel.jsx';
 
 describe('FriendsPanel', () => {
-  it('toggles row view', async () => {
+  it('renders friend threads', async () => {
     render(<FriendsPanel onSelectChat={() => {}} />);
     await screen.findByText('Friends');
-    const toggle = screen.getByRole('button', { name: /row view/i });
-    fireEvent.click(toggle);
-    const container = screen.getByTestId('friends-container');
-    expect(container).toHaveClass('overflow-x-auto');
+    const item = await screen.findByRole('listitem');
+    expect(item).toHaveClass('thread');
   });
 });
