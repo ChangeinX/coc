@@ -107,6 +107,7 @@ class FriendServiceTest {
 
         User friend = new User();
         friend.setId(2L);
+        friend.setSub("other");
         friend.setPlayerTag("#AAA");
         Mockito.when(userRepo.findById(2L)).thenReturn(Optional.of(friend));
 
@@ -120,7 +121,7 @@ class FriendServiceTest {
         FriendService svc = new FriendService(repo, userRepo);
         List<FriendService.FriendDto> list = svc.listFriends("abc");
         assertEquals(1, list.size());
-        assertEquals(2L, list.get(0).userId());
+        assertEquals("other", list.get(0).userId());
         assertEquals("#AAA", list.get(0).playerTag());
     }
 }

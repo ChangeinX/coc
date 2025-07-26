@@ -39,7 +39,7 @@ public class FriendController {
         var list = service.listRequests(sub).stream()
                 .map(r -> new PendingPayload(
                         r.getId(),
-                        r.getFromUserId(),
+                        service.getSub(r.getFromUserId()),
                         service.getPlayerTag(r.getFromUserId())))
                 .toList();
         return ResponseEntity.ok(list);
@@ -61,6 +61,6 @@ public class FriendController {
 
     public record RequestPayload(String fromSub, String toTag) {}
     public record RespondPayload(Long requestId, boolean accept) {}
-    public record PendingPayload(Long id, Long fromUserId, String playerTag) {}
+    public record PendingPayload(Long id, String fromUserId, String playerTag) {}
     public record RemovePayload(String fromSub, String toTag) {}
 }
