@@ -9,7 +9,7 @@ from . import API_PREFIX
 bp = Blueprint("user", __name__, url_prefix=f"{API_PREFIX}/user")
 
 
-async def _verify_player_token(tag: str, token: str) -> dict:
+async def _verify_player_token(tag: str, token: str) -> bool:
     return await verify_player_token(tag, token)
 
 
@@ -83,9 +83,9 @@ async def verify_player():
     if g.user.is_verified:
         abort(400)
     result = await _verify_player_token(g.user.player_tag, token)
-    if result.get("status") != "ok":
+    if not result:
         abort(400)
-    g.user.player_tag = normalize_tag(result.get("tag", g.user.player_tag))
+    g.user.player_tag = normalize_tag(g.user.player_tag)
     g.user.is_verified = True
     db.session.add(g.user)
     db.session.commit()
