@@ -22,17 +22,22 @@ public class VapidConfig {
 
     @Bean
     public PushService pushService() {
-        String secretArn = System.getenv("VAPID_KEYS");
+        String secretValue = System.getenv("VAPID_KEYS");
         ObjectMapper mapper = new ObjectMapper();
         try {
             String secretContent;
-            if (secretArn != null && !secretArn.isBlank()) {
-                logger.info("Loading VAPID keys from Secrets Manager using id {}", secretArn);
-                var client = SecretsManagerClient.builder().build();
-                var request = GetSecretValueRequest.builder()
-                        .secretId(secretArn)
-                        .build();
-                secretContent = client.getSecretValue(request).secretString();
+            if (secretValue != null && !secretValue.isBlank()) {
+                if (looksLikeKeys(secretValue)) {
+                    logger.info("Loading VAPID keys from environment variable");
+                    secretContent = secretValue;
+                } else {
+                    logger.info("Loading VAPID keys from Secrets Manager using id {}", secretValue);
+                    var client = SecretsManagerClient.builder().build();
+                    var request = GetSecretValueRequest.builder()
+                            .secretId(secretValue)
+                            .build();
+                    secretContent = client.getSecretValue(request).secretString();
+                }
             } else {
                 var file = new java.io.File("/secrets/vapid.json");
                 if (!file.exists()) {
@@ -45,12 +50,17 @@ public class VapidConfig {
             VapidKeys keys = parseSecret(secretContent, mapper);
             return new PushService(keys.publicKey, keys.privateKey, keys.subject);
         } catch (SecretsManagerException e) {
-            logger.error("Failed to retrieve secret {} from Secrets Manager: {}", secretArn, e.awsErrorDetails().errorMessage(), e);
+            logger.error("Failed to retrieve secret {} from Secrets Manager: {}", secretValue, e.awsErrorDetails().errorMessage(), e);
             throw e;
         } catch (IOException | java.security.GeneralSecurityException e) {
             logger.error("Failed to load VAPID keys", e);
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean looksLikeKeys(String value) {
+        String trimmed = value.trim();
+        return trimmed.startsWith("{") || trimmed.contains("publicKey") || trimmed.contains("privateKey");
     }
 
     private VapidKeys parseSecret(String secret, ObjectMapper mapper) throws IOException {
