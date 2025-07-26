@@ -135,7 +135,7 @@ body {
 .thread {
     display: flex;
     gap: 0.5rem;
-    padding: 0.5rem;
+    padding: 0.25rem 0.5rem;
     align-items: center;
     position: relative;
     width: 100%;
@@ -147,8 +147,8 @@ body {
 
 .thread .avatar {
     flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2rem;
+    height: 2rem;
 }
 
 .thread .meta {
