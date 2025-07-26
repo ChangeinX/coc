@@ -178,24 +178,6 @@ body {
     background-color: var(--highlight-bg);
 }
 
-.thread-actions {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 88px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #ef4444;
-    color: #fff;
-    transform: translateX(100%);
-    transition: transform 0.2s;
-}
-
-.thread.swiped .thread-actions {
-    transform: translateX(0);
-}
 
 .friends-wrapper {
     container-type: inline-size;
