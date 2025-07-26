@@ -9,3 +9,7 @@
 - [x] Metrics `notifications.sent` and `notifications.errors`
 - [x] OpenTelemetry tracing
 - [x] Containerize with /secrets/vapid.json volume
+- [x] VAPID public key exposed to front-end build
+- [x] Front-end subscribeForPush utility and banner UI
+- [x] Service worker handles push events and auto resubscribe
+- [x] Dev-only push debug page for QA

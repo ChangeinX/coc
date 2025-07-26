@@ -8,6 +8,7 @@ This folder contains a standalone React version of the dashboard. It can be buil
 npm install
 VITE_API_URL=http://localhost:8080 \
 VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
+VITE_VAPID_PUBLIC_KEY=your-public-key \
 npm run dev
 ```
 
@@ -41,6 +42,8 @@ checks the value from a `<meta name="build-commit">` tag. If the HTML commit
 doesn't match the running script the page reloads and cached assets are
 cleared. A fallback check reloads the page if the React root does not render
 within a few seconds to recover from blank screens.
+The service worker reads the `VITE_VAPID_PUBLIC_KEY` variable during build to
+support push notifications.
 
 The production build output will be in the `dist/` directory. When building the
 Docker image you can supply build arguments to set the backend URL and Google
@@ -50,6 +53,7 @@ client ID:
 docker build \
   --build-arg VITE_API_URL=https://api.example.com \
   --build-arg VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
+  --build-arg VITE_VAPID_PUBLIC_KEY=your-public-key \
   --build-arg VITE_BASE_PATH=/ \
   -t dashboard .
 ```
