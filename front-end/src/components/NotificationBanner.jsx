@@ -4,7 +4,7 @@ import { subscribeForPush } from '../lib/push.js';
 export default function NotificationBanner() {
   const [dismissed, setDismissed] = useState(() => localStorage.getItem('dismiss-push') === '1');
 
-  if (dismissed || Notification.permission === 'granted') {
+  if (dismissed || typeof Notification === 'undefined' || Notification.permission === 'granted') {
     return null;
   }
 
