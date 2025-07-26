@@ -19,23 +19,29 @@ public class VapidConfig {
     @Bean
     public PushService pushService() {
         String secretArn = System.getenv("VAPID_KEYS");
-        if (secretArn == null || secretArn.isEmpty()) {
-            throw new IllegalStateException("VAPID_KEYS env var is required");
-        }
-        var client = SecretsManagerClient.builder().build();
-        var request = GetSecretValueRequest.builder()
-                .secretId(secretArn)
-                .build();
         try {
-            var secret = client.getSecretValue(request).secretString();
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(secret);
+            JsonNode node;
+            if (secretArn != null && !secretArn.isEmpty()) {
+                var client = SecretsManagerClient.builder().build();
+                var request = GetSecretValueRequest.builder()
+                        .secretId(secretArn)
+                        .build();
+                var secret = client.getSecretValue(request).secretString();
+                node = mapper.readTree(secret);
+            } else {
+                var file = new java.io.File("/secrets/vapid.json");
+                if (!file.exists()) {
+                    throw new IllegalStateException("VAPID_KEYS env var or /secrets/vapid.json required");
+                }
+                node = mapper.readTree(file);
+            }
             return new PushService(
                 node.get("publicKey").asText(),
                 node.get("privateKey").asText(),
                 node.get("subject").asText());
         } catch (IOException | java.security.GeneralSecurityException e) {
-            logger.error("Failed to parse VAPID keys", e);
+            logger.error("Failed to load VAPID keys", e);
             throw new RuntimeException(e);
         }
     }
