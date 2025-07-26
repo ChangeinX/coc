@@ -64,9 +64,12 @@ export default function FriendsPanel({ onSelectChat }) {
               `query($id: ID!, $limit: Int){ getMessages(chatId:$id, limit:$limit){ content ts } }`,
               { id: chat, limit: 1 },
             );
-            const msgs = data.getMessages || [];
-            const m = msgs[msgs.length - 1];
-            return [f.userId, m ? { content: m.content, ts: m.ts } : null];
+            const msgs = Array.isArray(data.getMessages) ? data.getMessages : [];
+            const latest = msgs[msgs.length - 1];
+            return [
+              f.userId,
+              latest ? { content: latest.content, ts: latest.ts } : null,
+            ];
           } catch {
             return [f.userId, null];
           }
@@ -219,7 +222,7 @@ export default function FriendsPanel({ onSelectChat }) {
                 }}
               </List>
             ) : (
-              <ul className="friends-list py-2 space-y-2">
+              <ul className="friends-list py-2">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <SkeletonThread key={i} />
                 ))}
@@ -230,7 +233,7 @@ export default function FriendsPanel({ onSelectChat }) {
               className={`friends-list ${
                 view === 'row'
                   ? 'flex gap-4 px-0 overflow-x-auto scroller'
-                  : 'py-2 space-y-2 overflow-y-auto'
+                  : 'py-2 overflow-y-auto'
               }`}
               data-testid="friends-container"
             >
