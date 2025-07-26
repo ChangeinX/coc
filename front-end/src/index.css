@@ -107,8 +107,117 @@ body {
         padding: 0.5rem 1rem;
         font-size: 0.75rem;
     }
-    .mobile-table tbody td::before {
+.mobile-table tbody td::before {
+    display: none;
+    content: none;
+}
+}
+
+/* Generic spacing and color tokens */
+:root {
+    --spacing-unit: 0.75rem;
+    --label-primary: #1e293b;
+    --surface: #ffffff;
+    --surface-dark: #0f172a;
+    --highlight-bg: rgba(59,130,246,0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --label-primary: #e2e8f0;
+        --surface: #1f2937;
+        --surface-dark: #111827;
+        --highlight-bg: rgba(59,130,246,0.2);
+    }
+}
+
+/* Friend thread layout */
+.thread {
+    display: flex;
+    gap: var(--spacing-unit);
+    padding: var(--spacing-unit);
+    align-items: center;
+    position: relative;
+    background-color: var(--surface);
+    width: 100%;
+    border-bottom: 1px solid #e5e7eb;
+}
+.thread:last-child {
+    border-bottom: none;
+}
+
+.thread .avatar {
+    flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+}
+
+.thread .meta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.thread .meta .name {
+    color: var(--label-primary);
+    font-weight: 500;
+}
+
+.thread .meta .preview {
+    font-size: 0.875rem;
+    color: #475569;
+}
+
+.thread .time {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    margin-left: auto;
+    align-self: flex-start;
+}
+
+.thread:active {
+    background-color: var(--highlight-bg);
+}
+
+.thread-actions {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ef4444;
+    color: #fff;
+    transform: translateX(100%);
+    transition: transform 0.2s;
+}
+
+.thread.swiped .thread-actions {
+    transform: translateX(0);
+}
+
+.friends-wrapper {
+    container-type: inline-size;
+}
+
+@container (max-width: 380px) {
+    .thread .preview {
         display: none;
-        content: none;
+    }
+}
+
+@container (min-width: 600px) {
+    .friends-wrapper {
+        display: flex;
+    }
+    .friends-list {
+        flex: 0 0 40%;
+        max-width: 20rem;
+        border-right: 1px solid #e5e7eb;
+        overflow-y: auto;
+    }
+    .friends-detail {
+        flex: 1 1 auto;
     }
 }
