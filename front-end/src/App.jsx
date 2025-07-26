@@ -9,6 +9,7 @@ import { getSub } from './lib/auth.js';
 import useFeatures from './hooks/useFeatures.js';
 import BottomNav from './components/BottomNav.jsx';
 import DesktopNav from './components/DesktopNav.jsx';
+import NotificationBanner from './components/NotificationBanner.jsx';
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
@@ -19,6 +20,7 @@ const ScoutPage = lazy(() => import('./pages/Scout.jsx'));
 const StatsPage = lazy(() => import('./pages/Stats.jsx'));
 const AccountPage = lazy(() => import('./pages/Account.jsx'));
 const LoginPage = lazy(() => import('./pages/Login.jsx'));
+const PushDebugPage = lazy(() => import('./pages/PushDebug.jsx'));
 
 function isTokenExpired(tok) {
   try {
@@ -199,6 +201,7 @@ export default function App() {
 
   return (
     <Router>
+      <NotificationBanner />
       <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white px-4 py-2 flex items-center justify-between shadow-md sticky top-0 z-50">
         <h1 className="flex flex-row items-center gap-1 sm:flex-col sm:items-start sm:gap-0 text-left">
           <span className="text-lg font-semibold cursor-pointer" onClick={() => setShowLegal(true)}>Clan Boards</span>
@@ -279,6 +282,9 @@ export default function App() {
               <Route path="/scout" element={<ScoutPage />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/account" element={<AccountPage onVerified={() => setVerified(true)} />} />
+              {import.meta.env.DEV && (
+                <Route path="/push-debug" element={<PushDebugPage />} />
+              )}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>

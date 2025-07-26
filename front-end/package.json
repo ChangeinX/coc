@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/replace-sw-key.js",
     "dev": "vite",
+    "prebuild": "node scripts/replace-sw-key.js",
     "build": "VITE_COMMIT_HASH=$(git rev-parse --short HEAD) vite build",
     "preview": "vite preview",
     "test": "vitest run"
