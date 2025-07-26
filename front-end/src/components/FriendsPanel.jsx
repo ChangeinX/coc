@@ -20,6 +20,7 @@ export default function FriendsPanel({ onSelectChat }) {
   );
   const listRef = useRef(null);
   const [visible, setVisible] = useState(false);
+  const [previews, setPreviews] = useState({});
 
   useEffect(() => {
     fetchJSON('/user/me')
@@ -45,6 +46,37 @@ export default function FriendsPanel({ onSelectChat }) {
     };
     load();
   }, [sub]);
+
+  function directId(a, b) {
+    return a < b ? `direct#${a}#${b}` : `direct#${b}#${a}`;
+  }
+
+  useEffect(() => {
+    if (!friends || !sub) return;
+    let ignore = false;
+    async function loadPreviews() {
+      const entries = await Promise.all(
+        friends.map(async (f) => {
+          const chat = directId(sub, f.userId);
+          try {
+            const data = await graphqlRequest(
+              `query($id: ID!, $limit: Int){ getMessages(chatId:$id, limit:$limit){ content ts } }`,
+              { id: chat, limit: 1 },
+            );
+            const m = data.getMessages?.[0];
+            return [f.userId, m ? { content: m.content, ts: m.ts } : null];
+          } catch {
+            return [f.userId, null];
+          }
+        }),
+      );
+      if (!ignore) setPreviews(Object.fromEntries(entries));
+    }
+    loadPreviews();
+    return () => {
+      ignore = true;
+    };
+  }, [friends, sub]);
 
 
   const respond = async (req, accept) => {
@@ -164,16 +196,19 @@ export default function FriendsPanel({ onSelectChat }) {
                 width="100%"
                 outerElementType="ul"
                 className="friends-list list-none p-0 m-0"
-                itemData={{ friends }}
+                itemData={{ friends, previews }}
               >
-                {({ index, style }) => {
-                  const f = friends[index];
+                {({ index, style, data }) => {
+                  const f = data.friends[index];
+                  const preview = data.previews[f.userId];
                   const pending = requests?.some((r) => r.playerTag === f.playerTag);
                   return (
                     <div style={style}>
                       <FriendThread
                         friend={f}
                         pending={pending}
+                        preview={preview?.content}
+                        ts={preview?.ts}
                         onSelect={startChat}
                         onRemove={() => removeFriend(f.playerTag)}
                       />
@@ -202,6 +237,8 @@ export default function FriendsPanel({ onSelectChat }) {
                   key={f.userId || f.playerTag}
                   friend={f}
                   pending={requests?.some((r) => r.playerTag === f.playerTag)}
+                  preview={previews[f.userId]?.content}
+                  ts={previews[f.userId]?.ts}
                   onSelect={startChat}
                   onRemove={() => setSelected(f)}
                 />
