@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import BottomSheet from './BottomSheet.jsx';
 import PlayerMini from './PlayerMini.jsx';
-import { fetchJSON } from '../lib/api.js';
+import Loading from './Loading.jsx';
+import { fetchJSONCached, fetchJSON } from '../lib/api.js';
 import { graphqlRequest } from '../lib/gql.js';
 
 export default function FriendsPanel({ onSelectChat }) {
-  const [friends, setFriends] = useState([]);
-  const [requests, setRequests] = useState([]);
+  const [friends, setFriends] = useState(null);
+  const [requests, setRequests] = useState(null);
   const [sub, setSub] = useState('');
   const [selected, setSelected] = useState(null);
   const [showReqs, setShowReqs] = useState(false);
@@ -21,13 +22,13 @@ export default function FriendsPanel({ onSelectChat }) {
     if (!sub) return;
     const load = async () => {
       try {
-        const list = await fetchJSON(`/friends/list?sub=${sub}`);
+        const list = await fetchJSONCached(`/friends/list?sub=${sub}`);
         setFriends(list);
       } catch {
         setFriends([]);
       }
       try {
-        const reqs = await fetchJSON(`/friends/requests?sub=${sub}`);
+        const reqs = await fetchJSONCached(`/friends/requests?sub=${sub}`);
         setRequests(reqs);
       } catch {
         setRequests([]);
@@ -91,16 +92,16 @@ export default function FriendsPanel({ onSelectChat }) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-2 border-b">
-        <h4 className="font-medium flex items-center gap-2">
-          Friends
-          {requests.length > 0 && (
-            <button
-              onClick={() => setShowReqs(true)}
-              className="bg-blue-600 text-white rounded-full px-2 py-0.5 text-xs"
-            >
-              Pending {requests.length}
-            </button>
-          )}
+          <h4 className="font-medium flex items-center gap-2">
+            Friends
+            {requests && requests.length > 0 && (
+              <button
+                onClick={() => setShowReqs(true)}
+                className="bg-blue-600 text-white rounded-full px-2 py-0.5 text-xs"
+              >
+                Pending {requests.length}
+              </button>
+            )}
         </h4>
         <button
           className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"
@@ -112,7 +113,7 @@ export default function FriendsPanel({ onSelectChat }) {
         </button>
       </div>
       <div className="p-4 space-y-2 overflow-y-auto flex-1">
-        {friends.map((f) => (
+        {friends && friends.map((f) => (
           <div
             key={f.userId || f.playerTag}
             className="flex items-center gap-2 cursor-pointer"
@@ -121,14 +122,16 @@ export default function FriendsPanel({ onSelectChat }) {
             }}
           >
             <PlayerMini tag={f.playerTag} />
-            {requests.some((r) => r.playerTag === f.playerTag) && (
+            {requests && requests.some((r) => r.playerTag === f.playerTag) && (
               <span className="text-xs text-slate-500">\u23F3 Pending</span>
             )}
           </div>
         ))}
-        {friends.length === 0 && (
+        {friends === null ? (
+          <Loading size={24} />
+        ) : friends.length === 0 ? (
           <div className="text-sm text-slate-500">No friends yet</div>
-        )}
+        ) : null}
       </div>
 
       <BottomSheet open={!!selected} onClose={() => setSelected(null)}>
@@ -157,7 +160,7 @@ export default function FriendsPanel({ onSelectChat }) {
 
       <BottomSheet open={showReqs} onClose={() => setShowReqs(false)}>
         <div className="p-4 space-y-2">
-          {requests.map((r) => (
+          {requests && requests.map((r) => (
             <div key={r.id} className="flex items-center gap-2 text-sm">
               <span className="flex-1">
                 <PlayerMini tag={r.playerTag} />
@@ -176,9 +179,11 @@ export default function FriendsPanel({ onSelectChat }) {
               </button>
             </div>
           ))}
-          {requests.length === 0 && (
+          {requests === null ? (
+            <Loading size={24} />
+          ) : requests.length === 0 ? (
             <div className="text-sm text-slate-500">No requests</div>
-          )}
+          ) : null}
         </div>
       </BottomSheet>
     </div>

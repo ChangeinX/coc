@@ -38,6 +38,31 @@ export async function fetchJSON(path, options = {}) {
     return res.json();
 }
 
+export async function fetchJSONWithError(path, options = {}) {
+    const token = localStorage.getItem('token');
+    options.headers = {
+        ...(options.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+    const res = await fetch(`${API_URL}${API_PREFIX}${path}`, options);
+    if (res.status === 401) {
+        localStorage.removeItem('token');
+    }
+    const text = await res.text();
+    let data = {};
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch {
+        data = { error: text };
+    }
+    if (!res.ok) {
+        const err = new Error(data.error || `HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
+    }
+    return data;
+}
+
 const CACHE_PREFIX = 'cache:';
 const CACHE_TTL = 60 * 1000; // 1 minute
 
