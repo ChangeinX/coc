@@ -34,8 +34,10 @@ export default function ChatPanel({
 
   useEffect(() => {
     const handler = (e) => {
-      setDirectChatId(e.detail);
-      setTab('Friends');
+      if (e.detail) {
+        setDirectChatId(e.detail);
+        setTab('Friends');
+      }
     };
     window.addEventListener('open-direct-chat', handler);
     return () => window.removeEventListener('open-direct-chat', handler);

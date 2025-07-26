@@ -32,7 +32,8 @@ public class ChatService {
         log.info("Publishing message to chat {} by {}", chatId, userId);
         try {
             Instant ts = Instant.now();
-            ChatMessage msg = new ChatMessage(chatId, userId, text, ts);
+            String uuid = java.util.UUID.randomUUID().toString();
+            ChatMessage msg = new ChatMessage(uuid, chatId, userId, text, ts);
             repository.saveMessage(msg);
             events.publishEvent(new MessageSavedEvent(msg));
             return msg;
@@ -47,7 +48,8 @@ public class ChatService {
         try {
             Instant ts = Instant.now();
             String shard = ChatRepository.globalShardKey(userId);
-            ChatMessage msg = new ChatMessage(shard, userId, text, ts);
+            String uuid = java.util.UUID.randomUUID().toString();
+            ChatMessage msg = new ChatMessage(uuid, shard, userId, text, ts);
             repository.saveMessage(msg);
             events.publishEvent(new MessageSavedEvent(msg));
             return msg;
