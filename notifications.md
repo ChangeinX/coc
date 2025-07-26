@@ -4,8 +4,8 @@
 - [x] Load VAPID keys from AWS Secrets Manager and configure `VapidDetails`
 - [x] Implement `/notifications/subscribe` and `/notifications/test` endpoints
 - [x] Add `push_subscriptions` table model and migration
-- [ ] SQS listener for `notifications-outbox` queue
-- [ ] Graceful retries with exponential backoff and DLQ
-- [ ] Metrics `notifications.sent` and `notifications.errors`
-- [ ] OpenTelemetry tracing
-- [ ] Containerize with /secrets/vapid.json volume
+- [x] SQS listener for `notifications-outbox` queue
+- [x] Graceful retries with exponential backoff and DLQ
+- [x] Metrics `notifications.sent` and `notifications.errors`
+- [x] OpenTelemetry tracing
+- [x] Containerize with /secrets/vapid.json volume
