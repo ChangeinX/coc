@@ -18,11 +18,13 @@ env:
   WORKER_REPOSITORY: ${{ secrets.WORKER_REPOSITORY }}
   MESSAGES_REPOSITORY: ${{ secrets.MESSAGES_REPOSITORY }}
   USER_REPOSITORY: ${{ secrets.USER_REPOSITORY }}
+  NOTIFICATIONS_REPOSITORY: ${{ secrets.NOTIFICATIONS_REPOSITORY }}
   FRONTEND_BUCKET: ${{ secrets.FRONTEND_BUCKET }}
   APP_SERVICE: ${{ secrets.APP_SERVICE }}
   WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
   MESSAGES_SERVICE: ${{ secrets.MESSAGES_SERVICE }}
   USER_SERVICE: ${{ secrets.USER_SERVICE }}
+  NOTIFICATIONS_SERVICE: ${{ secrets.NOTIFICATIONS_SERVICE }}
   VITE_API_URL: ${{ secrets.VITE_API_URL }}
   VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
   VITE_APPSYNC_EVENTS_URL: ${{ secrets.VITE_APPSYNC_EVENTS_URL }}
@@ -37,6 +39,7 @@ jobs:
       worker_any_changed: ${{ steps.changes.outputs.worker_any_changed }}
       messages_any_changed: ${{ steps.changes.outputs.messages_any_changed }}
       user_any_changed: ${{ steps.changes.outputs.user_any_changed }}
+      notifications_any_changed: ${{ steps.changes.outputs.notifications_any_changed }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -57,6 +60,8 @@ jobs:
               - messages-java/**
             user:
               - user_service/**
+            notifications:
+              - notifications/**
 
   front-end:
     needs: detect
@@ -103,11 +108,11 @@ jobs:
 
   build-push:
     needs: detect
-    if: needs.detect.outputs.worker_any_changed == 'true' || needs.detect.outputs.messages_any_changed == 'true' || needs.detect.outputs.user_any_changed == 'true'
+    if: needs.detect.outputs.worker_any_changed == 'true' || needs.detect.outputs.messages_any_changed == 'true' || needs.detect.outputs.user_any_changed == 'true' || needs.detect.outputs.notifications_any_changed == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [worker, messages, user]
+        service: [worker, messages, user, notifications]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -163,6 +168,12 @@ jobs:
               REPOSITORY=$USER_REPOSITORY
               SERVICE_NAME=$USER_SERVICE
               CHANGED=${{ needs.detect.outputs.user_any_changed }}
+              ;;
+            notifications)
+              DOCKERFILE=notifications/Dockerfile
+              REPOSITORY=$NOTIFICATIONS_REPOSITORY
+              SERVICE_NAME=$NOTIFICATIONS_SERVICE
+              CHANGED=${{ needs.detect.outputs.notifications_any_changed }}
               ;;
           esac
 
