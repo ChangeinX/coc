@@ -138,7 +138,6 @@ body {
     padding: var(--spacing-unit);
     align-items: center;
     position: relative;
-    background-color: var(--surface);
     width: 100%;
     border-bottom: 1px solid #e5e7eb;
 }
