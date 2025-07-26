@@ -124,6 +124,9 @@ public class ChatRepository {
         List<ChatMessage> result = new ArrayList<>();
         for (Page<MessageItem> page : table.query(req)) {
             for (MessageItem it : page.items()) {
+                if (it.getTs() == null || !it.getSK().startsWith("MSG#")) {
+                    continue;
+                }
                 result.add(new ChatMessage(
                         it.getChatId(),
                         it.getSenderId(),
