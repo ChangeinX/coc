@@ -28,6 +28,12 @@ public class FriendService {
                 .orElse(null);
     }
 
+    public String getSub(Long userId) {
+        return userRepo.findById(userId)
+                .map(User::getSub)
+                .orElse(null);
+    }
+
     public Long sendRequest(String fromSub, String toTag) {
         logger.info("Requesting friend from {} to {}", fromSub, toTag);
         Long fromUserId = userRepo.findBySub(fromSub)
@@ -76,7 +82,7 @@ public class FriendService {
         return records.stream()
                 .map(r -> {
                     Long other = r.getFromUserId().equals(userId) ? r.getToUserId() : r.getFromUserId();
-                    return new FriendDto(other, getPlayerTag(other), r.getCreatedAt());
+                    return new FriendDto(getSub(other), getPlayerTag(other), r.getCreatedAt());
                 })
                 .toList();
     }
@@ -99,5 +105,5 @@ public class FriendService {
         return false;
     }
 
-    public record FriendDto(Long userId, String playerTag, java.time.Instant since) {}
+    public record FriendDto(String userId, String playerTag, java.time.Instant since) {}
 }
