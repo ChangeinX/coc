@@ -197,7 +197,7 @@ export default function FriendsPanel({ onSelectChat }) {
               <List
                 height={400}
                 itemCount={friends.length}
-                itemSize={72}
+                itemSize={56}
                 width="100%"
                 outerElementType="ul"
                 className="friends-list list-none p-0 m-0"
