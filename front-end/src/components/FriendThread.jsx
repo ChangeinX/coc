@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import PlayerAvatar from './PlayerAvatar.jsx';
 import PlayerMini from './PlayerMini.jsx';
 
@@ -24,45 +24,31 @@ export default function FriendThread({
 }) {
   const longPress = useRef(false);
   const timer = useRef(null);
-  const startX = useRef(0);
-  const [swiped, setSwiped] = useState(false);
 
   function handlePointerDown(e) {
-    startX.current = e.clientX;
     longPress.current = false;
     timer.current = setTimeout(() => {
       longPress.current = true;
-      if (onRemove) onRemove(friend);
+      if (onRemove) onRemove(friend.playerTag);
     }, 600);
-  }
-
-  function handlePointerMove(e) {
-    if (Math.abs(e.clientX - startX.current) > 30) {
-      clearTimeout(timer.current);
-      if (e.clientX < startX.current - 30) {
-        setSwiped(true);
-      }
-    }
+    e.preventDefault();
   }
 
   function handlePointerUp() {
     clearTimeout(timer.current);
-    if (!longPress.current && !swiped) {
+    if (!longPress.current) {
       onSelect(friend);
-    }
-    if (swiped) {
-      setTimeout(() => setSwiped(false), 2000);
     }
   }
 
   return (
     <li
-      className={`thread ${swiped ? 'swiped' : ''}`}
+      className="thread select-none"
       aria-label={pending ? 'Unread' : undefined}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={() => clearTimeout(timer.current)}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div className="avatar">
         <PlayerAvatar tag={friend.playerTag} showName={false} className="w-12" />
@@ -74,14 +60,6 @@ export default function FriendThread({
         <div className="preview">{preview || 'Tap to chat…'}</div>
       </div>
       <time className="time" dateTime={ts || ''}>{formatTs(ts)}</time>
-      <div className="thread-actions">
-        <button
-          className="text-sm focus:outline-none"
-          onClick={() => onRemove(friend.playerTag)}
-        >
-          Remove
-        </button>
-      </div>
     </li>
   );
 }
