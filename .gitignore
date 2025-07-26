@@ -195,3 +195,6 @@ messages-java/build/
 messages-java/.gradle/
 user_service/build/
 user_service/.gradle/
+notifications/build/
+notifications/.gradle/
+notifications/gradle/wrapper/gradle-wrapper.jar
