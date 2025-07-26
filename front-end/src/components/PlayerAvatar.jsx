@@ -2,7 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { fetchJSONCached } from '../lib/api.js';
 import CachedImage from './CachedImage.jsx';
 
-export default function PlayerAvatar({ tag, player: preload = null, showName = true, className = '', ...props }) {
+export default function PlayerAvatar({
+  tag,
+  player: preload = null,
+  showName = true,
+  className = '',
+  ...props
+}) {
   const [player, setPlayer] = useState(preload);
 
   useEffect(() => {
@@ -26,15 +32,21 @@ export default function PlayerAvatar({ tag, player: preload = null, showName = t
   const name = player?.name || tag;
 
   return (
-    <div className={`flex flex-col items-center w-16 ${className}`} {...props}>
+    <div className={`flex flex-col items-center ${className}`} {...props}>
       {player?.leagueIcon ? (
-        <CachedImage src={player.leagueIcon} alt="league" className="w-12 h-12 rounded-full" />
+        <CachedImage
+          src={player.leagueIcon}
+          alt="league"
+          className="w-full h-full rounded-full"
+        />
       ) : (
-        <div className="w-12 h-12 rounded-full bg-slate-300 flex items-center justify-center text-lg font-semibold">
+        <div className="w-full h-full rounded-full bg-slate-300 flex items-center justify-center text-lg font-semibold">
           {name ? name.charAt(0) : '?'}
         </div>
       )}
-      {showName && <span className="text-xs mt-1 truncate w-12 text-center">{name}</span>}
+      {showName && (
+        <span className="text-xs mt-1 truncate w-full text-center">{name}</span>
+      )}
     </div>
   );
 }
