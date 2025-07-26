@@ -45,6 +45,16 @@ public class FriendService {
         if (fromUserId.equals(toUserId)) {
             throw new InvalidRequestException("Cannot send friend request to yourself");
         }
+        List<FriendRequest> existing = repo.findBetweenUsers(fromUserId, toUserId);
+        for (FriendRequest r : existing) {
+            if (!"REJECTED".equals(r.getStatus()) || r.getFromUserId().equals(fromUserId)) {
+                switch (r.getStatus()) {
+                    case "PENDING" -> throw new InvalidRequestException("Friend request already pending");
+                    case "ACCEPTED" -> throw new InvalidRequestException("You are already friends");
+                    case "REJECTED" -> throw new InvalidRequestException("Friend request was rejected");
+                }
+            }
+        }
         FriendRequest req = new FriendRequest();
         req.setFromUserId(fromUserId);
         req.setToUserId(toUserId);
