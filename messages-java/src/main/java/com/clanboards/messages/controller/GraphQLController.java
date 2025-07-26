@@ -17,7 +17,6 @@ import org.springframework.stereotype.Controller;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 @Controller
@@ -53,7 +52,7 @@ public class GraphQLController {
         log.debug("GraphQL getMessages {} limit {}", chatId, lim);
         List<ChatMessage> msgs = chatService.history(chatId, lim, after);
         return msgs.stream()
-                .map(m -> new Message(UUID.randomUUID().toString(), m.channel(), m.ts(), m.userId(), m.content()))
+                .map(m -> new Message(m.id(), m.channel(), m.ts(), m.userId(), m.content()))
                 .toList();
     }
 
@@ -69,6 +68,6 @@ public class GraphQLController {
         } else {
             saved = chatService.publish(chatId, content, userId);
         }
-        return new Message(UUID.randomUUID().toString(), saved.channel(), saved.ts(), saved.userId(), saved.content());
+        return new Message(saved.id(), saved.channel(), saved.ts(), saved.userId(), saved.content());
     }
 }

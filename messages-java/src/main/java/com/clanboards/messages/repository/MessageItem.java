@@ -8,6 +8,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 public class MessageItem {
     private String PK;
     private String SK;
+    private String id;
     private String chatId;
     private String senderId;
     private String content;
@@ -21,6 +22,9 @@ public class MessageItem {
     @DynamoDbSortKey
     public String getSK() { return SK; }
     public void setSK(String SK) { this.SK = SK; }
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getChatId() { return chatId; }
     public void setChatId(String chatId) { this.chatId = chatId; }
