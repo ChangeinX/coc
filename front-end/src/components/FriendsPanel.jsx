@@ -4,7 +4,7 @@ import PlayerMini from './PlayerMini.jsx';
 import { fetchJSON } from '../lib/api.js';
 import { graphqlRequest } from '../lib/gql.js';
 
-export default function FriendsPanel() {
+export default function FriendsPanel({ onSelectChat }) {
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState([]);
   const [sub, setSub] = useState('');
@@ -80,7 +80,11 @@ export default function FriendsPanel() {
     } catch {
       /* ignore */
     }
-    window.dispatchEvent(new CustomEvent('open-direct-chat', { detail: chatId }));
+    if (onSelectChat) {
+      onSelectChat(chatId);
+    } else {
+      window.dispatchEvent(new CustomEvent('open-direct-chat', { detail: chatId }));
+    }
     setSelected(null);
   };
 
