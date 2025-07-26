@@ -139,7 +139,7 @@ body {
     align-items: center;
     position: relative;
     width: 100%;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #d1d5db;
 }
 .thread:last-child {
     border-bottom: none;
@@ -157,8 +157,14 @@ body {
 }
 
 .thread .meta .name {
-    color: var(--label-primary);
-    font-weight: 500;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+    .thread .meta .name {
+        color: #f8fafc;
+    }
 }
 
 .thread .meta .preview {
