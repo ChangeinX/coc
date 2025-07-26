@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import BottomSheet from './BottomSheet.jsx';
 import PlayerMini from './PlayerMini.jsx';
 import PlayerAvatar from './PlayerAvatar.jsx';
+import FriendThread from './FriendThread.jsx';
 import Loading from './Loading.jsx';
 import { fetchJSONCached, fetchJSON } from '../lib/api.js';
 import { graphqlRequest } from '../lib/gql.js';
@@ -15,6 +16,8 @@ export default function FriendsPanel({ onSelectChat }) {
   const [view, setView] = useState(() =>
     localStorage.getItem('friends-view') || 'stack',
   );
+  const [visible, setVisible] = useState(50);
+  const loadMoreRef = useRef(null);
   const longPress = useRef(false);
   const timer = useRef(null);
 
@@ -42,6 +45,19 @@ export default function FriendsPanel({ onSelectChat }) {
     };
     load();
   }, [sub]);
+
+  useEffect(() => {
+    if (!friends || friends.length <= 50) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const ob = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setVisible((v) => Math.min(friends.length, v + 25));
+      }
+    });
+    ob.observe(el);
+    return () => ob.disconnect();
+  }, [friends, visible]);
 
 
   const respond = async (req, accept) => {
@@ -135,11 +151,12 @@ export default function FriendsPanel({ onSelectChat }) {
         className={
           view === 'row'
             ? 'p-4 overflow-x-auto flex gap-4 scroller'
-            : 'p-4 space-y-2 overflow-y-auto flex-1'
+            : 'p-4 overflow-y-auto flex-1'
         }
         data-testid="friends-container"
       >
-        {friends &&
+        {view === 'row' ? (
+          friends &&
           friends.map((f) => {
             function handlePointerDown(e) {
               if (e.pointerType !== 'mouse') {
@@ -166,7 +183,7 @@ export default function FriendsPanel({ onSelectChat }) {
               clearTimeout(timer.current);
             }
 
-            return view === 'row' ? (
+            return (
               <div
                 key={f.userId || f.playerTag}
                 className="flex flex-col items-center cursor-pointer select-none"
@@ -184,28 +201,31 @@ export default function FriendsPanel({ onSelectChat }) {
                     <span className="text-[10px] text-slate-500">\u23F3 Pending</span>
                   )}
               </div>
-            ) : (
-              <div
-                key={f.userId || f.playerTag}
-                className="flex items-center gap-2 cursor-pointer select-none"
-                onPointerDown={handlePointerDown}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handleCancel}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setSelected(f);
-                }}
-              >
-                <PlayerMini tag={f.playerTag} showTag={false} />
-                {requests &&
-                  requests.some((r) => r.playerTag === f.playerTag) && (
-                    <span className="text-xs text-slate-500">\u23F3 Pending</span>
-                  )}
-              </div>
             );
-          })}
+          })
+        ) : (
+          <ul className="friends-list split space-y-2 w-full">
+            {friends &&
+              friends.slice(0, visible).map((f) => (
+                <FriendThread
+                  key={f.userId || f.playerTag}
+                  friend={f}
+                  pending={requests && requests.some((r) => r.playerTag === f.playerTag)}
+                  onOpen={startChat}
+                  onRemove={() => setSelected(f)}
+                />
+              ))}
+            {friends && friends.length > visible && (
+              <li ref={loadMoreRef} className="h-1" />
+            )}
+          </ul>
+        )}
         {friends === null ? (
-          <Loading size={24} />
+          <ul className="friends-list split space-y-2 w-full">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <li key={i} className="thread skeleton" />
+            ))}
+          </ul>
         ) : friends.length === 0 ? (
           <div className="text-sm text-slate-500">No friends yet</div>
         ) : null}
