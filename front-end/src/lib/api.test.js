@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fetchJSONCached, API_URL } from './api.js';
+import { fetchJSONCached, fetchJSONWithError, API_URL } from './api.js';
 
 afterEach(async () => {
   vi.restoreAllMocks();
@@ -41,5 +41,13 @@ describe('fetchJSONCached', () => {
       }),
     );
     expect(data2).toEqual({ foo: 'bar' });
+  });
+});
+
+describe('fetchJSONWithError', () => {
+  it('throws with message from body', async () => {
+    const resp = new Response(JSON.stringify({ error: 'bad' }), { status: 400 });
+    global.fetch = vi.fn(() => Promise.resolve(resp));
+    await expect(fetchJSONWithError('/bad')).rejects.toThrow('bad');
   });
 });

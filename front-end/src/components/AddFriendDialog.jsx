@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import BottomSheet from './BottomSheet.jsx';
-import { fetchJSON } from '../lib/api.js';
+import { fetchJSON, fetchJSONWithError } from '../lib/api.js';
 
 export default function AddFriendDialog({ sub: propSub = null, friends: propFriends = null }) {
   const [open, setOpen] = useState(false);
@@ -62,13 +62,13 @@ export default function AddFriendDialog({ sub: propSub = null, friends: propFrie
     setOpen(false);
     setTag('');
     try {
-      await fetchJSON('/friends/request', {
+      await fetchJSONWithError('/friends/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fromSub: sub, toTag: trimmed }),
       });
-    } catch {
-      alert('Failed to send request');
+    } catch (err) {
+      alert(err.message || 'Failed to send request');
     }
   };
 
