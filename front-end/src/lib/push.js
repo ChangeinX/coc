@@ -30,6 +30,7 @@ export async function sendSubscription(sub) {
 
 export async function subscribeForPush() {
   if (!('serviceWorker' in navigator)) throw new Error('no sw');
+  if (typeof Notification === 'undefined') throw new Error('no notifications');
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('denied');
   const reg = await navigator.serviceWorker.ready;
