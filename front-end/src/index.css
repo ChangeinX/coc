@@ -163,12 +163,13 @@ body {
 
 @media (prefers-color-scheme: dark) {
     .thread .meta .name {
-        color: #f8fafc;
+        color: #000000;
     }
 }
 
 .thread .meta .preview {
     font-size: 0.875rem;
+    font-weight: 300;
     color: #475569;
 }
 
