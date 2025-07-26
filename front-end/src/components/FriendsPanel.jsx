@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import BottomSheet from './BottomSheet.jsx';
 import PlayerMini from './PlayerMini.jsx';
+import PlayerAvatar from './PlayerAvatar.jsx';
 import Loading from './Loading.jsx';
 import { fetchJSONCached, fetchJSON } from '../lib/api.js';
 import { graphqlRequest } from '../lib/gql.js';
@@ -11,6 +12,9 @@ export default function FriendsPanel({ onSelectChat }) {
   const [sub, setSub] = useState('');
   const [selected, setSelected] = useState(null);
   const [showReqs, setShowReqs] = useState(false);
+  const [view, setView] = useState(() =>
+    localStorage.getItem('friends-view') || 'stack',
+  );
   const longPress = useRef(false);
   const timer = useRef(null);
 
@@ -94,27 +98,47 @@ export default function FriendsPanel({ onSelectChat }) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-2 border-b">
-          <h4 className="font-medium flex items-center gap-2">
-            Friends
-            {requests && requests.length > 0 && (
-              <button
-                onClick={() => setShowReqs(true)}
-                className="bg-blue-600 text-white rounded-full px-2 py-0.5 text-xs"
-              >
-                Pending {requests.length}
-              </button>
-            )}
+        <h4 className="font-medium flex items-center gap-2">
+          Friends
+          {requests && requests.length > 0 && (
+            <button
+              onClick={() => setShowReqs(true)}
+              className="bg-blue-600 text-white rounded-full px-2 py-0.5 text-xs"
+            >
+              Pending {requests.length}
+            </button>
+          )}
         </h4>
-        <button
-          className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"
-          onClick={() => {
-            window.dispatchEvent(new CustomEvent('open-friend-add'));
-          }}
-        >
-          +
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            aria-label={view === 'row' ? 'Switch to stacked view' : 'Switch to row view'}
+            className="text-sm text-blue-600"
+            onClick={() => {
+              const next = view === 'row' ? 'stack' : 'row';
+              setView(next);
+              localStorage.setItem('friends-view', next);
+            }}
+          >
+            {view === 'row' ? 'Stack' : 'Row'}
+          </button>
+          <button
+            className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('open-friend-add'));
+            }}
+          >
+            +
+          </button>
+        </div>
       </div>
-      <div className="p-4 space-y-2 overflow-y-auto flex-1">
+      <div
+        className={
+          view === 'row'
+            ? 'p-4 overflow-x-auto flex gap-4 scroller'
+            : 'p-4 space-y-2 overflow-y-auto flex-1'
+        }
+        data-testid="friends-container"
+      >
         {friends &&
           friends.map((f) => {
             function handlePointerDown(e) {
@@ -142,7 +166,25 @@ export default function FriendsPanel({ onSelectChat }) {
               clearTimeout(timer.current);
             }
 
-            return (
+            return view === 'row' ? (
+              <div
+                key={f.userId || f.playerTag}
+                className="flex flex-col items-center cursor-pointer select-none"
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handleCancel}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setSelected(f);
+                }}
+              >
+                <PlayerAvatar tag={f.playerTag} />
+                {requests &&
+                  requests.some((r) => r.playerTag === f.playerTag) && (
+                    <span className="text-[10px] text-slate-500">\u23F3 Pending</span>
+                  )}
+              </div>
+            ) : (
               <div
                 key={f.userId || f.playerTag}
                 className="flex items-center gap-2 cursor-pointer select-none"
