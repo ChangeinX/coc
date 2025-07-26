@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
 import java.net.URI;
+import java.sql.Connection;
 
 @Configuration
 public class DatabaseConfig {
@@ -16,12 +17,7 @@ public class DatabaseConfig {
             @Value("${DATABASE_USERNAME:}") String username,
             @Value("${DATABASE_PASSWORD:}") String password) throws Exception {
         if (databaseUrl == null || databaseUrl.isBlank()) {
-            return DataSourceBuilder.create()
-                    .driverClassName("org.h2.Driver")
-                    .url("jdbc:h2:mem:testdb")
-                    .username("sa")
-                    .password("")
-                    .build();
+            throw new IllegalStateException("DATABASE_URL must be provided");
         }
         URI uri = new URI(databaseUrl);
         String userInfo = uri.getUserInfo();
@@ -33,11 +29,15 @@ public class DatabaseConfig {
         String jdbcUrl = "jdbc:postgresql://" + uri.getHost()
                 + (uri.getPort() > 0 ? ":" + uri.getPort() : "")
                 + uri.getPath();
-        return DataSourceBuilder.create()
+        DataSource dataSource = DataSourceBuilder.create()
                 .driverClassName("org.postgresql.Driver")
                 .url(jdbcUrl)
                 .username(username)
                 .password(password)
                 .build();
+        try (Connection conn = dataSource.getConnection()) {
+            conn.isValid(1);
+        }
+        return dataSource;
     }
 }
