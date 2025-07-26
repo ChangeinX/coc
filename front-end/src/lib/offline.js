@@ -1,4 +1,5 @@
 import { putApiCache } from './db.js';
+import { sendSubscription } from './push.js';
 
 export function initOffline() {
   if ('serviceWorker' in navigator) {
@@ -12,6 +13,9 @@ export function initOffline() {
         } catch {
           /* ignore */
         }
+      }
+      if (msg && msg.type === 'pushsubscriptionchange' && msg.subscription) {
+        sendSubscription(msg.subscription).catch(() => {});
       }
     });
   }
