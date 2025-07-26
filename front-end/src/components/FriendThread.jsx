@@ -51,7 +51,7 @@ export default function FriendThread({
       onContextMenu={(e) => e.preventDefault()}
     >
       <div className="avatar">
-        <PlayerAvatar tag={friend.playerTag} showName={false} className="w-12" />
+        <PlayerAvatar tag={friend.playerTag} showName={false} className="w-10" />
       </div>
       <div className="meta">
         <div className="name">

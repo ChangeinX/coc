@@ -134,8 +134,8 @@ body {
 /* Friend thread layout */
 .thread {
     display: flex;
-    gap: var(--spacing-unit);
-    padding: var(--spacing-unit);
+    gap: 0.5rem;
+    padding: 0.5rem;
     align-items: center;
     position: relative;
     width: 100%;
@@ -147,8 +147,8 @@ body {
 
 .thread .avatar {
     flex-shrink: 0;
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
 }
 
 .thread .meta {
