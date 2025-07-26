@@ -8,7 +8,6 @@ import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
 import FriendsPanel from './FriendsPanel.jsx';
 import AddFriendDialog from './AddFriendDialog.jsx';
-import DirectChatDrawer from './DirectChatDrawer.jsx';
 
 export default function ChatPanel({
   chatId = null,
@@ -21,14 +20,22 @@ export default function ChatPanel({
   const clanChat = chatId ? useChat(chatId) : { messages: [], loadMore: () => {}, hasMore: false, appendMessage: () => {} };
   const globalChat = useMultiChat(globalIds);
   const friendChat = useMultiChat(friendIds);
-  const current = tab === 'Clan' ? clanChat : tab === 'Global' ? globalChat : friendChat;
+  const [directChatId, setDirectChatId] = useState(null);
+  const directChat = useChat(directChatId);
+  const current =
+    tab === 'Clan'
+      ? clanChat
+      : tab === 'Global'
+      ? globalChat
+      : directChatId
+      ? directChat
+      : friendChat;
   const { messages, loadMore, hasMore, appendMessage } = current;
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [infoMap, setInfoMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [directChatId, setDirectChatId] = useState(null);
   const endRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -126,6 +133,8 @@ useEffect(() => {
     let targetId = chatId;
     if (tab === 'Global') {
       targetId = globalShardFor(userId);
+    } else if (tab === 'Friends') {
+      targetId = directChatId;
     }
     const localMsg = {
       chatId: targetId,
@@ -161,8 +170,18 @@ useEffect(() => {
           </button>
         ))}
       </div>
-      {tab === 'Friends' ? (
-        <FriendsPanel />
+      {tab === 'Friends' && directChatId && (
+        <div className="p-2 border-b">
+          <button
+            onClick={() => setDirectChatId(null)}
+            className="text-sm text-blue-600"
+          >
+            &larr; Back
+          </button>
+        </div>
+      )}
+      {tab === 'Friends' && !directChatId ? (
+        <FriendsPanel onSelectChat={setDirectChatId} />
       ) : (
         <>
         <div
@@ -206,7 +225,7 @@ useEffect(() => {
             </>
           )}
         </div>
-        {tab !== 'Friends' && !(tab === 'Clan' && !chatId) && (
+        {(tab !== 'Friends' || directChatId) && !(tab === 'Clan' && !chatId) && (
           <form onSubmit={handleSubmit} className="flex gap-2 p-2 border-t">
             <input
               className="flex-1 border rounded px-2 py-1"
@@ -225,12 +244,6 @@ useEffect(() => {
         )}
         </>
       )}
-      <DirectChatDrawer
-        chatId={directChatId}
-        userId={userId}
-        open={!!directChatId}
-        onClose={() => setDirectChatId(null)}
-      />
       <AddFriendDialog />
     </div>
   );
