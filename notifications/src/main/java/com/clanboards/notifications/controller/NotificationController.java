@@ -4,6 +4,8 @@ import com.clanboards.notifications.repository.entity.PushSubscription;
 import com.clanboards.notifications.service.NotificationService;
 import com.clanboards.notifications.repository.UserRepository;
 import com.clanboards.notifications.repository.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/notifications")
 public class NotificationController {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationController.class);
     private final NotificationService service;
     private final UserRepository userRepository;
 
@@ -25,6 +28,7 @@ public class NotificationController {
     public ResponseEntity<?> subscribe(@RequestBody PushSubscription sub, Principal principal) {
         Long userId = parseUserId(principal);
         service.subscribe(userId, sub);
+        logger.info("User {} subscribed", userId);
         return ResponseEntity.ok(Map.of("status", "subscribed"));
     }
 
