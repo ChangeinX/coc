@@ -51,6 +51,7 @@ public class SqsListener {
                     var node = mapper.readTree(msg.body());
                     long userId = node.path("userId").asLong();
                     String payload = node.path("payload").asText();
+                    logger.info("Processing notification for user {}", userId);
                     if (node.has("senderId")) {
                         String senderId = node.get("senderId").asText();
                         var map = new HashMap<String, String>();
