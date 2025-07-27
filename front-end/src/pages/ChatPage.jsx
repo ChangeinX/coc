@@ -13,6 +13,12 @@ export default function ChatPage({ verified, chatId, userId }) {
   const initialTab = search.get('tab');
 
   useEffect(() => {
+    if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'clear-badge' });
+    }
+  }, [chatId]);
+
+  useEffect(() => {
     if (!verified) return;
     (async () => {
       try {
