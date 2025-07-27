@@ -11,13 +11,13 @@ from coclib.models import User
 class TestConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
-    GOOGLE_CLIENT_ID = "dummy"
+    JWT_SIGNING_KEY = "k"
 
 
 def _mock_verify(monkeypatch):
     monkeypatch.setattr(
-        "app.id_token.verify_oauth2_token",
-        lambda t, req, cid: {"sub": "abc", "email": "u@example.com", "name": "U"},
+        "app.jwt.decode",
+        lambda t, key, algorithms: {"sub": "abc"},
     )
 
 

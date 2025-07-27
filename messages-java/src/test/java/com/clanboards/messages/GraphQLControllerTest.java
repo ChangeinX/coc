@@ -5,8 +5,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.clanboards.messages.model.ChatMessage;
 import com.clanboards.messages.service.ChatService;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,19 +19,18 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(properties = "jwt.signing-key=0123456789abcdef0123456789abcdef")
 @AutoConfigureMockMvc
 class GraphQLControllerTest {
   @Autowired private MockMvc mvc;
 
   @MockBean private ChatService chatService;
 
+  private static final byte[] KEY =
+      "0123456789abcdef0123456789abcdef".getBytes(StandardCharsets.UTF_8);
+
   private static String token(String sub) {
-    String payload =
-        Base64.getUrlEncoder()
-            .withoutPadding()
-            .encodeToString(("{\"sub\":\"" + sub + "\"}").getBytes());
-    return "x." + payload + ".y";
+    return Jwts.builder().claim("sub", sub).signWith(SignatureAlgorithm.HS256, KEY).compact();
   }
 
   @Test

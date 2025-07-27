@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
+import { AuthProvider } from './hooks/useAuth.jsx';
 import './index.css';
 import { initOffline } from './lib/offline.js';
 import { listenForSubscriptionChanges } from './lib/push.js';
@@ -24,6 +25,8 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </React.StrictMode>
 );
