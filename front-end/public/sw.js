@@ -114,7 +114,7 @@ self.addEventListener('push', (event) => {
         const info = await getPlayerInfo(senderId);
         if (info) {
           options.icon = info.leagueIcon || options.icon;
-          body = `From ${info.name}\n${preview}`;
+          body = `${info.name}: ${preview}`;
         }
       } catch (err) {
         console.error('Failed to fetch sender info', err);
@@ -156,18 +156,27 @@ self.addEventListener('notificationclick', (event) => {
     friendDetailCount = 0;
   }
   const url = event.notification.data && event.notification.data.url;
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      for (const client of clients) {
-        if (client.url.includes(url) && 'focus' in client) {
-          return client.focus();
+  const openUrl = url && url.startsWith('/') ? '/#' + url : url;
+  if (openUrl) {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        for (const client of clients) {
+          if (client.url.includes(openUrl) && 'focus' in client) {
+            return client.focus();
+          }
         }
-      }
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(url);
-      }
-    })
-  );
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(openUrl);
+        }
+      })
+    );
+  }
+});
+
+self.addEventListener('notificationclose', (event) => {
+  if (event.notification.tag && event.notification.tag.startsWith('friend-')) {
+    friendDetailCount = 0;
+  }
 });
 
 self.addEventListener('pushsubscriptionchange', (event) => {
