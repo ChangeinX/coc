@@ -16,8 +16,20 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    self.clients.claim().then(() => {
+      broadcastBadgeCount();
+    })
+  );
 });
+
+function broadcastBadgeCount() {
+  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+    for (const client of clients) {
+      client.postMessage({ type: 'badge-count', count: notificationCount });
+    }
+  });
+}
 
 const subscribedChats = new Set();
 
@@ -41,6 +53,13 @@ self.addEventListener('message', (event) => {
     friendDetailCount = 0;
     if (navigator.clearAppBadge) {
       navigator.clearAppBadge().catch(() => {});
+    }
+    broadcastBadgeCount();
+  } else if (msg.type === 'get-badge') {
+    if (event.source) {
+      event.source.postMessage({ type: 'badge-count', count: notificationCount });
+    } else {
+      broadcastBadgeCount();
     }
   }
 });
@@ -104,8 +123,10 @@ self.addEventListener('push', (event) => {
     const isFriendMessage = tag.startsWith('friend-');
     if (isFriendMessage) {
       friendDetailCount += 1;
-      if (friendDetailCount > 2) {
+      if (friendDetailCount === 3) {
         body = 'You have unread messages';
+      } else if (friendDetailCount > 3) {
+        return;
       }
     }
     notificationCount += 1;
@@ -113,6 +134,11 @@ self.addEventListener('push', (event) => {
       await navigator.setAppBadge(notificationCount).catch(() => {});
     }
     await self.registration.showNotification(title, { ...options, body });
+    broadcastBadgeCount();
+    const clients = await self.clients.matchAll({ includeUncontrolled: true });
+    for (const client of clients) {
+      client.postMessage({ type: 'refresh' });
+    }
   })();
   event.waitUntil(promise);
 });
@@ -124,6 +150,7 @@ self.addEventListener('notificationclick', (event) => {
     if (navigator.clearAppBadge) {
       event.waitUntil(navigator.clearAppBadge().catch(() => {}));
     }
+    broadcastBadgeCount();
   }
   if (event.notification.tag && event.notification.tag.startsWith('friend-')) {
     friendDetailCount = 0;

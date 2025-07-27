@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { Shield, MessageCircle, Users, BarChart2, User } from 'lucide-react';
 import CachedImage from './CachedImage.jsx';
 
-export default function DesktopNav({ clanIcon }) {
+export default function DesktopNav({ clanIcon, badgeCount = 0 }) {
   const items = [
     { to: '/', label: 'Home', icon: Shield },
     { to: '/chat', label: 'Chat', icon: MessageCircle },
@@ -23,11 +23,18 @@ export default function DesktopNav({ clanIcon }) {
             `flex items-center gap-1 ${isActive ? 'text-blue-600' : 'text-slate-700'}`
           }
         >
-          {item.to === '/' && clanIcon ? (
-            <CachedImage src={clanIcon} alt="clan" className="w-4 h-4" />
-          ) : (
-            React.createElement(item.icon, { className: 'w-4 h-4' })
-          )}
+          <span className="relative">
+            {item.to === '/' && clanIcon ? (
+              <CachedImage src={clanIcon} alt="clan" className="w-4 h-4" />
+            ) : (
+              React.createElement(item.icon, { className: 'w-4 h-4' })
+            )}
+            {item.to === '/chat' && badgeCount > 0 && (
+              <span className="absolute -top-1 -right-2 bg-red-600 text-white rounded-full text-[10px] px-1">
+                {badgeCount}
+              </span>
+            )}
+          </span>
           <span className="text-sm">{item.label}</span>
         </NavLink>
       ))}

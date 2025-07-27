@@ -15,12 +15,21 @@ export default function ChatPanel({
   globalIds = [],
   friendIds = [],
   initialTab = null,
+  initialDirectId = null,
 }) {
-  const [tab, setTab] = useState(initialTab || (chatId ? 'Clan' : 'Global'));
+  const [tab, setTab] = useState(
+    initialDirectId ? 'Friends' : initialTab || (chatId ? 'Clan' : 'Global')
+  );
   const clanChat = chatId ? useChat(chatId) : { messages: [], loadMore: () => {}, hasMore: false, appendMessage: () => {} };
   const globalChat = useMultiChat(globalIds);
   const friendChat = useMultiChat(friendIds);
-  const [directChatId, setDirectChatId] = useState(null);
+  const [directChatId, setDirectChatId] = useState(initialDirectId);
+  useEffect(() => {
+    if (initialDirectId) {
+      setDirectChatId(initialDirectId);
+      setTab('Friends');
+    }
+  }, [initialDirectId]);
   const directChat = useChat(directChatId);
   const current =
     tab === 'Clan'
