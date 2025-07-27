@@ -42,8 +42,10 @@ public class NotificationService {
             existing.setUserId(userId);
             existing.setLastSeenAt(Instant.now());
             repository.save(existing);
+            logger.info("Updated subscription for user {}", userId);
         } else {
             repository.save(sub);
+            logger.info("Created subscription for user {}", userId);
         }
     }
 
