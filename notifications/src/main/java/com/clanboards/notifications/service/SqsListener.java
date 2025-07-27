@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
 
 @Component
 public class SqsListener {
@@ -48,8 +49,17 @@ public class SqsListener {
                 boolean ok = false;
                 try {
                     var node = mapper.readTree(msg.body());
-                    long userId = node.get("userId").asLong();
-                    String payload = node.get("payload").asText();
+                    long userId = node.path("userId").asLong();
+                    String payload = node.path("payload").asText();
+                    if (node.has("senderId")) {
+                        String senderId = node.get("senderId").asText();
+                        var map = new HashMap<String, String>();
+                        map.put("title", "New message");
+                        map.put("body", payload);
+                        map.put("url", "/chat?user=" + senderId);
+                        map.put("tag", "friend-" + senderId);
+                        payload = mapper.writeValueAsString(map);
+                    }
                     ok = notificationService.sendNotification(userId, payload);
                 } catch (Exception e) {
                     logger.error("Failed processing message", e);
