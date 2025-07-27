@@ -8,6 +8,8 @@ const PLAYER_CACHE = 'player-info-cache-v1';
 const PLAYER_TTL = 6 * 60 * 60 * 1000; // 6 hours
 
 let notificationCount = 0;
+// track how many detailed friend message notifications were shown
+let friendDetailCount = 0;
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -91,6 +93,13 @@ self.addEventListener('push', (event) => {
         console.error('Failed to fetch sender info', err);
       }
     }
+    const isFriendMessage = tag.startsWith('friend-');
+    if (isFriendMessage) {
+      friendDetailCount += 1;
+      if (friendDetailCount > 2) {
+        body = 'You have unread messages';
+      }
+    }
     notificationCount += 1;
     if (navigator.setAppBadge) {
       await navigator.setAppBadge(notificationCount).catch(() => {});
@@ -107,6 +116,9 @@ self.addEventListener('notificationclick', (event) => {
     if (navigator.clearAppBadge) {
       event.waitUntil(navigator.clearAppBadge().catch(() => {}));
     }
+  }
+  if (event.notification.tag && event.notification.tag.startsWith('friend-')) {
+    friendDetailCount = 0;
   }
   const url = event.notification.data && event.notification.data.url;
   event.waitUntil(
