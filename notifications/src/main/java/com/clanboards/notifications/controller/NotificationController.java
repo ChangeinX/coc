@@ -25,11 +25,15 @@ public class NotificationController {
     }
 
     @PostMapping("/subscribe")
-    public ResponseEntity<?> subscribe(@RequestBody PushSubscription sub,
+    public ResponseEntity<?> subscribe(@RequestBody Map<String, String> payload,
                                        jakarta.servlet.http.HttpServletRequest request,
                                        Principal principal) {
         Long userId = parseUserId(request, principal);
-        service.subscribe(userId, sub);
+        PushSubscription sub = new PushSubscription();
+        sub.setEndpoint(payload.get("endpoint"));
+        sub.setP256dhKey(payload.get("p256dhKey"));
+        sub.setAuthKey(payload.get("authKey"));
+        service.subscribe(userId, sub, payload.get("oldEndpoint"));
         logger.info("User {} subscribed", userId);
         return ResponseEntity.ok(Map.of("status", "subscribed"));
     }

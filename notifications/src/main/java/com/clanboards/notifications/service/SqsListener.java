@@ -71,6 +71,7 @@ public class SqsListener {
                         map.put("body", payload);
                         map.put("url", "/chat?user=" + senderId);
                         map.put("tag", "friend-" + senderId);
+                        map.put("senderId", senderId);
                         payload = mapper.writeValueAsString(map);
                     }
                     if (userId != null) {

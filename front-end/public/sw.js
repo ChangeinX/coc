@@ -87,7 +87,7 @@ self.addEventListener('push', (event) => {
         const info = await getPlayerInfo(senderId);
         if (info) {
           options.icon = info.leagueIcon || options.icon;
-          body = `${info.name} sent you a message\n${preview}`;
+          body = `From ${info.name}\n${preview}`;
         }
       } catch (err) {
         console.error('Failed to fetch sender info', err);
@@ -145,7 +145,11 @@ self.addEventListener('pushsubscriptionchange', (event) => {
       .then(async (sub) => {
         const clients = await self.clients.matchAll({ includeUncontrolled: true });
         for (const client of clients) {
-          client.postMessage({ type: 'pushsubscriptionchange', subscription: sub });
+          client.postMessage({
+            type: 'pushsubscriptionchange',
+            subscription: sub,
+            oldEndpoint: event.oldSubscription ? event.oldSubscription.endpoint : null,
+          });
         }
       })
       .catch((err) => console.error('resubscribe failed', err))

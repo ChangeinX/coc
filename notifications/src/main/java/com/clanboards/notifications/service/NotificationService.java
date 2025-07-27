@@ -32,9 +32,12 @@ public class NotificationService {
         this.errorCounter = meterRegistry.counter("notifications.errors");
     }
 
-    public void subscribe(Long userId, PushSubscription sub) {
+    public void subscribe(Long userId, PushSubscription sub, String oldEndpoint) {
         sub.setUserId(userId);
         sub.setLastSeenAt(Instant.now());
+        if (oldEndpoint != null && !oldEndpoint.isEmpty()) {
+            repository.deleteByEndpoint(oldEndpoint);
+        }
         PushSubscription existing = repository.findByEndpoint(sub.getEndpoint());
         if (existing != null) {
             existing.setP256dhKey(sub.getP256dhKey());

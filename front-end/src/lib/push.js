@@ -14,12 +14,13 @@ export function arrayBufferToBase64(buf) {
   return btoa(str);
 }
 
-export async function sendSubscription(sub) {
+export async function sendSubscription(sub, oldEndpoint = null) {
   if (!sub) return;
   const payload = {
     endpoint: sub.endpoint,
     p256dhKey: arrayBufferToBase64(sub.getKey('p256dh')),
     authKey: arrayBufferToBase64(sub.getKey('auth')),
+    oldEndpoint,
   };
   await fetchJSON('/notifications/subscribe', {
     method: 'POST',
@@ -47,7 +48,7 @@ export function listenForSubscriptionChanges() {
   navigator.serviceWorker.addEventListener('message', (event) => {
     const msg = event.data;
     if (msg && msg.type === 'pushsubscriptionchange' && msg.subscription) {
-      sendSubscription(msg.subscription).catch(() => {});
+      sendSubscription(msg.subscription, msg.oldEndpoint).catch(() => {});
     }
   });
 }
