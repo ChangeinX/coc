@@ -10,6 +10,7 @@ COPY src ./src
 RUN --mount=type=cache,target=/home/gradle/.gradle \
     gradle --no-daemon bootJar
 
+
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /opt/app
 COPY --from=build /workspace/messages-java/build/libs/*.jar app.jar
