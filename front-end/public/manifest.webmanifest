@@ -1,6 +1,6 @@
 {
-  "name": "Clan Dashboard",
-  "short_name": "Clan",
+  "name": "Clan Boards",
+  "short_name": "Clan Boards",
   "icons": [
     {
       "src": "/src/assets/AppIcons/Assets.xcassets/AppIcon.appiconset/196.png",
