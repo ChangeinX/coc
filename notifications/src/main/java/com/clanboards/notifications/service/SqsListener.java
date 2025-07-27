@@ -5,6 +5,8 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import com.clanboards.notifications.repository.UserRepository;
+import com.clanboards.notifications.repository.entity.User;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
@@ -20,12 +22,14 @@ public class SqsListener {
     private static final Logger logger = LoggerFactory.getLogger(SqsListener.class);
     private final SqsClient sqsClient = SqsClient.create();
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
     private final ObjectMapper mapper = new ObjectMapper();
     private final String queueUrl = System.getenv("OUTBOX_QUEUE_URL");
     private final String dlqUrl = System.getenv("OUTBOX_DLQ_URL");
 
-    public SqsListener(NotificationService notificationService) {
+    public SqsListener(NotificationService notificationService, UserRepository userRepository) {
         this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     @PostConstruct
@@ -49,9 +53,17 @@ public class SqsListener {
                 boolean ok = false;
                 try {
                     var node = mapper.readTree(msg.body());
-                    long userId = node.path("userId").asLong();
+                    String rawUser = node.path("userId").asText();
+                    Long userId = null;
+                    try {
+                        userId = Long.parseLong(rawUser);
+                    } catch (NumberFormatException ex) {
+                        userId = userRepository.findBySub(rawUser)
+                                .map(User::getId)
+                                .orElse(null);
+                    }
                     String payload = node.path("payload").asText();
-                    logger.info("Processing notification for user {}", userId);
+                    logger.info("Processing notification for user {}", rawUser);
                     if (node.has("senderId")) {
                         String senderId = node.get("senderId").asText();
                         var map = new HashMap<String, String>();
@@ -61,7 +73,11 @@ public class SqsListener {
                         map.put("tag", "friend-" + senderId);
                         payload = mapper.writeValueAsString(map);
                     }
-                    ok = notificationService.sendNotification(userId, payload);
+                    if (userId != null) {
+                        ok = notificationService.sendNotification(userId, payload);
+                    } else {
+                        logger.warn("Unknown user {}", rawUser);
+                    }
                 } catch (Exception e) {
                     logger.error("Failed processing message", e);
                 }
