@@ -12,17 +12,11 @@ import ProfileCard from '../components/ProfileCard.jsx';
 import { getTownHallIcon } from '../lib/townhall.js';
 import CachedImage from '../components/CachedImage.jsx';
 import PlayerMini from '../components/PlayerMini.jsx';
-import { Users, SearchX } from 'lucide-react';
-
-const winStreakIcon = new URL('../assets/win-streak.svg', import.meta.url).href;
-const levelIcon = new URL('../assets/level.svg', import.meta.url).href;
-const warWinsIcon = new URL('../assets/war-wins.svg', import.meta.url).href;
-const warLossesIcon = new URL('../assets/war-losses.svg', import.meta.url).href;
+import { Users, SearchX, TrendingUp, Trophy, Shield, ShieldOff } from 'lucide-react';
 
 const PlayerSheet = lazy(() => import('../components/PlayerSheet.jsx'));
 
-
-const ICON_MAP = { users: Users };
+const ICON_MAP = { users: Users, trending: TrendingUp, trophy: Trophy, shield: Shield, shieldOff: ShieldOff };
 
 function Stat({icon, iconUrl, label, value, onClick}) {
     const Icon = ICON_MAP[icon];
@@ -246,16 +240,16 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                         <>
                             <div className="flex justify-center mt-6">
                                 <Stat
-                                    iconUrl={winStreakIcon}
+                                    icon="trending"
                                     label="Win Streak"
                                     value={clan.warWinStreak || 0}
                                 />
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <Stat icon="users" iconUrl={clan.badgeUrls?.small} label="Members" value={members.length} />
-                                <Stat iconUrl={levelIcon} label="Level" value={clan.clanLevel} />
-                                <Stat iconUrl={warWinsIcon} label="War Wins" value={clan.warWins || 0} />
-                                <Stat iconUrl={warLossesIcon} label="War Losses" value={clan.warLosses || 0} />
+                                <Stat icon="trophy" label="Level" value={clan.clanLevel} />
+                                <Stat icon="shield" label="War Wins" value={clan.warWins || 0} />
+                                <Stat icon="shieldOff" label="War Losses" value={clan.warLosses || 0} />
                             </div>
                         </>
                     )}
