@@ -52,7 +52,8 @@ export async function fetchJSONWithError(path, options = {}) {
     let data = {};
     try {
         data = text ? JSON.parse(text) : {};
-    } catch {
+    } catch (err) {
+        console.error('Failed to parse JSON', err);
         data = { error: text };
     }
     if (!res.ok) {
@@ -108,7 +109,9 @@ export async function fetchJSONCached(path, options = {}) {
                     putApiCache({ path: key, ts: Date.now(), data: res.data, etag: res.etag });
                 }
             })
-            .catch(() => {});
+            .catch((err) => {
+                console.error('Failed to refresh API cache', err);
+            });
         return data;
     }
 

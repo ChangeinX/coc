@@ -35,7 +35,9 @@ self.addEventListener('push', (event) => {
   let data = {};
   try {
     data = event.data.json();
-  } catch {}
+  } catch (err) {
+    console.error('Failed to parse push payload', err);
+  }
   console.log('Push event payload', data);
   const title = data.title || 'Clan Boards';
   const options = {
@@ -127,12 +129,15 @@ async function staleWhileRevalidate(request) {
         for (const client of clients) {
           client.postMessage({ type: 'api-update', url: request.url, data, etag });
         }
-      } catch {
-        // ignore JSON parse errors
+      } catch (err) {
+        console.warn('Failed to parse API response for caching', err);
       }
       return response;
     })
-    .catch(() => undefined);
+    .catch((err) => {
+      console.error('Network request failed', err);
+      throw err;
+    });
   if (cached) return cached;
-  return network || Response.error();
+  return network; // let it reject
 }

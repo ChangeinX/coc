@@ -4,7 +4,8 @@ function isTokenExpired(tok) {
   try {
     const payload = JSON.parse(atob(tok.split('.')[1]));
     return Date.now() >= payload.exp * 1000 - 60000;
-  } catch {
+  } catch (err) {
+    console.error('Failed to parse token', err);
     return true;
   }
 }

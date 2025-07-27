@@ -2,7 +2,8 @@ export function getJwtPayload(token) {
   try {
     const payload = atob(token.split('.')[1]);
     return JSON.parse(payload);
-  } catch {
+  } catch (err) {
+    console.error('Failed to decode JWT', err);
     return null;
   }
 }

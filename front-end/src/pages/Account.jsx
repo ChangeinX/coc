@@ -22,7 +22,8 @@ export default function Account({ onVerified }) {
         setProfile(data);
         const features = await fetchJSON('/user/features');
         setChatEnabled(features.all || features.features.includes('chat'));
-      } catch {
+      } catch (err) {
+        console.error('Failed to load profile', err);
         setProfile({});
       }
     };
@@ -54,7 +55,8 @@ export default function Account({ onVerified }) {
         body: JSON.stringify({ features: chatEnabled ? ['chat'] : [], all: false }),
       });
       window.dispatchEvent(new Event('features-updated'));
-    } catch {
+    } catch (err) {
+      console.error('Failed to save profile', err);
       setSaving(false);
       return;
     }
@@ -130,8 +132,8 @@ export default function Account({ onVerified }) {
                 window.dispatchEvent(new Event('features-updated'));
                 setProfile((p) => ({ ...p, verified: true }));
                 onVerified && onVerified();
-              } catch {
-                /* ignore */
+              } catch (err) {
+                console.error('Failed to verify account', err);
               }
               setSaving(false);
             }}

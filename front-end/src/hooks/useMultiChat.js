@@ -163,8 +163,8 @@ export default function useMultiChat(ids = []) {
     for (const id of Object.keys(grouped)) {
       try {
         putMessageCache({ chatId: id, messages: grouped[id].slice(-CACHE_LIMIT) });
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.error('Failed to cache messages', err);
       }
     }
   }, [messages]);
