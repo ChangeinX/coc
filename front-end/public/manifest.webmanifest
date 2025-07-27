@@ -3,12 +3,12 @@
   "short_name": "Clan",
   "icons": [
     {
-      "src": "/src/assets/favicon_io/android-chrome-192x192.png",
-      "sizes": "192x192",
+      "src": "/src/assets/AppIcons/Assets.xcassets/AppIcon.appiconset/196.png",
+      "sizes": "196x196",
       "type": "image/png"
     },
     {
-      "src": "/src/assets/favicon_io/android-chrome-512x512.png",
+      "src": "/src/assets/AppIcons/Assets.xcassets/AppIcon.appiconset/512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
