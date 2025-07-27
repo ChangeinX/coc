@@ -194,5 +194,8 @@ fabric.properties
 messages-java/build/
 user_service/build/
 notifications/build/
+messages-java/.gradle/
+notifications/.gradle/
+user_service/.gradle/
 .gradle/
 **/.gradle
