@@ -3,6 +3,7 @@ package com.clanboards.notifications.config;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.martijndwars.webpush.PushService;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +22,7 @@ public class VapidConfig {
     private static final Logger logger = LoggerFactory.getLogger(VapidConfig.class);
 
     @Bean
-    public PushService pushService() {
+    public PushService pushService(BouncyCastleProvider provider) {
         String secretValue = System.getenv("VAPID_KEYS");
         ObjectMapper mapper = new ObjectMapper();
         try {
