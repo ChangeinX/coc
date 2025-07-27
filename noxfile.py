@@ -4,6 +4,11 @@ import nox
 def lint(session: nox.Session) -> None:
     session.install("ruff")
     session.run("ruff", "check", "back-end", "coclib", "db")
+    for project in ("messages-java", "user_service", "notifications"):
+        session.chdir(project)
+        session.run("gradle", "wrapper", external=True)
+        session.run("./gradlew", "spotlessCheck", external=True)
+        session.chdir("..")
 
 
 @nox.session(python="3.11")
