@@ -33,3 +33,7 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+springBoot {
+    mainClass = 'com.clanboards.messages.Application'
+}
