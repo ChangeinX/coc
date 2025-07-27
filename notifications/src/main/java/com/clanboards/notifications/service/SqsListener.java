@@ -69,10 +69,14 @@ public class SqsListener {
           if (node.has("senderId")) {
             String senderId = node.get("senderId").asText();
             var map = new HashMap<String, String>();
-            map.put("title", "New message");
+            // Include senderId so the service worker can fetch profile info.
+            map.put("senderId", senderId);
+            // Put the message text in the body field used by the service worker.
             map.put("body", payload);
             map.put("url", "/chat?user=" + senderId);
             map.put("tag", "friend-" + senderId);
+            // Do not include a title field to avoid browsers displaying a
+            // default notification before the service worker handles the push.
             payload = mapper.writeValueAsString(map);
           }
           if (userId != null) {

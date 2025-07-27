@@ -30,11 +30,19 @@ function urlBase64ToUint8Array(base64String) {
 
 self.addEventListener('message', (event) => {
   const msg = event.data;
-  if (!msg || msg.type !== 'subscribe-chats' || !Array.isArray(msg.ids)) return;
-  for (const id of msg.ids) {
-    if (typeof id === 'string') subscribedChats.add(id);
+  if (!msg) return;
+  if (msg.type === 'subscribe-chats' && Array.isArray(msg.ids)) {
+    for (const id of msg.ids) {
+      if (typeof id === 'string') subscribedChats.add(id);
+    }
+    console.log('Subscribed chats updated', [...subscribedChats]);
+  } else if (msg.type === 'clear-badge') {
+    notificationCount = 0;
+    friendDetailCount = 0;
+    if (navigator.clearAppBadge) {
+      navigator.clearAppBadge().catch(() => {});
+    }
   }
-  console.log('Subscribed chats updated', [...subscribedChats]);
 });
 
 async function getPlayerInfo(userId) {
@@ -87,7 +95,7 @@ self.addEventListener('push', (event) => {
         const info = await getPlayerInfo(senderId);
         if (info) {
           options.icon = info.leagueIcon || options.icon;
-          body = `${info.name} sent you a message\n${preview}`;
+          body = `From ${info.name}\n${preview}`;
         }
       } catch (err) {
         console.error('Failed to fetch sender info', err);
