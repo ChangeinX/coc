@@ -36,6 +36,7 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data.json();
   } catch {}
+  console.log('Push event payload', data);
   const title = data.title || 'Clan Boards';
   const options = {
     body: data.body || '',
