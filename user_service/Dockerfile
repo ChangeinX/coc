@@ -13,5 +13,6 @@ RUN --mount=type=cache,target=/home/gradle/.gradle \
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /opt/app
 COPY --from=build /workspace/user-service/build/libs/*.jar app.jar
+
 EXPOSE 8020
 ENTRYPOINT ["java","-jar","/opt/app/app.jar","--server.port=8020"]
