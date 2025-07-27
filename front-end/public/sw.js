@@ -3,6 +3,8 @@ const VAPID_PUBLIC_KEY = '';
 const API_TTL = 60 * 1000; // 1 minute
 const ASSET_TTL = 30 * 60 * 1000; // 30 minutes
 
+let notificationCount = 0;
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -38,12 +40,23 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || '',
     data: { url: data.url || '/' },
+    tag: data.tag || 'chat',
   };
+  notificationCount += 1;
+  if (self.registration.setAppBadge) {
+    event.waitUntil(self.registration.setAppBadge(notificationCount).catch(() => {}));
+  }
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  if (notificationCount > 0) {
+    notificationCount = 0;
+    if (self.registration.clearAppBadge) {
+      event.waitUntil(self.registration.clearAppBadge().catch(() => {}));
+    }
+  }
   const url = event.notification.data && event.notification.data.url;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
