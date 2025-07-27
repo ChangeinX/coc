@@ -27,8 +27,7 @@ env:
   NOTIFICATIONS_SERVICE: ${{ secrets.NOTIFICATIONS_SERVICE }}
   VITE_API_URL: ${{ secrets.VITE_API_URL }}
   VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-  VITE_APPSYNC_EVENTS_URL: ${{ secrets.VITE_APPSYNC_EVENTS_URL }}
-  APP_SYNC_API_KEY: ${{ secrets.VITE_API_KEY }}
+  VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
 
 jobs:
   detect:
@@ -87,9 +86,8 @@ jobs:
           npm ci --prefix front-end
           VITE_API_URL=$VITE_API_URL \
           VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
-          VITE_APPSYNC_EVENTS_URL=$VITE_APPSYNC_EVENTS_URL \
+          VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY \
           VITE_AWS_REGION=$AWS_REGION \
-          VITE_API_KEY=$APP_SYNC_API_KEY \
           npm run --prefix front-end build
 
       - name: Configure AWS credentials
