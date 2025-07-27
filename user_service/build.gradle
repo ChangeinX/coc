@@ -30,3 +30,7 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+springBoot {
+    mainClass = 'com.clanboards.users.Application'
+}
