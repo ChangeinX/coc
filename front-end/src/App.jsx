@@ -189,8 +189,22 @@ export default function App() {
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+          .then((reg) => {
+            reg.active?.postMessage({ type: 'set-token', token });
+          })
+          .catch(() => {});
+      }
     } else {
       localStorage.removeItem('token');
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+          .then((reg) => {
+            reg.active?.postMessage({ type: 'set-token', token: null });
+          })
+          .catch(() => {});
+      }
     }
   }, [token]);
 
