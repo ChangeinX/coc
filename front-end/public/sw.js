@@ -3,6 +3,10 @@ const VAPID_PUBLIC_KEY = '';
 const API_TTL = 60 * 1000; // 1 minute
 const ASSET_TTL = 30 * 60 * 1000; // 30 minutes
 
+// cache player info fetched during push handling
+const PLAYER_CACHE = 'player-info-cache-v1';
+const PLAYER_TTL = 6 * 60 * 60 * 1000; // 6 hours
+
 let notificationCount = 0;
 
 self.addEventListener('install', (event) => {
@@ -31,6 +35,35 @@ self.addEventListener('message', (event) => {
   console.log('Subscribed chats updated', [...subscribedChats]);
 });
 
+async function getPlayerInfo(userId) {
+  const cache = await caches.open(PLAYER_CACHE);
+  const url = `/api/v1/player/by-user/${encodeURIComponent(userId)}`;
+  const req = new Request(url);
+  let resp = await cache.match(req);
+  if (resp) {
+    const ts = parseInt(resp.headers.get('sw-cache-time') || '0', 10);
+    if (Date.now() - ts <= PLAYER_TTL) {
+      try {
+        return await resp.clone().json();
+      } catch (err) {
+        await cache.delete(req);
+      }
+    } else {
+      await cache.delete(req);
+    }
+  }
+  const net = await fetch(req).catch(() => null);
+  if (net && net.ok) {
+    const cloned = net.clone();
+    const headers = new Headers(cloned.headers);
+    headers.set('sw-cache-time', Date.now().toString());
+    const body = await cloned.blob();
+    cache.put(req, new Response(body, { status: cloned.status, statusText: cloned.statusText, headers }));
+    return net.json();
+  }
+  return null;
+}
+
 self.addEventListener('push', (event) => {
   let data = {};
   try {
@@ -39,25 +72,40 @@ self.addEventListener('push', (event) => {
     console.error('Failed to parse push payload', err);
   }
   console.log('Push event payload', data);
-  const title = data.title || 'Clan Boards';
-  const options = {
-    body: data.body || '',
-    data: { url: data.url || '/' },
-    tag: data.tag || 'chat',
-  };
-  notificationCount += 1;
-  if (self.registration.setAppBadge) {
-    event.waitUntil(self.registration.setAppBadge(notificationCount).catch(() => {}));
-  }
-  event.waitUntil(self.registration.showNotification(title, options));
+  const title = 'Clan Boards';
+  const senderId = data.senderId;
+  const preview = data.body || '';
+  const url = data.url || '/';
+  const tag = data.tag || 'chat';
+  const promise = (async () => {
+    let body = preview;
+    const options = { data: { url }, tag };
+    if (senderId) {
+      try {
+        const info = await getPlayerInfo(senderId);
+        if (info) {
+          options.icon = info.leagueIcon || options.icon;
+          body = `${info.name} sent you a message\n${preview}`;
+        }
+      } catch (err) {
+        console.error('Failed to fetch sender info', err);
+      }
+    }
+    notificationCount += 1;
+    if (navigator.setAppBadge) {
+      await navigator.setAppBadge(notificationCount).catch(() => {});
+    }
+    await self.registration.showNotification(title, { ...options, body });
+  })();
+  event.waitUntil(promise);
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   if (notificationCount > 0) {
     notificationCount = 0;
-    if (self.registration.clearAppBadge) {
-      event.waitUntil(self.registration.clearAppBadge().catch(() => {}));
+    if (navigator.clearAppBadge) {
+      event.waitUntil(navigator.clearAppBadge().catch(() => {}));
     }
   }
   const url = event.notification.data && event.notification.data.url;
