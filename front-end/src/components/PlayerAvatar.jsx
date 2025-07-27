@@ -19,7 +19,8 @@ export default function PlayerAvatar({
       try {
         const data = await fetchJSONCached(`/player/${encodeURIComponent(tag)}`);
         if (!ignore) setPlayer(data);
-      } catch {
+      } catch (err) {
+        console.error('Failed to load player', err);
         if (!ignore) setPlayer(null);
       }
     }

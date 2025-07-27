@@ -17,8 +17,8 @@ export default function NotificationBanner() {
           onClick={async () => {
             try {
               await subscribeForPush();
-            } catch {
-              /* ignore */
+            } catch (err) {
+              console.error('Failed to subscribe for push', err);
             }
             setDismissed(true);
           }}

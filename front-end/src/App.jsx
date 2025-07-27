@@ -26,7 +26,8 @@ function isTokenExpired(tok) {
   try {
     const payload = JSON.parse(atob(tok.split('.')[1]));
     return Date.now() >= payload.exp * 1000;
-  } catch {
+  } catch (err) {
+    console.error('Failed to parse token', err);
     return true;
   }
 }
@@ -42,7 +43,8 @@ function getInitials(tok) {
       .join('')
       .slice(0, 2)
       .toUpperCase();
-  } catch {
+  } catch (err) {
+    console.error('Failed to get initials', err);
     return '';
   }
 }
@@ -128,7 +130,8 @@ export default function App() {
             setHomeClanTag(player.clanTag);
           }
         }
-      } catch {
+      } catch (err) {
+        console.error('Failed to load user info', err);
         setToken(null);
       }
       setLoadingUser(false);
@@ -145,8 +148,8 @@ export default function App() {
           setClanTag(player.clanTag);
           if (!homeClanTag) setHomeClanTag(player.clanTag);
         }
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.error('Failed to load clan', err);
       }
     };
     loadClan();
@@ -158,8 +161,8 @@ export default function App() {
       try {
         const data = await fetchJSON(`/clan/${encodeURIComponent(clanTag)}`);
         setClanInfo(data);
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.error('Failed to load clan info', err);
       }
     };
     loadInfo();

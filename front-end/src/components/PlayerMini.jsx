@@ -22,7 +22,8 @@ export default function PlayerMini({
       try {
         const data = await fetchJSONCached(`/player/${encodeURIComponent(t)}`);
         if (!ignore) setPlayer(data);
-      } catch {
+      } catch (err) {
+        console.error('Failed to load player mini', err);
         if (!ignore) setPlayer(null);
       }
     }

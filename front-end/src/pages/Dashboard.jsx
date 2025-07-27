@@ -138,8 +138,8 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             setError('');
             try {
                 await putClanCache({ key: cacheKey, clan: clanData, members: merged, topRisk: top });
-            } catch {
-                /* ignore */
+            } catch (err) {
+                console.error('Failed to cache clan', err);
             }
         } catch (err) {
             if (err.message.startsWith('HTTP 404')) {

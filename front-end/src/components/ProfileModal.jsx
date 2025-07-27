@@ -21,7 +21,8 @@ export default function ProfileModal({ onClose, onVerified }) {
         setProfile(data);
         const features = await fetchJSON('/user/features');
         setChatEnabled(features.all || features.features.includes('chat'));
-      } catch {
+      } catch (err) {
+        console.error('Failed to load profile', err);
         setProfile({});
       }
     };
@@ -53,7 +54,8 @@ export default function ProfileModal({ onClose, onVerified }) {
       });
       window.dispatchEvent(new Event('features-updated'));
       onClose();
-    } catch {
+    } catch (err) {
+      console.error('Failed to save profile', err);
       setSaving(false);
     }
   };
@@ -118,8 +120,8 @@ export default function ProfileModal({ onClose, onVerified }) {
                   window.dispatchEvent(new Event('features-updated'));
                   setProfile((p) => ({ ...p, verified: true }));
                   onVerified && onVerified();
-                } catch {
-                  /* ignore */
+                } catch (err) {
+                  console.error('Failed to verify profile', err);
                 }
                 setSaving(false);
               }} className="px-4 py-2 rounded bg-slate-800 text-white w-full">
