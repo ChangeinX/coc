@@ -12,6 +12,7 @@ RUN --mount=type=cache,target=/home/gradle/.gradle \
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /opt/app
 COPY --from=build /workspace/notifications/build/libs/*.jar app.jar
+
 # VAPID keys may be mounted at /secrets/vapid.json for local development
 VOLUME ["/secrets"]
 EXPOSE 8030
