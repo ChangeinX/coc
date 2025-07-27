@@ -5,7 +5,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.clanboards.notifications.repository.UserRepository;
 import com.clanboards.notifications.service.NotificationService;
-import java.util.Base64;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import java.nio.charset.StandardCharsets;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +21,11 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
+@SpringBootTest(
+    properties = {
+      "spring.main.allow-bean-definition-overriding=true",
+      "jwt.signing-key=0123456789abcdef0123456789abcdef"
+    })
 @AutoConfigureMockMvc
 class NotificationControllerAuthTest {
 
@@ -47,12 +53,11 @@ class NotificationControllerAuthTest {
 
   @MockBean private nl.martijndwars.webpush.PushService pushService;
 
+  private static final byte[] KEY =
+      "0123456789abcdef0123456789abcdef".getBytes(StandardCharsets.UTF_8);
+
   private static String token(String sub) {
-    String payload =
-        Base64.getUrlEncoder()
-            .withoutPadding()
-            .encodeToString(("{\"sub\":\"" + sub + "\"}").getBytes());
-    return "x." + payload + ".y";
+    return Jwts.builder().claim("sub", sub).signWith(SignatureAlgorithm.HS256, KEY).compact();
   }
 
   @Test

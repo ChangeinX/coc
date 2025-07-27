@@ -13,6 +13,16 @@ The dashboard uses [Google Identity Services](https://developers.google.com/iden
 
 Without the JavaScript origin entry Google will return a `redirect_uri_mismatch` error when attempting to sign in.
 
+## Session configuration
+
+The user service issues signed JWT cookies for authentication. Configure the following environment variables:
+
+- `JWT_SIGNING_KEY` – HMAC key used to sign session tokens.
+- `SESSION_MAX_AGE` – Lifetime of a session in seconds.
+- `COOKIE_DOMAIN` – Domain attribute for the `sid` cookie.
+- `COOKIE_SECURE` – Set to `false` to disable the `Secure` flag during local development.
+These variables are generally injected from AWS Secrets Manager at runtime.
+
 ## Clash of Clans asset links
 
 Clan and player records are stored exactly as returned by the [Clash of Clans API](https://developer.clashofclans.com/#/documentation). Icon URLs such as clan badges and league emblems can be read directly from the JSON data in the database. See the official documentation for the object schema and available image sizes.

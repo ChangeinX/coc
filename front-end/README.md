@@ -15,6 +15,10 @@ npm run dev
 The `VITE_API_URL` variable tells the dev server where the Flask API is
 running. Omit it when the API shares the same origin.
 
+The application uses http-only cookies for authentication. API helpers
+automatically include credentials, so no token storage is required on the
+client.
+
 ### Google Sign-In
 
 Create an OAuth 2.0 **Web** client in the Google Cloud Console and add
