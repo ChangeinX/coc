@@ -189,8 +189,8 @@ jobs:
           docker buildx build \
             --platform linux/arm64 \
             -f "$DOCKERFILE" \
-            --cache-from type=gha,scope=$SERVICE \
-            --cache-to type=gha,mode=max,scope=$SERVICE \
+            --cache-from type=registry,ref=$ECR_REGISTRY/$REPOSITORY:buildcache \
+            --cache-to type=registry,ref=$ECR_REGISTRY/$REPOSITORY:buildcache,mode=max \
             -t "$ECR_REGISTRY/$REPOSITORY:latest" \
             -t "$ECR_REGISTRY/$REPOSITORY:${{ github.sha }}" \
             --push "$CONTEXT"
