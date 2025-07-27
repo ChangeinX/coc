@@ -71,9 +71,27 @@ export default function App() {
   const [showLegal, setShowLegal] = useState(false);
   const [loadingUser, setLoadingUser] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [badgeCount, setBadgeCount] = useState(0);
   const { enabled: hasFeature } = useFeatures(token);
   const chatAllowed = hasFeature('chat');
   const menuRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    function handler(event) {
+      const msg = event.data;
+      if (msg && msg.type === 'badge-count') {
+        setBadgeCount(msg.count || 0);
+      }
+    }
+    navigator.serviceWorker.addEventListener('message', handler);
+    navigator.serviceWorker.ready
+      .then((reg) => {
+        reg.active?.postMessage({ type: 'get-badge' });
+      })
+      .catch(() => {});
+    return () => navigator.serviceWorker.removeEventListener('message', handler);
+  }, []);
 
   useEffect(() => {
     if (token && isTokenExpired(token)) {
@@ -267,7 +285,7 @@ export default function App() {
           </div>
         </div>
       </header>
-      <DesktopNav clanIcon={clanInfo?.badgeUrls?.small} />
+      <DesktopNav clanIcon={clanInfo?.badgeUrls?.small} badgeCount={badgeCount} />
       <main className="px-2 pt-0 pb-2 sm:px-4 sm:pt-0 sm:pb-4">
         {loadingUser && <Loading className="h-[calc(100dvh-4rem)]" />}
         {!loadingUser && !playerTag && (
@@ -293,7 +311,7 @@ export default function App() {
           </Suspense>
         )}
       </main>
-      <BottomNav clanIcon={clanInfo?.badgeUrls?.small} />
+      <BottomNav clanIcon={clanInfo?.badgeUrls?.small} badgeCount={badgeCount} />
       {showClanInfo && (
         <Suspense fallback={<Loading className="h-screen" />}>
           <ClanModal clan={clanInfo} onClose={() => setShowClanInfo(false)} />

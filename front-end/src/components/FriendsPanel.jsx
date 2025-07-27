@@ -54,12 +54,10 @@ export default function FriendsPanel({ onSelectChat }) {
     return a < b ? `direct#${a}#${b}` : `direct#${b}#${a}`;
   }
 
-  useEffect(() => {
+  const loadPreviews = async () => {
     if (!friends || !sub) return;
-    let ignore = false;
-    async function loadPreviews() {
-      const entries = await Promise.all(
-        friends.map(async (f) => {
+    const entries = await Promise.all(
+      friends.map(async (f) => {
           const chat = directId(sub, f.userId);
           try {
             const data = await graphqlRequest(
@@ -77,13 +75,33 @@ export default function FriendsPanel({ onSelectChat }) {
             return [f.userId, null];
           }
         }),
-      );
-      if (!ignore) setPreviews(Object.fromEntries(entries));
-    }
+    );
+    const map = Object.fromEntries(entries);
+    setPreviews(map);
+    setFriends((list) => {
+      const sorted = [...list];
+      sorted.sort((a, b) => {
+        const ta = map[a.userId]?.ts || 0;
+        const tb = map[b.userId]?.ts || 0;
+        return new Date(tb) - new Date(ta);
+      });
+      return sorted;
+    });
+  };
+
+  useEffect(() => {
     loadPreviews();
-    return () => {
-      ignore = true;
+  }, [friends, sub]);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handler = (e) => {
+      if (e.data && e.data.type === 'refresh') {
+        loadPreviews();
+      }
     };
+    navigator.serviceWorker.addEventListener('message', handler);
+    return () => navigator.serviceWorker.removeEventListener('message', handler);
   }, [friends, sub]);
 
 

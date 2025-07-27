@@ -16,4 +16,14 @@ describe('DesktopNav', () => {
     expect(screen.getByText('Stats')).toBeInTheDocument();
     expect(screen.getByText('Account')).toBeInTheDocument();
   });
+
+  it('shows badge when count provided', () => {
+    render(
+      <MemoryRouter>
+        <DesktopNav badgeCount={2} />
+      </MemoryRouter>
+    );
+    const badge = screen.getByText('2');
+    expect(badge).toBeInTheDocument();
+  });
 });

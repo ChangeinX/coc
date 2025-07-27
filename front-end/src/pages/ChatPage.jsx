@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import Loading from '../components/Loading.jsx';
 import { graphqlRequest } from '../lib/gql.js';
@@ -11,10 +11,21 @@ export default function ChatPage({ verified, chatId, userId }) {
   const [friendIds, setFriendIds] = useState([]);
   const search = new URLSearchParams(location.search);
   const initialTab = search.get('tab');
+  const initialUser = search.get('user');
+  const initialDirectId = useMemo(() => {
+    if (!initialUser || !userId) return null;
+    return userId < initialUser
+      ? `direct#${userId}#${initialUser}`
+      : `direct#${initialUser}#${userId}`;
+  }, [initialUser, userId]);
 
   useEffect(() => {
-    if (navigator.serviceWorker?.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'clear-badge' });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready
+        .then((reg) => {
+          reg.active?.postMessage({ type: 'clear-badge' });
+        })
+        .catch(() => {});
     }
   }, [chatId]);
 
@@ -29,11 +40,12 @@ export default function ChatPage({ verified, chatId, userId }) {
         setGlobalIds(globals);
         setFriendIds(directs);
         console.log('Subscribed chats', ids);
-        if (navigator.serviceWorker?.controller) {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'subscribe-chats',
-            ids,
-          });
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready
+            .then((reg) => {
+              reg.active?.postMessage({ type: 'subscribe-chats', ids });
+            })
+            .catch(() => {});
         }
       } catch (err) {
         console.error('Failed to fetch chat list', err);
@@ -49,9 +61,10 @@ export default function ChatPage({ verified, chatId, userId }) {
             chatId={chatId}
             userId={userId}
             globalIds={globalIds}
-            friendIds={friendIds}
-            initialTab={initialTab ? initialTab.charAt(0).toUpperCase() + initialTab.slice(1) : undefined}
-          />
+          friendIds={friendIds}
+          initialTab={initialTab ? initialTab.charAt(0).toUpperCase() + initialTab.slice(1) : undefined}
+          initialDirectId={initialDirectId}
+        />
         ) : (
           <div className="p-4">Verify your account to chat.</div>
         )}
