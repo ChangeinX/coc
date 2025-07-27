@@ -153,24 +153,28 @@ jobs:
           case "$SERVICE" in
             worker)
               DOCKERFILE=back-end/Dockerfile
+              CONTEXT=back-end
               REPOSITORY=$WORKER_REPOSITORY
               SERVICE_NAME=$WORKER_SERVICE
               CHANGED=${{ needs.detect.outputs.worker_any_changed }}
               ;;
             messages)
               DOCKERFILE=messages-java/Dockerfile
+              CONTEXT=messages-java
               REPOSITORY=$MESSAGES_REPOSITORY
               SERVICE_NAME=$MESSAGES_SERVICE
               CHANGED=${{ needs.detect.outputs.messages_any_changed }}
               ;;
             user)
               DOCKERFILE=user_service/Dockerfile
+              CONTEXT=user_service
               REPOSITORY=$USER_REPOSITORY
               SERVICE_NAME=$USER_SERVICE
               CHANGED=${{ needs.detect.outputs.user_any_changed }}
               ;;
             notifications)
               DOCKERFILE=notifications/Dockerfile
+              CONTEXT=notifications
               REPOSITORY=$NOTIFICATIONS_REPOSITORY
               SERVICE_NAME=$NOTIFICATIONS_SERVICE
               CHANGED=${{ needs.detect.outputs.notifications_any_changed }}
@@ -185,11 +189,11 @@ jobs:
           docker buildx build \
             --platform linux/arm64 \
             -f "$DOCKERFILE" \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
+            --cache-from type=gha,scope=$SERVICE \
+            --cache-to type=gha,mode=max,scope=$SERVICE \
             -t "$ECR_REGISTRY/$REPOSITORY:latest" \
             -t "$ECR_REGISTRY/$REPOSITORY:${{ github.sha }}" \
-            --push .
+            --push "$CONTEXT"
 
           task_def=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE_NAME --query 'services[0].taskDefinition' --output text)
           aws ecs describe-task-definition --task-definition "$task_def" --query 'taskDefinition' > taskdef.json
