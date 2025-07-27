@@ -1,7 +1,11 @@
 # syntax=docker/dockerfile:1.5
 FROM gradle:8.7-jdk21 AS build
 WORKDIR /workspace/notifications
-COPY notifications/ .
+COPY notifications/build.gradle notifications/settings.gradle ./
+RUN --mount=type=cache,target=/home/gradle/.gradle \
+    gradle --no-daemon build -x test || true
+
+COPY notifications/src ./src
 RUN --mount=type=cache,target=/home/gradle/.gradle \
     gradle --no-daemon bootJar
 
