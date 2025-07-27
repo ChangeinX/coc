@@ -41,6 +41,11 @@ class Config:
         "http://localhost:5173,https://dev.clan-boards.com,https://api.dev.clan-boards.com",
     ).split(",")
 
+    JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY", "change-me")
+    SESSION_MAX_AGE = int(os.getenv("SESSION_MAX_AGE", "604800"))
+    COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN", "")
+    COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true").lower() == "true"
+
 
 
 

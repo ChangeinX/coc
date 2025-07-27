@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import useGoogleIdToken from './useGoogleIdToken.js';
 import { API_URL } from '../lib/api.js';
 import { graphqlRequest } from '../lib/gql.js';
 import {
@@ -30,7 +29,6 @@ export function globalShardFor(userId) {
 }
 
 export default function useMultiChat(ids = []) {
-  const token = useGoogleIdToken();
   const [messages, setMessages] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -44,7 +42,7 @@ export default function useMultiChat(ids = []) {
   }
 
   useEffect(() => {
-    if (!token || ids.length === 0) return;
+    if (ids.length === 0) return;
     let ignore = false;
     let client;
 
@@ -132,7 +130,7 @@ export default function useMultiChat(ids = []) {
       }
       setConnected(false);
     };
-  }, [token, ids.join(',')]);
+  }, [ids.join(',')]);
 
   async function loadMore() {
     if (!hasMore || messages.length === 0) return;

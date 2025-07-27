@@ -5,7 +5,7 @@ import CachedImage from './components/CachedImage.jsx';
 import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';
 import { fetchJSON } from './lib/api.js';
-import { getSub } from './lib/auth.js';
+import { useAuth } from './hooks/useAuth.jsx';
 import useFeatures from './hooks/useFeatures.js';
 import BottomNav from './components/BottomNav.jsx';
 import DesktopNav from './components/DesktopNav.jsx';
@@ -22,20 +22,8 @@ const AccountPage = lazy(() => import('./pages/Account.jsx'));
 const LoginPage = lazy(() => import('./pages/Login.jsx'));
 const PushDebugPage = lazy(() => import('./pages/PushDebug.jsx'));
 
-function isTokenExpired(tok) {
+function getInitialsFromName(name) {
   try {
-    const payload = JSON.parse(atob(tok.split('.')[1]));
-    return Date.now() >= payload.exp * 1000;
-  } catch (err) {
-    console.error('Failed to parse token', err);
-    return true;
-  }
-}
-
-function getInitials(tok) {
-  try {
-    const payload = JSON.parse(atob(tok.split('.')[1]));
-    const name = payload.name || '';
     return name
       .split(' ')
       .filter(Boolean)
@@ -51,16 +39,9 @@ function getInitials(tok) {
 
 
 export default function App() {
-  const [token, setToken] = useState(() => {
-    const stored = localStorage.getItem('token');
-    if (stored && isTokenExpired(stored)) {
-      localStorage.removeItem('token');
-      return null;
-    }
-    return stored;
-  });
-  const [initials, setInitials] = useState(() => (token ? getInitials(token) : ''));
-  const [userId, setUserId] = useState(() => (token ? getSub(token) : ''));
+  const { user, logout, loading } = useAuth();
+  const [initials, setInitials] = useState('');
+  const [userId, setUserId] = useState('');
   const [numericId, setNumericId] = useState(null);
   const [playerTag, setPlayerTag] = useState(null);
   const [verified, setVerified] = useState(false);
@@ -72,7 +53,7 @@ export default function App() {
   const [loadingUser, setLoadingUser] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [badgeCount, setBadgeCount] = useState(0);
-  const { enabled: hasFeature } = useFeatures(token);
+  const { enabled: hasFeature } = useFeatures(user);
   const chatAllowed = hasFeature('chat');
   const menuRef = React.useRef(null);
 
@@ -94,72 +75,49 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (token && isTokenExpired(token)) {
-      setToken(null);
-      return;
+    if (user) {
+      setInitials(getInitialsFromName(user.name || ''));
+      setUserId(user.sub || '');
+    } else {
+      setInitials('');
+      setUserId('');
     }
+  }, [user]);
 
-    const tryInit = () => {
-      if (!window.google) return false;
-      window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: (res) => {
-          localStorage.setItem('token', res.credential);
-          setToken(res.credential);
-        },
-      });
-      window.google.accounts.id.renderButton(
-        document.getElementById('signin'),
-        { theme: 'outline', size: 'large' },
-      );
-      window.google.accounts.id.prompt();
-      return true;
-    };
-
-    if (!token) {
-      if (!tryInit()) {
-        const id = setInterval(() => {
-          if (tryInit()) clearInterval(id);
-        }, 100);
-        return () => clearInterval(id);
+  useEffect(() => {
+    const updateFromUser = async () => {
+      if (!user) {
+        setPlayerTag(null);
+        setVerified(false);
+        setNumericId(null);
+        setClanTag(null);
+        setHomeClanTag(null);
+        return;
       }
-    }
-  }, [token]);
-
-  useEffect(() => {
-    setInitials(token ? getInitials(token) : '');
-    setUserId(token ? getSub(token) : '');
-  }, [token]);
-
-  useEffect(() => {
-    const loadUser = async () => {
-      if (!token) return;
       setLoadingUser(true);
-      try {
-        const me = await fetchJSON('/user/me');
-        setPlayerTag(me.player_tag);
-        setVerified(me.verified);
-        setUserId(me.sub);
-        setNumericId(me.id);
-        if (me.player_tag) {
-          const player = await fetchJSON(`/player/${encodeURIComponent(me.player_tag)}`);
+      setPlayerTag(user.player_tag);
+      setVerified(user.verified);
+      setUserId(user.sub);
+      setNumericId(user.id);
+      if (user.player_tag) {
+        try {
+          const player = await fetchJSON(`/player/${encodeURIComponent(user.player_tag)}`);
           if (player.clanTag) {
             setClanTag(player.clanTag);
             setHomeClanTag(player.clanTag);
           }
+        } catch (err) {
+          console.error('Failed to load clan', err);
         }
-      } catch (err) {
-        console.error('Failed to load user info', err);
-        setToken(null);
       }
       setLoadingUser(false);
     };
-    loadUser();
-  }, [token]);
+    updateFromUser();
+  }, [user]);
 
   useEffect(() => {
     const loadClan = async () => {
-      if (!token || !playerTag) return;
+      if (!playerTag) return;
       try {
         const player = await fetchJSON(`/player/${encodeURIComponent(playerTag)}`);
         if (player.clanTag) {
@@ -171,7 +129,7 @@ export default function App() {
       }
     };
     loadClan();
-  }, [playerTag, token]);
+  }, [playerTag]);
 
   useEffect(() => {
     const loadInfo = async () => {
@@ -186,27 +144,6 @@ export default function App() {
     loadInfo();
   }, [clanTag]);
 
-  useEffect(() => {
-    if (token) {
-      localStorage.setItem('token', token);
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready
-          .then((reg) => {
-            reg.active?.postMessage({ type: 'set-token', token });
-          })
-          .catch(() => {});
-      }
-    } else {
-      localStorage.removeItem('token');
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready
-          .then((reg) => {
-            reg.active?.postMessage({ type: 'set-token', token: null });
-          })
-          .catch(() => {});
-      }
-    }
-  }, [token]);
 
 
   useEffect(() => {
@@ -226,9 +163,13 @@ export default function App() {
     }
   }, []);
 
-  if (!token) {
+  if (loading) {
+    return <Loading className="h-screen" />;
+  }
+
+  if (!user) {
     return (
-      <Suspense fallback={<Loading className="h-screen" />}> 
+      <Suspense fallback={<Loading className="h-screen" />}>
         <LoginPage />
       </Suspense>
     );
@@ -284,9 +225,7 @@ export default function App() {
                   className="block w-full text-left px-3 py-2 hover:bg-slate-100"
                   onClick={() => {
                     window.google?.accounts.id.disableAutoSelect();
-                    localStorage.removeItem('token');
-                    window.location.hash = '#/';
-                    setToken(null);
+                    logout();
                     setPlayerTag(null);
                     setClanTag(null);
                     setShowMenu(false);

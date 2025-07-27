@@ -25,29 +25,24 @@ export const API_URL = apiUrl;
 const API_PREFIX = '/api/v1';
 
 export async function fetchJSON(path, options = {}) {
-    const token = localStorage.getItem('token');
     options.headers = {
         ...(options.headers || {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
+    options.credentials = 'include';
     const res = await fetch(`${API_URL}${API_PREFIX}${path}`, options);
     if (res.status === 401) {
-        localStorage.removeItem('token');
+        window.dispatchEvent(new CustomEvent('unauthorized'));
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
 }
 
 export async function fetchJSONWithError(path, options = {}) {
-    const token = localStorage.getItem('token');
     options.headers = {
         ...(options.headers || {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
+    options.credentials = 'include';
     const res = await fetch(`${API_URL}${API_PREFIX}${path}`, options);
-    if (res.status === 401) {
-        localStorage.removeItem('token');
-    }
     const text = await res.text();
     let data = {};
     try {
@@ -55,6 +50,9 @@ export async function fetchJSONWithError(path, options = {}) {
     } catch (err) {
         console.error('Failed to parse JSON', err);
         data = { error: text };
+    }
+    if (res.status === 401) {
+        window.dispatchEvent(new CustomEvent('unauthorized'));
     }
     if (!res.ok) {
         const err = new Error(data.error || `HTTP ${res.status}`);
@@ -68,20 +66,16 @@ const CACHE_PREFIX = 'cache:';
 const CACHE_TTL = 60 * 1000; // 1 minute
 
 async function requestWithETag(path, options = {}, etag) {
-    const token = localStorage.getItem('token');
     const cleanOptions = { ...options };
     if (!cleanOptions.method || cleanOptions.method.toUpperCase() === 'GET') {
         delete cleanOptions.body;
     }
     const headers = {
         ...(cleanOptions.headers || {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(etag ? { 'If-None-Match': etag } : {}),
     };
+    cleanOptions.credentials = 'include';
     const res = await fetch(`${API_URL}${API_PREFIX}${path}`, { ...cleanOptions, headers });
-    if (res.status === 401) {
-        localStorage.removeItem('token');
-    }
     if (res.status === 304) {
         return { notModified: true, etag: res.headers.get('ETag') || etag, data: null };
     }

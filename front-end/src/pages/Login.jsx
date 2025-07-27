@@ -1,15 +1,22 @@
 import React, { useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth.jsx';
 
 export default function Login() {
+  const { login } = useAuth();
+
   useEffect(() => {
     const init = () => {
       if (!window.google) return false;
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: (res) => {
-          localStorage.setItem('token', res.credential);
-          window.location.hash = '#/';
-          window.location.reload();
+        callback: async (res) => {
+          try {
+            await login(res.credential);
+            window.location.hash = '#/';
+            window.location.reload();
+          } catch (err) {
+            console.error('Login failed', err);
+          }
         },
       });
       window.google.accounts.id.renderButton(

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import useGoogleIdToken from './useGoogleIdToken.js';
 import { API_URL } from '../lib/api.js';
 import { graphqlRequest } from '../lib/gql.js';
 import {
@@ -15,7 +14,6 @@ const PAGE_SIZE = 20;
 const CACHE_LIMIT = 50;
 
 export default function useChat(chatId) {
-  const token = useGoogleIdToken();
   const [messages, setMessages] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -25,7 +23,7 @@ export default function useChat(chatId) {
   }
 
   useEffect(() => {
-    if (!chatId || !token) return;
+    if (!chatId) return;
     let ignore = false;
     let client;
 
@@ -106,7 +104,7 @@ export default function useChat(chatId) {
       }
       setConnected(false);
   };
-  }, [chatId, token]);
+  }, [chatId]);
 
   async function loadMore() {
     if (!hasMore || messages.length === 0) return;

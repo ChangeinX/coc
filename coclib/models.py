@@ -183,3 +183,17 @@ class PushSubscription(db.Model):
 
     __table_args__ = (db.Index("ix_push_subscriptions_user_id", "user_id"),)
 
+
+class Session(db.Model):
+    __tablename__ = "sessions"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=False)
+    refresh_token_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    ip = db.Column(db.String(50))
+    user_agent = db.Column(db.String(255))
+
+    user = db.relationship("User", backref=db.backref("sessions", lazy="dynamic"))
+

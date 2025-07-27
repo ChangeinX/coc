@@ -10,7 +10,6 @@ const PLAYER_TTL = 6 * 60 * 60 * 1000; // 6 hours
 let notificationCount = 0;
 // track how many detailed friend message notifications were shown
 let friendDetailCount = 0;
-let authToken = null;
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -62,8 +61,6 @@ self.addEventListener('message', (event) => {
     } else {
       broadcastBadgeCount();
     }
-  } else if (msg.type === 'set-token') {
-    authToken = msg.token || null;
   }
 });
 
@@ -84,9 +81,7 @@ async function getPlayerInfo(userId) {
       await cache.delete(req);
     }
   }
-  const net = await fetch(url, {
-    headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-  }).catch(() => null);
+  const net = await fetch(url, { credentials: 'include' }).catch(() => null);
   if (net && net.ok) {
     const cloned = net.clone();
     const headers = new Headers(cloned.headers);
