@@ -195,3 +195,4 @@ messages-java/build/
 user_service/build/
 notifications/build/
 .gradle/
+**/.gradle
