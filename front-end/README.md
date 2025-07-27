@@ -41,9 +41,8 @@ The application logs this commit hash to the browser console on page load and
 checks the value from a `<meta name="build-commit">` tag. If the HTML commit
 doesn't match the running script the page reloads and cached assets are
 cleared. A fallback check reloads the page if the React root does not render
-within a few seconds to recover from blank screens.
-The service worker reads the `VITE_VAPID_PUBLIC_KEY` variable during build to
-support push notifications.
+within a few seconds to recover from blank screens. The service worker reads 
+the `VITE_VAPID_PUBLIC_KEY` variable during build to support push notifications.
 
 The production build output will be in the `dist/` directory. When building the
 Docker image you can supply build arguments to set the backend URL and Google
