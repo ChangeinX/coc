@@ -10,12 +10,14 @@ export function initOffline() {
           const url = new URL(msg.url);
           const path = url.pathname.replace('/api/v1', '');
           putApiCache({ path: `cache:${path}`, ts: Date.now(), data: msg.data, etag: msg.etag });
-        } catch {
-          /* ignore */
+        } catch (err) {
+          console.error('Failed to cache API update', err);
         }
       }
       if (msg && msg.type === 'pushsubscriptionchange' && msg.subscription) {
-        sendSubscription(msg.subscription).catch(() => {});
+        sendSubscription(msg.subscription).catch((err) => {
+          console.error('Failed to send subscription', err);
+        });
       }
     });
   }

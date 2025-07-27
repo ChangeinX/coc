@@ -127,8 +127,8 @@ export default function useChat(chatId) {
     if (!chatId) return;
     try {
       putMessageCache({ chatId, messages: messages.slice(-CACHE_LIMIT) });
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('Failed to persist chat cache', err);
     }
   }, [chatId, messages]);
 

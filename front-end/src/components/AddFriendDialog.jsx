@@ -36,7 +36,8 @@ export default function AddFriendDialog({ sub: propSub = null, friends: propFrie
           if (!propFriends && curSub) {
             curFriends = await fetchJSON(`/friends/list?sub=${curSub}`);
           }
-        } catch {
+        } catch (err) {
+          console.error('Failed to load friend data', err);
           curFriends = curFriends || [];
         }
       }
@@ -84,7 +85,8 @@ export default function AddFriendDialog({ sub: propSub = null, friends: propFrie
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fromSub: sub, toTag: tag }),
       });
-    } catch {
+    } catch (err) {
+      console.error('Failed to remove friend', err);
       alert('Failed to remove friend');
     }
     setOpen(false);

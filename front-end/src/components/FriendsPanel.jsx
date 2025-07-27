@@ -35,13 +35,15 @@ export default function FriendsPanel({ onSelectChat }) {
       try {
         const list = await fetchJSONCached(`/friends/list?sub=${sub}`);
         setFriends(list);
-      } catch {
+      } catch (err) {
+        console.error('Failed to load friends', err);
         setFriends([]);
       }
       try {
         const reqs = await fetchJSONCached(`/friends/requests?sub=${sub}`);
         setRequests(reqs);
-      } catch {
+      } catch (err) {
+        console.error('Failed to load friend requests', err);
         setRequests([]);
       }
     };
@@ -70,7 +72,8 @@ export default function FriendsPanel({ onSelectChat }) {
               f.userId,
               latest ? { content: latest.content, ts: latest.ts } : null,
             ];
-          } catch {
+          } catch (err) {
+            console.error('Failed to load chat preview', err);
             return [f.userId, null];
           }
         }),
@@ -95,8 +98,8 @@ export default function FriendsPanel({ onSelectChat }) {
       if (accept) {
         setFriends((f) => [...f, { userId: req.fromUserId, playerTag: req.playerTag }]);
       }
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('Failed to respond to request', err);
     }
   };
 
@@ -109,7 +112,8 @@ export default function FriendsPanel({ onSelectChat }) {
         body: JSON.stringify({ fromSub: sub, toTag: tag }),
       });
       setFriends((f) => f.filter((x) => x.playerTag !== tag));
-    } catch {
+    } catch (err) {
+      console.error('Failed to remove friend', err);
       alert('Failed to remove friend');
     }
     setSelected(null);
@@ -124,8 +128,8 @@ export default function FriendsPanel({ onSelectChat }) {
         { id: friend.userId },
       );
       chatId = resp.createDirectChat?.id || null;
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('Failed to start chat', err);
     }
     if (onSelectChat) {
       onSelectChat(chatId);

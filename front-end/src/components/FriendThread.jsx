@@ -9,7 +9,8 @@ function formatTs(ts) {
       hour: '2-digit',
       minute: '2-digit',
     });
-  } catch {
+  } catch (err) {
+    console.error('Failed to format timestamp', err);
     return '';
   }
 }
