@@ -8,10 +8,9 @@ import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 
 @Configuration
 public class AwsConfig {
-    @Bean
-    public SecretsManagerClient secretsManagerClient(@Value("${aws.region:us-east-1}") String region) {
-        return SecretsManagerClient.builder()
-                .region(Region.of(region))
-                .build();
-    }
+  @Bean
+  public SecretsManagerClient secretsManagerClient(
+      @Value("${aws.region:us-east-1}") String region) {
+    return SecretsManagerClient.builder().region(Region.of(region)).build();
+  }
 }

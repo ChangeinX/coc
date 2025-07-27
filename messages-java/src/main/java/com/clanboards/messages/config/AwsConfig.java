@@ -11,31 +11,25 @@ import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 
 @Configuration
 public class AwsConfig {
-    @Bean
-    public DynamoDbClient dynamoDbClient(@Value("${aws.region:us-east-1}") String region) {
-        return DynamoDbClient.builder()
-                .region(Region.of(region))
-                .build();
-    }
+  @Bean
+  public DynamoDbClient dynamoDbClient(@Value("${aws.region:us-east-1}") String region) {
+    return DynamoDbClient.builder().region(Region.of(region)).build();
+  }
 
-    @Bean
-    public SecretsManagerClient secretsManagerClient(@Value("${aws.region:us-east-1}") String region) {
-        return SecretsManagerClient.builder()
-                .region(Region.of(region))
-                .build();
-    }
+  @Bean
+  public SecretsManagerClient secretsManagerClient(
+      @Value("${aws.region:us-east-1}") String region) {
+    return SecretsManagerClient.builder().region(Region.of(region)).build();
+  }
 
-    @Bean
-    public DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient client) {
-        return DynamoDbEnhancedClient.builder()
-                .dynamoDbClient(client)
-                .build();
-    }
+  @Bean
+  public DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient client) {
+    return DynamoDbEnhancedClient.builder().dynamoDbClient(client).build();
+  }
 
-    @Bean
-    public ChatRepository chatRepository(
-            DynamoDbEnhancedClient enhancedClient,
-            @Value("${chat.table:webapp-chat}") String tableName) {
-        return new ChatRepository(enhancedClient, tableName);
-    }
+  @Bean
+  public ChatRepository chatRepository(
+      DynamoDbEnhancedClient enhancedClient, @Value("${chat.table:webapp-chat}") String tableName) {
+    return new ChatRepository(enhancedClient, tableName);
+  }
 }
