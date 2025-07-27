@@ -37,3 +37,7 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+springBoot {
+    mainClass = 'com.clanboards.notifications.NotificationsApplication'
+}

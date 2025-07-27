@@ -2,11 +2,11 @@
 FROM gradle:8.7-jdk21 AS build
 WORKDIR /workspace/messages-java
 
-COPY messages-java/build.gradle messages-java/settings.gradle ./
+COPY build.gradle settings.gradle ./
 RUN --mount=type=cache,target=/home/gradle/.gradle \
     gradle --no-daemon build -x test || true
 
-COPY messages-java/src ./src
+COPY src ./src
 RUN --mount=type=cache,target=/home/gradle/.gradle \
     gradle --no-daemon bootJar
 
