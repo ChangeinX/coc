@@ -51,8 +51,8 @@ self.addEventListener('message', (event) => {
   } else if (msg.type === 'clear-badge') {
     notificationCount = 0;
     friendDetailCount = 0;
-    if (navigator.clearAppBadge) {
-      navigator.clearAppBadge().catch(() => {});
+    if (self.registration.clearAppBadge) {
+      self.registration.clearAppBadge().catch(() => {});
     }
     broadcastBadgeCount();
   } else if (msg.type === 'get-badge') {
@@ -113,8 +113,8 @@ self.addEventListener('push', (event) => {
       try {
         const info = await getPlayerInfo(senderId);
         if (info) {
-          options.icon = info.leagueIcon || options.icon;
-          body = `${info.name}: ${preview}`;
+          options.subtitle = `from ${info.name}`;
+          body = preview;
         }
       } catch (err) {
         console.error('Failed to fetch sender info', err);
@@ -130,8 +130,8 @@ self.addEventListener('push', (event) => {
       }
     }
     notificationCount += 1;
-    if (navigator.setAppBadge) {
-      await navigator.setAppBadge(notificationCount).catch(() => {});
+    if (self.registration.setAppBadge) {
+      await self.registration.setAppBadge(notificationCount).catch(() => {});
     }
     await self.registration.showNotification(title, { ...options, body });
     broadcastBadgeCount();
@@ -147,8 +147,8 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   if (notificationCount > 0) {
     notificationCount = 0;
-    if (navigator.clearAppBadge) {
-      event.waitUntil(navigator.clearAppBadge().catch(() => {}));
+    if (self.registration.clearAppBadge) {
+      event.waitUntil(self.registration.clearAppBadge().catch(() => {}));
     }
     broadcastBadgeCount();
   }
