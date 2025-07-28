@@ -13,7 +13,10 @@ export default function ChatMessage({ message, info, isSelf, cacheStrategy = 'in
       parts.push(content.slice(last, m.index));
     }
     parts.push(
-      <strong key={`mention-${idx++}`} className="font-bold">
+      <strong
+        key={`mention-${idx++}`}
+        className="font-bold text-slate-900 underline decoration-1"
+      >
         <PlayerMini
           tag={m[1]}
           showTag={false}
