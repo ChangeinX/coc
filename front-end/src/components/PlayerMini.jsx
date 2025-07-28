@@ -7,6 +7,7 @@ export default function PlayerMini({
   player: preload,
   showTag = true,
   showLeague = true,
+  cacheStrategy = 'indexed',
 }) {
   const [player, setPlayer] = useState(preload || null);
 
@@ -43,6 +44,7 @@ export default function PlayerMini({
         <CachedImage
           key={player.tag}
           src={player.leagueIcon}
+          strategy={cacheStrategy}
           alt="league"
           className="w-4 h-4"
         />
