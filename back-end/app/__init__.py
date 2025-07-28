@@ -55,7 +55,7 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
         if not token:
             abort(401)
         try:
-            info = jwt.decode(token, signing_key, algorithms=["HS256"])
+            info = jwt.decode(token, signing_key, algorithms=["HS256", "HS384", "HS512"])
         except Exception as exc:
             logger.warning("Token verification failed: %s", exc)
             abort(401)
