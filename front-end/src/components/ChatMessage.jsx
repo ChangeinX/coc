@@ -13,12 +13,13 @@ export default function ChatMessage({ message, info, isSelf, cacheStrategy = 'in
       parts.push(content.slice(last, m.index));
     }
     parts.push(
-      <PlayerMini
-        key={`mention-${idx++}`}
-        tag={m[1]}
-        showTag={false}
-        cacheStrategy={cacheStrategy}
-      />
+      <strong key={`mention-${idx++}`} className="font-bold">
+        <PlayerMini
+          tag={m[1]}
+          showTag={false}
+          cacheStrategy={cacheStrategy}
+        />
+      </strong>
     );
     last = regex.lastIndex;
   }
