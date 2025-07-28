@@ -4,8 +4,13 @@ import '@testing-library/jest-dom';
 vi.mock('../hooks/useCachedIcon.js', () => ({
   default: (url) => url,
 }));
+vi.mock('../lib/api.js', () => ({
+  fetchJSONCached: vi.fn(),
+  API_URL: '',
+}));
 
 import ChatMessage from './ChatMessage.jsx';
+import { fetchJSONCached } from '../lib/api.js';
 
 const sample = { name: 'Alice', icon: 'http://ex/icon.png' };
 
@@ -53,5 +58,21 @@ describe('ChatMessage', () => {
     expect(handler).toHaveBeenCalledTimes(1);
     window.removeEventListener('open-friend-add', handler);
     vi.useRealTimers();
+  });
+
+  it('renders mentioned player from tag', async () => {
+    fetchJSONCached.mockResolvedValue({
+      name: 'Bob',
+      tag: '#TAG',
+      leagueIcon: 'http://ex/b.png',
+    });
+    render(
+      <ChatMessage
+        message={{ content: 'hi @{#TAG}', userId: '#A1B2C' }}
+        info={sample}
+      />,
+    );
+    expect(await screen.findByText('Bob')).toBeInTheDocument();
+    expect(fetchJSONCached).toHaveBeenCalledWith('/player/%23TAG');
   });
 });
