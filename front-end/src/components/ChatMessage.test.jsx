@@ -74,7 +74,10 @@ describe('ChatMessage', () => {
     );
     const mention = await screen.findByText('Bob');
     expect(mention).toBeInTheDocument();
-    expect(mention.closest('strong')).toBeInTheDocument();
+    const strong = mention.closest('strong');
+    expect(strong).toBeInTheDocument();
+    expect(strong).toHaveClass('text-slate-900');
+    expect(strong).toHaveClass('underline');
     expect(fetchJSONCached).toHaveBeenCalledWith('/player/%23TAG');
   });
 });
