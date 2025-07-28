@@ -78,4 +78,14 @@ class NotificationControllerAuthTest {
                 .content("{\"endpoint\":\"e\",\"p256dhKey\":\"k\",\"authKey\":\"a\"}"))
         .andExpect(status().isOk());
   }
+
+  @Test
+  void validCookieSucceeds() throws Exception {
+    mvc.perform(
+            post("/api/v1/notifications/subscribe")
+                .cookie(new jakarta.servlet.http.Cookie("sid", token("1")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"endpoint\":\"e\",\"p256dhKey\":\"k\",\"authKey\":\"a\"}"))
+        .andExpect(status().isOk());
+  }
 }
