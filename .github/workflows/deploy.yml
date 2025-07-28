@@ -3,9 +3,6 @@ name: Build and Deploy
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-    types: [closed]
 
 permissions:
   contents: read
@@ -31,7 +28,7 @@ env:
 
 jobs:
   detect:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       app_any_changed: ${{ steps.changes.outputs.app_any_changed }}
