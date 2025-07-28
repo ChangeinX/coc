@@ -22,7 +22,11 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
 
 
 
-    CORS(app, resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}})
+    CORS(
+        app,
+        resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}},
+        supports_credentials=True,
+    )
 
     db.init_app(app)
     cache.init_app(app)
