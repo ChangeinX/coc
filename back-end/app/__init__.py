@@ -44,6 +44,7 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
         if (
             request.method == "OPTIONS"
             or path.endswith("/health")
+            or path.endswith("/log")
             or path.startswith(asset_prefix)
         ):
             return

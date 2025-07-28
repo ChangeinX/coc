@@ -42,6 +42,19 @@ function urlBase64ToUint8Array(base64String) {
   return new Uint8Array([...raw].map((c) => c.charCodeAt(0)));
 }
 
+async function logError(message) {
+  try {
+    await fetch('/api/v1/log', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+  } catch (err) {
+    console.warn('Failed to send log', err);
+  }
+}
+
 self.addEventListener('message', (event) => {
   const msg = event.data;
   if (!msg) return;
@@ -55,6 +68,8 @@ self.addEventListener('message', (event) => {
     friendDetailCount = 0;
     if (self.registration.clearAppBadge) {
       self.registration.clearAppBadge().catch(() => {});
+    } else if (self.registration.clearClientBadge) {
+      self.registration.clearClientBadge().catch(() => {});
     }
     broadcastBadgeCount();
   } else if (msg.type === 'get-badge') {
@@ -101,16 +116,16 @@ self.addEventListener('push', (event) => {
     data = event.data.json();
   } catch (err) {
     console.error('Failed to parse push payload', err);
+    logError(`push parse failed: ${err}`);
   }
   console.log('Push event payload', data);
-  const fallbackTitle = 'Clan Boards';
+  const title = 'Clan Boards';
   const senderId = data.senderId;
   const preview = data.body || '';
   const url = data.url || '/';
   const tag = data.tag || 'chat';
   event.waitUntil(
     (async () => {
-      let title = fallbackTitle;
       let body = preview;
       const options = { data: { url }, tag };
       if (senderId) {
@@ -118,11 +133,11 @@ self.addEventListener('push', (event) => {
           const info = await getPlayerInfo(senderId);
           console.log('Fetched sender info', info);
           if (info) {
-            title = info.name;
-            options.subtitle = `from ${info.name}`;
+            body = `${info.name}: ${preview}`;
           }
         } catch (err) {
           console.error('Failed to fetch sender info', err);
+          logError(`sender fetch failed: ${err}`);
         }
       }
     const isFriendMessage = tag.startsWith('friend-');
@@ -137,6 +152,8 @@ self.addEventListener('push', (event) => {
     notificationCount += 1;
     if (self.registration.setAppBadge) {
       await self.registration.setAppBadge(notificationCount).catch(() => {});
+    } else if (self.registration.setClientBadge) {
+      await self.registration.setClientBadge(notificationCount).catch(() => {});
     }
     await self.registration.showNotification(title, { ...options, body });
     broadcastBadgeCount();
@@ -154,6 +171,8 @@ self.addEventListener('notificationclick', (event) => {
     notificationCount = 0;
     if (self.registration.clearAppBadge) {
       event.waitUntil(self.registration.clearAppBadge().catch(() => {}));
+    } else if (self.registration.clearClientBadge) {
+      event.waitUntil(self.registration.clearClientBadge().catch(() => {}));
     }
     broadcastBadgeCount();
   }
@@ -197,7 +216,10 @@ self.addEventListener('pushsubscriptionchange', (event) => {
           client.postMessage({ type: 'pushsubscriptionchange', subscription: sub });
         }
       })
-      .catch((err) => console.error('resubscribe failed', err))
+      .catch((err) => {
+        console.error('resubscribe failed', err);
+        logError(`resubscribe failed: ${err}`);
+      })
   );
 });
 
@@ -245,6 +267,7 @@ async function staleWhileRevalidate(request) {
     })
     .catch((err) => {
       console.error('Network request failed', err);
+      logError(`fetch failed: ${err}`);
       throw err;
     });
   if (cached) return cached;
