@@ -29,7 +29,7 @@ export default function MentionInput({ value, onChange, members = [], ...props }
   function select(member) {
     const before = value.slice(0, start);
     const after = value.slice(start + query.length + 1);
-    const insert = `@{${member.tag}}`;
+    const insert = `@${member.name}`;
     const newVal = `${before}${insert}${after}`;
     onChange(newVal);
     setShowList(false);
