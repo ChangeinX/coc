@@ -13,6 +13,9 @@ import { getTownHallIcon } from '../lib/townhall.js';
 import CachedImage from '../components/CachedImage.jsx';
 import PlayerMini from '../components/PlayerMini.jsx';
 import { Users, SearchX, TrendingUp, Trophy, Shield, ShieldOff } from 'lucide-react';
+import useClanInfo from '../hooks/useClanInfo.js';
+
+const CLAN_TTL = 5 * 60 * 1000; // 5 minutes
 
 const PlayerSheet = lazy(() => import('../components/PlayerSheet.jsx'));
 
@@ -58,6 +61,15 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width:640px)').matches);
     const [listHeight, setListHeight] = useState(() => Math.min(500, window.innerHeight - 200));
 
+    const cachedClan = useClanInfo(defaultTag);
+
+    useEffect(() => {
+        if (cachedClan && !clan) {
+            setClan(cachedClan);
+            if (onClanLoaded) onClanLoaded(cachedClan);
+        }
+    }, [cachedClan]);
+
     const sortedMembers = useMemo(() => {
         if (!sortField) return members;
         const getVal = (m) => {
@@ -93,11 +105,17 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     const load = async (clanTag) => {
         const cacheKey = `clan:${clanTag}`;
         const cached = await getClanCache(cacheKey);
+        const age = cached ? Date.now() - (cached.ts || 0) : Infinity;
         if (cached) {
             setClan(cached.clan);
             if (onClanLoaded) onClanLoaded(cached.clan);
             setMembers(cached.members);
             setTopRisk(cached.topRisk.slice(0, 5));
+            if (age < CLAN_TTL) {
+                setLoading(false);
+                setRefreshing(false);
+                return;
+            }
         } else {
             setLoading(true);
         }
@@ -131,7 +149,7 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
             setTopRisk(top);
             setError('');
             try {
-                await putClanCache({ key: cacheKey, clan: clanData, members: merged, topRisk: top });
+                await putClanCache({ key: cacheKey, clan: clanData, members: merged, topRisk: top, ts: Date.now() });
             } catch (err) {
                 console.error('Failed to cache clan', err);
             }

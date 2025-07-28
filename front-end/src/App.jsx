@@ -4,7 +4,8 @@ import { ArrowLeft } from 'lucide-react';
 import CachedImage from './components/CachedImage.jsx';
 import Loading from './components/Loading.jsx';
 import PlayerTagForm from './components/PlayerTagForm.jsx';
-import { fetchJSON } from './lib/api.js';
+import usePlayerInfo from './hooks/usePlayerInfo.js';
+import useClanInfo from './hooks/useClanInfo.js';
 import { useAuth } from './hooks/useAuth.jsx';
 import useFeatures from './hooks/useFeatures.js';
 import BottomNav from './components/BottomNav.jsx';
@@ -57,6 +58,9 @@ export default function App() {
   const chatAllowed = hasFeature('chat');
   const menuRef = React.useRef(null);
 
+  const playerInfo = usePlayerInfo(playerTag);
+  const cachedClan = useClanInfo(clanTag);
+
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     function handler(event) {
@@ -85,64 +89,37 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    const updateFromUser = async () => {
-      if (!user) {
-        setPlayerTag(null);
-        setVerified(false);
-        setNumericId(null);
-        setClanTag(null);
-        setHomeClanTag(null);
-        return;
-      }
-      setLoadingUser(true);
-      setPlayerTag(user.player_tag);
-      setVerified(user.verified);
-      setUserId(user.sub);
-      setNumericId(user.id);
-      if (user.player_tag) {
-        try {
-          const player = await fetchJSON(`/player/${encodeURIComponent(user.player_tag)}`);
-          if (player.clanTag) {
-            setClanTag(player.clanTag);
-            setHomeClanTag(player.clanTag);
-          }
-        } catch (err) {
-          console.error('Failed to load clan', err);
-        }
-      }
+    if (!user) {
+      setPlayerTag(null);
+      setVerified(false);
+      setNumericId(null);
+      setClanTag(null);
+      setHomeClanTag(null);
       setLoadingUser(false);
-    };
-    updateFromUser();
+      return;
+    }
+    setLoadingUser(true);
+    setPlayerTag(user.player_tag);
+    setVerified(user.verified);
+    setUserId(user.sub);
+    setNumericId(user.id);
+    setLoadingUser(false);
   }, [user]);
 
   useEffect(() => {
-    const loadClan = async () => {
-      if (!playerTag) return;
-      try {
-        const player = await fetchJSON(`/player/${encodeURIComponent(playerTag)}`);
-        if (player.clanTag) {
-          setClanTag(player.clanTag);
-          if (!homeClanTag) setHomeClanTag(player.clanTag);
-        }
-      } catch (err) {
-        console.error('Failed to load clan', err);
-      }
-    };
-    loadClan();
+    if (playerTag) setLoadingUser(false);
   }, [playerTag]);
 
   useEffect(() => {
-    const loadInfo = async () => {
-      if (!clanTag) return;
-      try {
-        const data = await fetchJSON(`/clan/${encodeURIComponent(clanTag)}`);
-        setClanInfo(data);
-      } catch (err) {
-        console.error('Failed to load clan info', err);
-      }
-    };
-    loadInfo();
-  }, [clanTag]);
+    if (playerInfo && playerInfo.clanTag) {
+      setClanTag(playerInfo.clanTag);
+      if (!homeClanTag) setHomeClanTag(playerInfo.clanTag);
+    }
+  }, [playerInfo]);
+
+  useEffect(() => {
+    if (cachedClan) setClanInfo(cachedClan);
+  }, [cachedClan]);
 
 
 
