@@ -5,9 +5,6 @@ console.log('Service Worker', SW_VERSION);
 const API_TTL = 60 * 1000; // 1 minute
 const ASSET_TTL = 30 * 60 * 1000; // 30 minutes
 
-// cache player info fetched during push handling
-const PLAYER_CACHE = 'player-info-cache-v1';
-const PLAYER_TTL = 6 * 60 * 60 * 1000; // 6 hours
 
 let notificationCount = 0;
 // track how many detailed friend message notifications were shown
@@ -81,34 +78,6 @@ self.addEventListener('message', (event) => {
   }
 });
 
-async function getPlayerInfo(userId) {
-  const cache = await caches.open(PLAYER_CACHE);
-  const url = `/api/v1/player/by-user/${encodeURIComponent(userId)}`;
-  const req = new Request(url);
-  let resp = await cache.match(req);
-  if (resp) {
-    const ts = parseInt(resp.headers.get('sw-cache-time') || '0', 10);
-    if (Date.now() - ts <= PLAYER_TTL) {
-      try {
-        return await resp.clone().json();
-      } catch (err) {
-        await cache.delete(req);
-      }
-    } else {
-      await cache.delete(req);
-    }
-  }
-  const net = await fetch(url, { credentials: 'include' }).catch(() => null);
-  if (net && net.ok) {
-    const cloned = net.clone();
-    const headers = new Headers(cloned.headers);
-    headers.set('sw-cache-time', Date.now().toString());
-    const body = await cloned.blob();
-    cache.put(req, new Response(body, { status: cloned.status, statusText: cloned.statusText, headers }));
-    return net.json();
-  }
-  return null;
-}
 
 self.addEventListener('push', (event) => {
   let data = {};
@@ -119,7 +88,8 @@ self.addEventListener('push', (event) => {
     logError(`push parse failed: ${err}`);
   }
   console.log('Push event payload', data);
-  const title = 'Clan Boards';
+  const name = data.name;
+  const title = name || 'Clan Boards';
   const senderId = data.senderId;
   const preview = data.body || '';
   const url = data.url || '/';
@@ -128,18 +98,6 @@ self.addEventListener('push', (event) => {
     (async () => {
       let body = preview;
       const options = { data: { url }, tag };
-      if (senderId) {
-        try {
-          const info = await getPlayerInfo(senderId);
-          console.log('Fetched sender info', info);
-          if (info) {
-            body = `${info.name}: ${preview}`;
-          }
-        } catch (err) {
-          console.error('Failed to fetch sender info', err);
-          logError(`sender fetch failed: ${err}`);
-        }
-      }
     const isFriendMessage = tag.startsWith('friend-');
     if (isFriendMessage) {
       friendDetailCount += 1;
