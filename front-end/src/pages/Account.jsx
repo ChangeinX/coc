@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../hooks/useAuth.jsx';
 import { Info } from 'lucide-react';
 import { fetchJSON } from '../lib/api.js';
 import Loading from '../components/Loading.jsx';
@@ -7,6 +8,7 @@ import ChatBadge from '../components/ChatBadge.jsx';
 import RiskPrioritySelect from '../components/RiskPrioritySelect.jsx';
 
 export default function Account({ onVerified }) {
+  const { logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [token, setToken] = useState('');
@@ -148,8 +150,9 @@ export default function Account({ onVerified }) {
       </button>
       <button
         type="button"
-        onClick={() => {
+        onClick={async () => {
           window.google?.accounts.id.disableAutoSelect();
+          await logout();
           localStorage.removeItem('token');
           window.location.hash = '#/';
           window.location.reload();
