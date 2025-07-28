@@ -49,6 +49,20 @@ export default function ChatPanel({
   const containerRef = useRef(null);
 
   useEffect(() => {
+    if (
+      'serviceWorker' in navigator &&
+      tab === 'Friends' &&
+      directChatId
+    ) {
+      navigator.serviceWorker.ready
+        .then((reg) => {
+          reg.active?.postMessage({ type: 'clear-badge' });
+        })
+        .catch(() => {});
+    }
+  }, [tab, directChatId]);
+
+  useEffect(() => {
     const handler = (e) => {
       if (e.detail) {
         setDirectChatId(e.detail);

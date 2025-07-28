@@ -1,6 +1,8 @@
 package com.clanboards.notifications.service;
 
+import com.clanboards.notifications.repository.PlayerRepository;
 import com.clanboards.notifications.repository.UserRepository;
+import com.clanboards.notifications.repository.entity.Player;
 import com.clanboards.notifications.repository.entity.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -22,13 +24,18 @@ public class SqsListener {
   private final SqsClient sqsClient = SqsClient.create();
   private final NotificationService notificationService;
   private final UserRepository userRepository;
+  private final PlayerRepository playerRepository;
   private final ObjectMapper mapper = new ObjectMapper();
   private final String queueUrl = System.getenv("OUTBOX_QUEUE_URL");
   private final String dlqUrl = System.getenv("OUTBOX_DLQ_URL");
 
-  public SqsListener(NotificationService notificationService, UserRepository userRepository) {
+  public SqsListener(
+      NotificationService notificationService,
+      UserRepository userRepository,
+      PlayerRepository playerRepository) {
     this.notificationService = notificationService;
     this.userRepository = userRepository;
+    this.playerRepository = playerRepository;
   }
 
   @PostConstruct
@@ -69,14 +76,28 @@ public class SqsListener {
           if (node.has("senderId")) {
             String senderId = node.get("senderId").asText();
             var map = new HashMap<String, String>();
-            // Include senderId so the service worker can fetch profile info.
             map.put("senderId", senderId);
-            // Put the message text in the body field used by the service worker.
             map.put("body", payload);
             map.put("url", "/chat?user=" + senderId);
             map.put("tag", "friend-" + senderId);
-            // Do not include a title field to avoid browsers displaying a
-            // default notification before the service worker handles the push.
+
+            try {
+              Long sid = Long.parseLong(senderId);
+              userRepository
+                  .findById(sid)
+                  .map(User::getPlayerTag)
+                  .flatMap(tag -> playerRepository.findById(tag.replace("#", "")))
+                  .map(Player::getName)
+                  .ifPresent(name -> map.put("name", name));
+            } catch (NumberFormatException ex) {
+              userRepository
+                  .findBySub(senderId)
+                  .map(User::getPlayerTag)
+                  .flatMap(tag -> playerRepository.findById(tag.replace("#", "")))
+                  .map(Player::getName)
+                  .ifPresent(name -> map.put("name", name));
+            }
+
             payload = mapper.writeValueAsString(map);
           }
           if (userId != null) {
