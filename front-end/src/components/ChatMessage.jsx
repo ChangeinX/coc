@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import PlayerMini from './PlayerMini.jsx';
 
-export default function ChatMessage({ message, info, isSelf }) {
+export default function ChatMessage({ message, info, isSelf, cacheStrategy = 'indexed' }) {
   const { content } = message;
   const senderTag = message.senderId?.startsWith('#')
     ? message.senderId
@@ -51,6 +51,7 @@ export default function ChatMessage({ message, info, isSelf }) {
             <PlayerMini
               player={{ name: info.name, tag: senderTag, leagueIcon: info.icon }}
               showTag={false}
+              cacheStrategy={cacheStrategy}
             />
           </div>
         )}

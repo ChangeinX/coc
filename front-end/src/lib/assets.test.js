@@ -47,4 +47,21 @@ describe('fetchCachedIcon', () => {
     expect(typeof cached.blob.size).toBe('number');
   });
 
+  it('supports memory caching strategy', async () => {
+    const url = 'https://api-assets.clashofclans.com/mem.png';
+    const proxied = `${API_URL}/api/v1/assets?url=${encodeURIComponent(url)}`;
+    const blob = new Blob(['img'], { type: 'image/png' });
+    const fetchMock = vi.fn().mockResolvedValue(new Response(blob, { status: 200 }));
+    global.fetch = fetchMock;
+
+    const data1 = await fetchCachedIcon(url, 'memory');
+    expect(fetchMock).toHaveBeenCalledWith(proxied);
+    expect(typeof data1.size).toBe('number');
+
+    fetchMock.mockClear();
+    const data2 = await fetchCachedIcon(url, 'memory');
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(typeof data2.size).toBe('number');
+  });
+
 });
