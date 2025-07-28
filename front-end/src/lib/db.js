@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 
-const dbPromise = openDB('coc-cache', 6, {
+const dbPromise = openDB('coc-cache', 7, {
   upgrade(db, oldVersion, newVersion, transaction) {
     if (oldVersion < 1) {
       db.createObjectStore('api', { keyPath: 'path' });
@@ -21,6 +21,9 @@ const dbPromise = openDB('coc-cache', 6, {
     if (oldVersion < 6) {
       db.createObjectStore('messages', { keyPath: 'chatId' });
     }
+    if (oldVersion < 7) {
+      db.createObjectStore('players', { keyPath: 'key' });
+    }
   },
 });
 
@@ -38,6 +41,14 @@ export async function getClanCache(key) {
 
 export async function putClanCache(record) {
   return (await dbPromise).put('clans', record);
+}
+
+export async function getPlayerCache(key) {
+  return (await dbPromise).get('players', key);
+}
+
+export async function putPlayerCache(record) {
+  return (await dbPromise).put('players', record);
 }
 
 export async function getIconCache(url) {
