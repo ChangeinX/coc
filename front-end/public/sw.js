@@ -1,5 +1,7 @@
 const CACHE_NAME = 'api-cache-v1';
 const VAPID_PUBLIC_KEY = '';
+const SW_VERSION = '';
+console.log('Service Worker', SW_VERSION);
 const API_TTL = 60 * 1000; // 1 minute
 const ASSET_TTL = 30 * 60 * 1000; // 30 minutes
 
@@ -101,25 +103,27 @@ self.addEventListener('push', (event) => {
     console.error('Failed to parse push payload', err);
   }
   console.log('Push event payload', data);
-  const title = 'Clan Boards';
+  const fallbackTitle = 'Clan Boards';
   const senderId = data.senderId;
   const preview = data.body || '';
   const url = data.url || '/';
   const tag = data.tag || 'chat';
-  const promise = (async () => {
-    let body = preview;
-    const options = { data: { url }, tag };
-    if (senderId) {
-      try {
-        const info = await getPlayerInfo(senderId);
-        if (info) {
-          options.subtitle = `from ${info.name}`;
-          body = preview;
+  event.waitUntil(
+    (async () => {
+      let title = fallbackTitle;
+      let body = preview;
+      const options = { data: { url }, tag };
+      if (senderId) {
+        try {
+          const info = await getPlayerInfo(senderId);
+          if (info) {
+            title = info.name;
+            options.subtitle = `from ${info.name}`;
+          }
+        } catch (err) {
+          console.error('Failed to fetch sender info', err);
         }
-      } catch (err) {
-        console.error('Failed to fetch sender info', err);
       }
-    }
     const isFriendMessage = tag.startsWith('friend-');
     if (isFriendMessage) {
       friendDetailCount += 1;
@@ -136,11 +140,11 @@ self.addEventListener('push', (event) => {
     await self.registration.showNotification(title, { ...options, body });
     broadcastBadgeCount();
     const clients = await self.clients.matchAll({ includeUncontrolled: true });
-    for (const client of clients) {
-      client.postMessage({ type: 'refresh' });
-    }
-  })();
-  event.waitUntil(promise);
+      for (const client of clients) {
+        client.postMessage({ type: 'refresh' });
+      }
+    })()
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
