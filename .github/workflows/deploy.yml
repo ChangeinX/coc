@@ -132,14 +132,16 @@ jobs:
         run: |
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-      - name: Cache Maven dependencies (messages service only)
-        if: matrix.service == 'messages'
+      - name: Cache Gradle dependencies
+        if: matrix.service != 'worker'
         uses: actions/cache@v4
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-${{ hashFiles('messages-java/pom.xml') }}
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ matrix.service }}-${{ hashFiles('**/*.gradle*', '**/gradle.properties') }}
           restore-keys: |
-            ${{ runner.os }}-m2-
+            ${{ runner.os }}-gradle-${{ matrix.service }}-
 
       - name: Build & push ${{ matrix.service }} image
         env:
