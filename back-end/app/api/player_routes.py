@@ -1,3 +1,4 @@
+import logging
 from flask import Blueprint, jsonify, abort
 from coclib.services.player_service import get_player_snapshot
 from coclib.services.loyalty_service import get_player_loyalty
@@ -6,6 +7,7 @@ from ..services.risk_service import get_history, score_breakdown
 from . import API_PREFIX
 
 bp = Blueprint("player", __name__, url_prefix=f"{API_PREFIX}/player")
+logger = logging.getLogger(__name__)
 
 
 async def _build_profile(tag: str) -> dict | None:
@@ -32,6 +34,7 @@ async def player_profile(tag: str):
 
 @bp.get("/by-user/<string:sub>")
 async def player_profile_by_user(sub: str):
+    logger.info("Fetching player profile for user: %s", sub)
     user = User.query.filter_by(sub=sub).one_or_none()
     if user is None or not user.player_tag:
         abort(404)
