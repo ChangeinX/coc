@@ -21,9 +21,23 @@ public class AuthInterceptor implements WebGraphQlInterceptor {
 
   @Override
   public Mono<WebGraphQlResponse> intercept(WebGraphQlRequest request, Chain chain) {
+    String token = null;
     String auth = request.getHeaders().getFirst("Authorization");
     if (auth != null && auth.startsWith("Bearer ")) {
-      String token = auth.substring(7);
+      token = auth.substring(7);
+    } else {
+      String cookie = request.getHeaders().getFirst("Cookie");
+      if (cookie != null) {
+        for (String part : cookie.split(";")) {
+          String trimmed = part.trim();
+          if (trimmed.startsWith("sid=")) {
+            token = trimmed.substring(4);
+            break;
+          }
+        }
+      }
+    }
+    if (token != null) {
       try {
         Claims claims =
             Jwts.parserBuilder()
