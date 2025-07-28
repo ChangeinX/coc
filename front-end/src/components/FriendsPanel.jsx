@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { LayoutList, LayoutGrid } from 'lucide-react';
 import { FixedSizeList as List } from 'react-window';
 import BottomSheet from './BottomSheet.jsx';
 import FriendThread from './FriendThread.jsx';
 import SkeletonThread from './SkeletonThread.jsx';
 import PlayerMini from './PlayerMini.jsx';
-import PlayerAvatar from './PlayerAvatar.jsx';
 import Loading from './Loading.jsx';
 import { fetchJSONCached, fetchJSON } from '../lib/api.js';
 import { graphqlRequest } from '../lib/gql.js';
@@ -16,9 +14,6 @@ export default function FriendsPanel({ onSelectChat }) {
   const [sub, setSub] = useState('');
   const [selected, setSelected] = useState(null);
   const [showReqs, setShowReqs] = useState(false);
-  const [view, setView] = useState(() =>
-    localStorage.getItem('friends-view') || 'stack',
-  );
   const listRef = useRef(null);
   const [visible, setVisible] = useState(false);
   const [previews, setPreviews] = useState({});
@@ -174,19 +169,16 @@ export default function FriendsPanel({ onSelectChat }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-2 border-b">
+      <div className="flex items-center p-2 border-b">
         <h4 className="font-medium flex items-center gap-2">
           Friends
           <button
-            aria-label={view === 'row' ? 'Switch to stacked view' : 'Switch to row view'}
-            className="text-blue-600"
+            className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"
             onClick={() => {
-              const next = view === 'row' ? 'stack' : 'row';
-              setView(next);
-              localStorage.setItem('friends-view', next);
+              window.dispatchEvent(new CustomEvent('open-friend-add'));
             }}
           >
-            {view === 'row' ? <LayoutList className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+            +
           </button>
           {requests && requests.length > 0 && (
             <button
@@ -197,16 +189,6 @@ export default function FriendsPanel({ onSelectChat }) {
             </button>
           )}
         </h4>
-        <div className="flex items-center gap-2">
-          <button
-            className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent('open-friend-add'));
-            }}
-          >
-            +
-          </button>
-        </div>
       </div>
       <div className="friends-wrapper flex-1" ref={listRef}>
         {friends === null && <div className="p-4"><Loading size={24} /></div>}
@@ -252,11 +234,7 @@ export default function FriendsPanel({ onSelectChat }) {
             )
           ) : (
             <ul
-              className={`friends-list ${
-                view === 'row'
-                  ? 'flex gap-4 px-0 overflow-x-auto scroller'
-                  : 'py-2 overflow-y-auto'
-              }`}
+              className="friends-list py-2 overflow-y-auto"
               data-testid="friends-container"
             >
               {friends.map((f) => (
