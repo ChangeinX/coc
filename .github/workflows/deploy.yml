@@ -151,7 +151,7 @@ jobs:
           case "$SERVICE" in
             worker)
               DOCKERFILE=back-end/Dockerfile
-              CONTEXT=back-end
+              CONTEXT=.
               REPOSITORY=$WORKER_REPOSITORY
               SERVICE_NAME=$WORKER_SERVICE
               CHANGED=${{ needs.detect.outputs.worker_any_changed }}
