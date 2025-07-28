@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,9 +29,19 @@ public class AuthFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
     String auth = request.getHeader("Authorization");
-    HttpServletRequest req = request;
+    String token = null;
     if (auth != null && auth.startsWith("Bearer ")) {
-      String token = auth.substring(7);
+      token = auth.substring(7);
+    } else if (request.getCookies() != null) {
+      for (Cookie c : request.getCookies()) {
+        if ("sid".equals(c.getName())) {
+          token = c.getValue();
+          break;
+        }
+      }
+    }
+    HttpServletRequest req = request;
+    if (token != null) {
       try {
         Claims claims =
             Jwts.parserBuilder()
