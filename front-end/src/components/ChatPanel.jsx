@@ -8,6 +8,8 @@ import ChatMessage from './ChatMessage.jsx';
 import Loading from './Loading.jsx';
 import FriendsPanel from './FriendsPanel.jsx';
 import AddFriendDialog from './AddFriendDialog.jsx';
+import MentionInput from './MentionInput.jsx';
+import useClanMembers from '../hooks/useClanMembers.js';
 
 export default function ChatPanel({
   chatId = null,
@@ -47,6 +49,7 @@ export default function ChatPanel({
   const [loadingMore, setLoadingMore] = useState(false);
   const endRef = useRef(null);
   const containerRef = useRef(null);
+  const clanMembers = useClanMembers(tab === 'Clan' ? chatId : null);
 
   useEffect(() => {
     if (
@@ -251,10 +254,10 @@ useEffect(() => {
         </div>
         {(tab !== 'Friends' || directChatId) && !(tab === 'Clan' && !chatId) && (
           <form onSubmit={handleSubmit} className="flex gap-2 p-2 border-t">
-            <input
-              className="flex-1 border rounded px-2 py-1"
+            <MentionInput
+              members={clanMembers.map((m) => ({ name: m.name, tag: m.tag }))}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={setText}
               placeholder="Type a message…"
             />
             <button
