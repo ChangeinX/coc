@@ -116,6 +116,7 @@ self.addEventListener('push', (event) => {
       if (senderId) {
         try {
           const info = await getPlayerInfo(senderId);
+          console.log('Fetched sender info', info);
           if (info) {
             title = info.name;
             options.subtitle = `from ${info.name}`;
