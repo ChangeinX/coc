@@ -3,12 +3,12 @@
   "short_name": "Clan Boards",
   "icons": [
     {
-      "src": "/src/assets/AppIcons/Assets.xcassets/AppIcon.appiconset/196.png",
+      "src": "/icons/196.png",
       "sizes": "196x196",
       "type": "image/png"
     },
     {
-      "src": "/src/assets/AppIcons/Assets.xcassets/AppIcon.appiconset/512.png",
+      "src": "/icons/512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
