@@ -226,6 +226,7 @@ useEffect(() => {
                       message={m}
                       info={infoMap[sender]}
                       isSelf={sender === userId}
+                      cacheStrategy={tab === 'Global' ? 'memory' : 'indexed'}
                     />
                   );
                 })
