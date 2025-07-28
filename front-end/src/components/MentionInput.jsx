@@ -51,7 +51,7 @@ export default function MentionInput({ value, onChange, members = [], ...props }
         {...props}
       />
       {showList && filtered.length > 0 && (
-        <ul className="absolute z-10 bg-white border rounded shadow mt-1 w-full max-h-40 overflow-auto">
+        <ul className="absolute bottom-full mb-1 z-10 bg-white border rounded shadow w-full max-h-40 overflow-auto">
           {filtered.map((m) => (
             <li
               key={m.tag}
