@@ -110,20 +110,19 @@ self.addEventListener('push', (event) => {
   const tag = data.tag || 'chat';
   event.waitUntil(
     (async () => {
-      let title = fallbackTitle;
-      let body = preview;
-      const options = { data: { url }, tag };
-      if (senderId) {
-        try {
-          const info = await getPlayerInfo(senderId);
-          if (info) {
-            title = info.name;
-            options.subtitle = `from ${info.name}`;
-          }
-        } catch (err) {
-          console.error('Failed to fetch sender info', err);
+    let title = fallbackTitle;
+    let body = preview;
+    const options = { data: { url }, tag, subtitle: '' };
+    if (senderId) {
+      try {
+        const info = await getPlayerInfo(senderId);
+        if (info) {
+          body = `${info.name} ${preview}`.trim();
         }
+      } catch (err) {
+        console.error('Failed to fetch sender info', err);
       }
+    }
     const isFriendMessage = tag.startsWith('friend-');
     if (isFriendMessage) {
       friendDetailCount += 1;
