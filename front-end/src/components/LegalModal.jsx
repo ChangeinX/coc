@@ -1,6 +1,16 @@
 import React from 'react';
+import { fetchJSON } from '../lib/api.js';
 
 export default function LegalModal({ onClose }) {
+  async function accept() {
+    try {
+      await fetchJSON('/user/legal', { method: 'POST' });
+    } catch (err) {
+      console.error('Failed to accept legal', err);
+    }
+    onClose();
+  }
+
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose}></div>
@@ -16,7 +26,7 @@ export default function LegalModal({ onClose }) {
             <li><a href="#" className="text-blue-600 hover:underline">Privacy Policy</a></li>
             <li><a href="#" className="text-blue-600 hover:underline">Terms of Service</a></li>
           </ul>
-          <button className="mt-2 px-4 py-2 bg-blue-600 text-white rounded" onClick={onClose}>Accept</button>
+          <button className="mt-2 px-4 py-2 bg-blue-600 text-white rounded" onClick={accept}>Accept</button>
         </div>
       </div>
     </>
