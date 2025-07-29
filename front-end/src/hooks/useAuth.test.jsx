@@ -22,19 +22,7 @@ describe('AuthProvider', () => {
     vi.clearAllMocks();
   });
 
-  it('skips user check when no session cookie', async () => {
-    document.cookie = '';
-    render(
-      <AuthProvider>
-        <Status />
-      </AuthProvider>
-    );
-    await screen.findByText('done');
-    expect(fetchJSON).not.toHaveBeenCalled();
-  });
-
-  it('calls /user/me when session cookie present', async () => {
-    document.cookie = 'sid=abc';
+  it('checks current user on mount', async () => {
     render(
       <AuthProvider>
         <Status />
