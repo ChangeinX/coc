@@ -143,3 +143,16 @@ def accept_legal():
     db.session.add(rec)
     db.session.commit()
     return jsonify({"status": "ok"})
+
+
+@bp.get("/disclaimer")
+def get_disclaimer():
+    return jsonify({"seen": g.user.seen_supercell_disclaimer})
+
+
+@bp.post("/disclaimer")
+def accept_disclaimer():
+    g.user.seen_supercell_disclaimer = True
+    db.session.add(g.user)
+    db.session.commit()
+    return jsonify({"status": "ok"})
