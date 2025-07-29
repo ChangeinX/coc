@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, g, abort
+from flask import Blueprint, jsonify, request, g, abort, current_app
 from coclib.extensions import db
 from coclib.utils import normalize_tag
 from coclib.models import UserProfile, FeatureFlag, Legal
@@ -120,8 +120,9 @@ def update_features():
 
 @bp.get("/legal")
 def get_legal():
+    version = current_app.config.get("LEGAL_VERSION")
     record = (
-        Legal.query.filter_by(user_id=g.user.id)
+        Legal.query.filter_by(user_id=g.user.id, version=version)
         .order_by(Legal.created_at.desc())
         .first()
     )
@@ -130,7 +131,8 @@ def get_legal():
 
 @bp.post("/legal")
 def accept_legal():
-    rec = Legal(user_id=g.user.id, accepted=True)
+    version = current_app.config.get("LEGAL_VERSION")
+    rec = Legal(user_id=g.user.id, accepted=True, version=version)
     db.session.add(rec)
     db.session.commit()
     return jsonify({"status": "ok"})

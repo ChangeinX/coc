@@ -12,6 +12,10 @@ if (import.meta.env.VITE_COMMIT_HASH) {
   console.log('Build commit:', import.meta.env.VITE_COMMIT_HASH);
 }
 
+if (import.meta.env.VITE_LEGAL_VERSION) {
+  window.__LEGAL_VERSION = import.meta.env.VITE_LEGAL_VERSION;
+}
+
 checkForStaleBuild();
 detectBlankPage();
 
