@@ -49,8 +49,6 @@ class Config:
     COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN", "")
     COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true").lower() == "true"
 
-    LEGAL_VERSION = os.getenv("LEGAL_VERSION", "20250729")
-
 
 
 
