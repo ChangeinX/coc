@@ -40,7 +40,7 @@ class Config:
 
     CORS_ORIGINS = os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:5173,https://dev.clan-boards.com,https://api.dev.clan-boards.com",
+        "http://localhost:5173,https://app.dev.clan-boards.com,https://api.dev.clan-boards.com",
     ).split(",")
 
     JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY", "change-me")
