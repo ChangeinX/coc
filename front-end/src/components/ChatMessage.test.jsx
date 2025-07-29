@@ -80,4 +80,17 @@ describe('ChatMessage', () => {
     expect(strong).toHaveClass('underline');
     expect(fetchJSONCached).toHaveBeenCalledWith('/player/%23TAG');
   });
+
+  it('renders mention by player name', () => {
+    render(
+      <ChatMessage
+        message={{ content: 'hi @Alice', userId: '#A1B2C' }}
+        info={sample}
+      />,
+    );
+    const mention = screen.getByText('@Alice');
+    const strong = mention.closest('strong');
+    expect(strong).toBeInTheDocument();
+    expect(strong).toHaveClass('underline');
+  });
 });

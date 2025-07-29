@@ -4,7 +4,7 @@ import PlayerMini from './PlayerMini.jsx';
 export default function ChatMessage({ message, info, isSelf, cacheStrategy = 'indexed' }) {
   const { content } = message;
   const parts = [];
-  const regex = /@\{(#[^}]+)\}/g;
+  const regex = /@(?:\{(#[^}]+)\}|(\w+))/g;
   let last = 0;
   let m;
   let idx = 0;
@@ -12,18 +12,29 @@ export default function ChatMessage({ message, info, isSelf, cacheStrategy = 'in
     if (m.index > last) {
       parts.push(content.slice(last, m.index));
     }
-    parts.push(
-      <strong
-        key={`mention-${idx++}`}
-        className="font-bold text-slate-900 underline decoration-1"
-      >
-        <PlayerMini
-          tag={m[1]}
-          showTag={false}
-          cacheStrategy={cacheStrategy}
-        />
-      </strong>
-    );
+    if (m[1]) {
+      parts.push(
+        <strong
+          key={`mention-${idx++}`}
+          className="font-bold text-slate-900 underline decoration-1"
+        >
+          <PlayerMini
+            tag={m[1]}
+            showTag={false}
+            cacheStrategy={cacheStrategy}
+          />
+        </strong>
+      );
+    } else if (m[2]) {
+      parts.push(
+        <strong
+          key={`mention-${idx++}`}
+          className="font-bold text-slate-900 underline decoration-1"
+        >
+          @{m[2]}
+        </strong>
+      );
+    }
     last = regex.lastIndex;
   }
   if (last < content.length) {
