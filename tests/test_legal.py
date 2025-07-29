@@ -79,3 +79,18 @@ def test_requires_accept_on_version_change(monkeypatch):
     data = resp.get_json()
     assert data["accepted"] is False
     assert data["version"] == "20250728"
+
+
+def test_disclaimer_endpoints(monkeypatch):
+    app = setup_app(monkeypatch)
+    client: FlaskClient = app.test_client()
+    hdrs = {"Authorization": "Bearer t"}
+
+    resp = client.get("/api/v1/user/disclaimer", headers=hdrs)
+    assert resp.get_json()["seen"] is False
+
+    resp = client.post("/api/v1/user/disclaimer", headers=hdrs)
+    assert resp.status_code == 200
+
+    resp = client.get("/api/v1/user/disclaimer", headers=hdrs)
+    assert resp.get_json()["seen"] is True

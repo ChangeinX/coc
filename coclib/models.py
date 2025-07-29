@@ -103,6 +103,7 @@ class User(db.Model):
     name = db.Column(db.String(255))
     player_tag = db.Column(db.String(15), index=True)
     is_verified = db.Column(db.Boolean, nullable=False, default=False)
+    seen_supercell_disclaimer = db.Column(db.Boolean, nullable=False, default=False)
 
 
 class UserProfile(db.Model):

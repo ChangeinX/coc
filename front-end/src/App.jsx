@@ -11,10 +11,12 @@ import useFeatures from './hooks/useFeatures.js';
 import BottomNav from './components/BottomNav.jsx';
 import DesktopNav from './components/DesktopNav.jsx';
 import NotificationBanner from './components/NotificationBanner.jsx';
+import { fetchJSON } from './lib/api.js';
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
 const LegalModal = lazy(() => import('./components/LegalModal.jsx'));
+const DisclaimerModal = lazy(() => import('./components/DisclaimerModal.jsx'));
 const DashboardPage = lazy(() => import('./pages/Dashboard.jsx'));
 const ChatPage = lazy(() => import('./pages/ChatPage.jsx'));
 const ScoutPage = lazy(() => import('./pages/Scout.jsx'));
@@ -51,6 +53,7 @@ export default function App() {
   const [clanInfo, setClanInfo] = useState(null);
   const [showClanInfo, setShowClanInfo] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [loadingUser, setLoadingUser] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [badgeCount, setBadgeCount] = useState(0);
@@ -71,6 +74,18 @@ export default function App() {
       }
     }
     check();
+  }, []);
+
+  useEffect(() => {
+    async function checkDisc() {
+      try {
+        const res = await fetchJSON('/user/disclaimer');
+        if (!res.seen) setShowDisclaimer(true);
+      } catch (err) {
+        console.error('Failed to check disclaimer', err);
+      }
+    }
+    checkDisc();
   }, []);
 
   const playerInfo = usePlayerInfo(playerTag);
@@ -262,12 +277,21 @@ export default function App() {
           <ClanModal clan={clanInfo} onClose={() => setShowClanInfo(false)} />
         </Suspense>
       )}
+      {showDisclaimer && (
+        <Suspense fallback={<Loading className="h-screen" />}>
+          <DisclaimerModal onClose={() => setShowDisclaimer(false)} />
+        </Suspense>
+      )}
       {showLegal && (
         <Suspense fallback={<Loading className="h-screen" />}>
           <LegalModal
-            onClose={() => {
+            onAccept={() => {
               localStorage.setItem('tosAcceptedVersion', window.__LEGAL_VERSION__);
               setShowLegal(false);
+            }}
+            onDiscard={() => {
+              setShowLegal(false);
+              logout();
             }}
           />
         </Suspense>
