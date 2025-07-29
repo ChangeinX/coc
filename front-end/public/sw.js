@@ -185,8 +185,30 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
     event.respondWith(staleWhileRevalidate(event.request));
+    return;
+  }
+
+  const isDoc =
+    url.origin === self.location.origin &&
+    (url.pathname === '/privacy' || url.pathname.startsWith('/cookies-'));
+
+  if (isDoc) {
+    const req =
+      url.pathname === '/privacy'
+        ? new Request('/cookies-20250729.html')
+        : event.request;
+    event.respondWith(cacheFirst(req));
   }
 });
+
+async function cacheFirst(request) {
+  const cache = await caches.open('doc-cache-v1');
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  cache.put(request, response.clone());
+  return response;
+}
 
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);

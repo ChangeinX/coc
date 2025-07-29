@@ -2,6 +2,12 @@ import React from 'react';
 import { fetchJSON } from '../lib/api.js';
 
 export default function LegalModal({ onClose }) {
+  React.useEffect(() => {
+    if (window.__LEGAL_VERSION) {
+      console.log('Legal version:', window.__LEGAL_VERSION);
+    }
+  }, []);
+
   async function accept() {
     try {
       await fetchJSON('/user/legal', { method: 'POST' });
