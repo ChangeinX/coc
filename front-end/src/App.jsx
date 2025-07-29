@@ -15,8 +15,8 @@ import { fetchJSON } from './lib/api.js';
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
-const LegalModal = lazy(() => import('./components/LegalModal.jsx'));
-const DisclaimerModal = lazy(() => import('./components/DisclaimerModal.jsx'));
+import LegalModal from './components/LegalModal.jsx';
+import DisclaimerModal from './components/DisclaimerModal.jsx';
 const DashboardPage = lazy(() => import('./pages/Dashboard.jsx'));
 const ChatPage = lazy(() => import('./pages/ChatPage.jsx'));
 const ScoutPage = lazy(() => import('./pages/Scout.jsx'));
@@ -67,8 +67,10 @@ export default function App() {
       try {
         const res = await fetchJSON('/user/legal');
         const accepted = res.version === window.__LEGAL_VERSION__;
-        if (!accepted || localStorage.getItem('tosAcceptedVersion') !== window.__LEGAL_VERSION__) {
+        if (!accepted) {
           setShowLegal(true);
+        } else {
+          localStorage.setItem('tosAcceptedVersion', window.__LEGAL_VERSION__);
         }
       } catch (err) {
         console.error('Failed to check legal', err);
@@ -280,23 +282,19 @@ export default function App() {
         </Suspense>
       )}
       {showDisclaimer && (
-        <Suspense fallback={<Loading className="h-screen" />}>
-          <DisclaimerModal onClose={() => setShowDisclaimer(false)} />
-        </Suspense>
+        <DisclaimerModal onClose={() => setShowDisclaimer(false)} />
       )}
       {showLegal && (
-        <Suspense fallback={<Loading className="h-screen" />}>
-          <LegalModal
-            onAccept={() => {
-              localStorage.setItem('tosAcceptedVersion', window.__LEGAL_VERSION__);
-              setShowLegal(false);
-            }}
-            onDiscard={() => {
-              setShowLegal(false);
-              logout();
-            }}
-          />
-        </Suspense>
+        <LegalModal
+          onAccept={() => {
+            localStorage.setItem('tosAcceptedVersion', window.__LEGAL_VERSION__);
+            setShowLegal(false);
+          }}
+          onDiscard={() => {
+            setShowLegal(false);
+            logout();
+          }}
+        />
       )}
     </Router>
   );
