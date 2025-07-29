@@ -8,6 +8,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   async function loadMe() {
+    const hasSession = document.cookie
+      .split(';')
+      .some((c) => c.trim().startsWith('sid='));
+    if (!hasSession) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     try {
       const me = await fetchJSON('/user/me');
       setUser(me);
