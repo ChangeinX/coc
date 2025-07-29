@@ -2,7 +2,7 @@ import logging
 
 from pathlib import Path
 
-from flask import Flask, current_app, g, request, abort
+from flask import Flask, g, request, abort
 from flask_cors import CORS
 
 from .api import register_blueprints, API_PREFIX
@@ -19,7 +19,6 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
     configure_logging(level=cfg_cls.LOG_LEVEL)
     app = Flask(__name__)
     app.config.from_object(cfg_cls)
-    current_app.logger.info(f"CORS_ORIGINS: {app.config['CORS_ORIGINS']}")
 
     CORS(
         app,
