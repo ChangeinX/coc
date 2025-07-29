@@ -50,13 +50,19 @@ export default function App() {
   const [clanTag, setClanTag] = useState(null);
   const [clanInfo, setClanInfo] = useState(null);
   const [showClanInfo, setShowClanInfo] = useState(false);
-  const [showLegal, setShowLegal] = useState(false);
+  const [showLegal, setShowLegal] = useState(() => !localStorage.getItem('tosAccepted'));
   const [loadingUser, setLoadingUser] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [badgeCount, setBadgeCount] = useState(0);
   const { enabled: hasFeature } = useFeatures(user);
   const chatAllowed = hasFeature('chat');
   const menuRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!localStorage.getItem('tosAccepted')) {
+      setShowLegal(true);
+    }
+  }, []);
 
   const playerInfo = usePlayerInfo(playerTag);
   const cachedClan = useClanInfo(clanTag);
@@ -249,7 +255,10 @@ export default function App() {
       )}
       {showLegal && (
         <Suspense fallback={<Loading className="h-screen" />}>
-          <LegalModal onClose={() => setShowLegal(false)} />
+          <LegalModal onClose={() => {
+            localStorage.setItem('tosAccepted', '1');
+            setShowLegal(false);
+          }} />
         </Suspense>
       )}
     </Router>

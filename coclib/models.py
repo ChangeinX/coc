@@ -197,3 +197,16 @@ class Session(db.Model):
 
     user = db.relationship("User", backref=db.backref("sessions", lazy="dynamic"))
 
+
+class Legal(db.Model):
+    """Track user acceptance of the Terms of Service."""
+
+    __tablename__ = "legal"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=False)
+    accepted = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    user = db.relationship("User", backref=db.backref("legal_records", lazy="dynamic"))
+

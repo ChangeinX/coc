@@ -6,6 +6,9 @@ export default function MentionInput({ value, onChange, members = [], ...props }
   const [start, setStart] = useState(0);
   const ref = useRef(null);
 
+  const filtered = members
+    .filter((m) => m.name.toLowerCase().includes(query))
+    .slice(0, 5);
   function update(val, pos) {
     const at = val.lastIndexOf('@', pos - 1);
     if (at >= 0 && (at === 0 || /\s/.test(val[at - 1]))) {
@@ -26,20 +29,28 @@ export default function MentionInput({ value, onChange, members = [], ...props }
     update(val, e.target.selectionStart);
   }
 
-  function select(member) {
+  function handleKeyDown(e) {
+    if (!showList || filtered.length === 0) return;
+    if (e.key === 'Tab' || e.key === ' ') {
+      e.preventDefault();
+      select(filtered[0], e.key === ' ' ? ' ' : '');
+    }
+  }
+
+  function select(member, trailing = '') {
     const before = value.slice(0, start);
     const after = value.slice(start + query.length + 1);
     const insert = `@${member.name}`;
-    const newVal = `${before}${insert}${after}`;
+    const newVal = `${before}${insert}${trailing}${after}`;
     onChange(newVal);
     setShowList(false);
     setQuery('');
-    ref.current?.focus();
+    const pos = before.length + insert.length + trailing.length;
+    requestAnimationFrame(() => {
+      ref.current?.focus();
+      ref.current?.setSelectionRange(pos, pos);
+    });
   }
-
-  const filtered = members
-    .filter((m) => m.name.toLowerCase().includes(query))
-    .slice(0, 5);
 
   return (
     <div className="relative flex-1">
@@ -48,6 +59,7 @@ export default function MentionInput({ value, onChange, members = [], ...props }
         className="w-full border rounded px-2 py-1"
         value={value}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
         {...props}
       />
       {showList && filtered.length > 0 && (
