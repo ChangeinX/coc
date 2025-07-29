@@ -6,7 +6,7 @@
     "predev": "node scripts/replace-sw-key.js",
     "dev": "vite",
     "prebuild": "node scripts/replace-sw-key.js",
-    "build": "VITE_COMMIT_HASH=$(git rev-parse --short HEAD) vite build",
+    "build": "VITE_LEGAL_VERSION=$(node scripts/get-legal-version.js) VITE_COMMIT_HASH=$(git rev-parse --short HEAD) vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },

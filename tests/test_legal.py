@@ -13,6 +13,7 @@ class TestConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     JWT_SIGNING_KEY = "k"
+    LEGAL_VERSION = "20250729"
 
 
 def setup_app(monkeypatch):
@@ -40,4 +41,9 @@ def test_accept_and_get_legal(monkeypatch):
     assert resp.get_json()["accepted"] is True
     with app.app_context():
         assert Legal.query.filter_by(user_id=1).count() == 1
+
+    # require re-acceptance when version changes
+    app.config["LEGAL_VERSION"] = "20250730"
+    resp = client.get("/api/v1/user/legal", headers=hdrs)
+    assert resp.get_json()["accepted"] is False
 
