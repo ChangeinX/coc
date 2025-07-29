@@ -50,7 +50,7 @@ export default function App() {
   const [clanTag, setClanTag] = useState(null);
   const [clanInfo, setClanInfo] = useState(null);
   const [showClanInfo, setShowClanInfo] = useState(false);
-  const [showLegal, setShowLegal] = useState(() => !localStorage.getItem('tosAccepted'));
+  const [showLegal, setShowLegal] = useState(false);
   const [loadingUser, setLoadingUser] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [badgeCount, setBadgeCount] = useState(0);
@@ -59,9 +59,18 @@ export default function App() {
   const menuRef = React.useRef(null);
 
   useEffect(() => {
-    if (!localStorage.getItem('tosAccepted')) {
-      setShowLegal(true);
+    async function check() {
+      try {
+        const res = await fetchJSON('/user/legal');
+        const accepted = Boolean(res.accepted);
+        if (!accepted || localStorage.getItem('tosAcceptedVersion') !== window.__LEGAL_VERSION__) {
+          setShowLegal(true);
+        }
+      } catch (err) {
+        console.error('Failed to check legal', err);
+      }
     }
+    check();
   }, []);
 
   const playerInfo = usePlayerInfo(playerTag);
@@ -255,10 +264,12 @@ export default function App() {
       )}
       {showLegal && (
         <Suspense fallback={<Loading className="h-screen" />}>
-          <LegalModal onClose={() => {
-            localStorage.setItem('tosAccepted', '1');
-            setShowLegal(false);
-          }} />
+          <LegalModal
+            onClose={() => {
+              localStorage.setItem('tosAcceptedVersion', window.__LEGAL_VERSION__);
+              setShowLegal(false);
+            }}
+          />
         </Suspense>
       )}
     </Router>

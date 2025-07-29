@@ -13,6 +13,7 @@ class TestConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     JWT_SIGNING_KEY = "k"
+    LEGAL_VERSION = "20250729"
 
 
 def setup_app(monkeypatch):
@@ -31,13 +32,40 @@ def test_accept_and_get_legal(monkeypatch):
     hdrs = {"Authorization": "Bearer t"}
 
     resp = client.get("/api/v1/user/legal", headers=hdrs)
-    assert resp.get_json()["accepted"] is False
+    data = resp.get_json()
+    assert data["accepted"] is False
+    assert data["version"] is None
 
-    resp = client.post("/api/v1/user/legal", headers=hdrs)
+    resp = client.post(
+        "/api/v1/user/legal",
+        headers=hdrs,
+        json={"version": "20250729"},
+    )
     assert resp.status_code == 200
 
     resp = client.get("/api/v1/user/legal", headers=hdrs)
-    assert resp.get_json()["accepted"] is True
+    data = resp.get_json()
+    assert data["accepted"] is True
+    assert data["version"] == "20250729"
     with app.app_context():
         assert Legal.query.filter_by(user_id=1).count() == 1
+
+
+def test_requires_accept_on_version_change(monkeypatch):
+    app = setup_app(monkeypatch)
+    client: FlaskClient = app.test_client()
+    hdrs = {"Authorization": "Bearer t"}
+
+    client.post(
+        "/api/v1/user/legal",
+        headers=hdrs,
+        json={"version": "20250729"},
+    )
+
+    monkeypatch.setattr(Config, "LEGAL_VERSION", "20250801")
+
+    resp = client.get("/api/v1/user/legal", headers=hdrs)
+    data = resp.get_json()
+    assert data["accepted"] is False
+    assert data["version"] == "20250729"
 
