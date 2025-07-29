@@ -10,7 +10,9 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('legal', sa.Column('version', sa.String(length=20), nullable=True))
+    op.execute(
+        "ALTER TABLE legal ADD COLUMN IF NOT EXISTS version VARCHAR(20)"
+    )
 
 
 def downgrade():
