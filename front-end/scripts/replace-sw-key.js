@@ -9,3 +9,9 @@ content = content.replace('%VAPID_PUBLIC_KEY%', key);
 content = content.replace('%SW_VERSION%', version);
 fs.writeFileSync(swPath, content);
 
+const legalVersion = process.env.LEGAL_VERSION || '';
+const indexPath = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'index.html');
+let idx = fs.readFileSync(indexPath, 'utf8');
+idx = idx.replace('%LEGAL_VERSION%', legalVersion);
+fs.writeFileSync(indexPath, idx);
+

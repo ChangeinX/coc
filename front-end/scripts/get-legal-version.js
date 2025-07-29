@@ -1,9 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-
-const pubDir = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'public');
-const file = fs.readdirSync(pubDir).find(f => /^cookies-\d{8}\.html$/.test(f));
-if (!file) throw new Error('legal file not found');
-const ver = file.match(/\d{8}/)[0];
-process.stdout.write(ver);
-
+const publicDir = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'public');
+const file = fs.readdirSync(publicDir).find(f => /^cookies-\d{8}\.html$/.test(f));
+if (!file) process.exit(1);
+const match = file.match(/cookies-(\d{8})\.html/);
+console.log(match ? match[1] : '');

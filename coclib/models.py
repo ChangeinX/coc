@@ -199,14 +199,14 @@ class Session(db.Model):
 
 
 class Legal(db.Model):
-    """Track user acceptance of the Terms of Service."""
+    """Track user acceptance of the Terms and Conditions."""
 
     __tablename__ = "legal"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=False)
     accepted = db.Column(db.Boolean, nullable=False, default=False)
-    version = db.Column(db.String(20), nullable=False, default="20250729")
+    version = db.Column(db.String(20))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     user = db.relationship("User", backref=db.backref("legal_records", lazy="dynamic"))
