@@ -3,7 +3,7 @@
 This monorepo hosts several microservices and a front-end that make up a Clash of Clans dashboard. The key directories are:
 
 - `back-end/` – Flask API service, generic routes
-- `front-end/` – React dashboard built with Vite
+- `front-end/app/` – React dashboard built with Vite
 - `coclib/` – shared Python modules for the project
 - `db/` – minimal Flask app used solely for running migrations. Also holds graphql schema for messages.
 - `migrations/` – Alembic migration scripts
@@ -30,7 +30,7 @@ nox -s lint tests
 ruff back-end coclib db
 
 # Install deps and run front-end tests and build
-cd front-end
+cd front-end/app
 npm install
 npm test
 npm run build
