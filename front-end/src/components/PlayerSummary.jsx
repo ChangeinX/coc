@@ -45,12 +45,9 @@ export default function PlayerSummary({ tag, showHeader = true, scrollBadges = t
         }`}
       >
         <div className="flex flex-col items-center w-12">
-          <img
-            src={getTownHallIcon(player.townHallLevel)}
-            alt={`TH${player.townHallLevel}`}
-            className="w-8 h-8"
-          />
-          <p className="text-xs text-slate-500 mt-1">TH{player.townHallLevel}</p>
+          <span className="w-8 h-8 flex items-center justify-center font-semibold">
+            {getTownHallIcon(player.townHallLevel)}
+          </span>
         </div>
         {player.labels?.map((l) => (
           <div className="flex flex-col items-center w-12" key={l.id || l.name}>
