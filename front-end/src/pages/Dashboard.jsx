@@ -9,7 +9,6 @@ import DonationRing from '../components/DonationRing.jsx';
 import MemberList from '../components/MemberList.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
-import { getTownHallIcon } from '../lib/townhall.js';
 import CachedImage from '../components/CachedImage.jsx';
 import PlayerMini from '../components/PlayerMini.jsx';
 import { Users, SearchX, TrendingUp, Trophy, Shield, ShieldOff } from 'lucide-react';
@@ -296,9 +295,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                 >
                                                     <td data-label="Player" className="px-4 py-2 font-medium">
                                                         <span className="flex items-center gap-2">
-                                                            <span className="w-5 h-5 flex items-center justify-center font-semibold">
-                                                                {getTownHallIcon(m.townHallLevel)}
-                                                            </span>
                                                             <PlayerMini player={m} showTag={false} />
                                                         </span>
                                                     </td>
@@ -362,9 +358,6 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                         <td data-label="Player" className="px-3 py-2 font-medium">
                                                             <div className="flex flex-col">
                                                                 <span className="flex items-center gap-2">
-                                                                    <span className="w-5 h-5 flex items-center justify-center font-semibold">
-                                                                        {getTownHallIcon(m.townHallLevel)}
-                                                                    </span>
                                                                     <PlayerMini player={m} showTag={false} />
                                                                 </span>
                                                                 <span className="text-xs text-slate-500">
