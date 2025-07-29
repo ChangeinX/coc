@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { fetchJSON } from '../lib/api.js';
 
 export default function LegalModal({ onClose }) {
+  useEffect(() => {
+    console.log('Legal version', window.__LEGAL_VERSION__);
+  }, []);
   async function accept() {
     try {
-      await fetchJSON('/user/legal', { method: 'POST' });
+      await fetchJSON('/user/legal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ version: window.__LEGAL_VERSION__ }),
+      });
     } catch (err) {
       console.error('Failed to accept legal', err);
     }
@@ -23,8 +30,14 @@ export default function LegalModal({ onClose }) {
             <a href="https://supercell.com/en/fan-content-policy/" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer"> Supercell's Fan Content Policy</a>.
           </p>
           <ul className="space-y-1">
-            <li><a href="#" className="text-blue-600 hover:underline">Privacy Policy</a></li>
-            <li><a href="#" className="text-blue-600 hover:underline">Terms of Service</a></li>
+            <li>
+              <a href="/privacy-policy" className="text-blue-600 hover:underline">
+                Privacy Policy
+              </a>
+            </li>
+            <li>
+              <a href="/terms" className="text-blue-600 hover:underline">Terms and Conditions</a>
+            </li>
           </ul>
           <button className="mt-2 px-4 py-2 bg-blue-600 text-white rounded" onClick={accept}>Accept</button>
         </div>

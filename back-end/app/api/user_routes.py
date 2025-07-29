@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, g, abort
 from coclib.extensions import db
 from coclib.utils import normalize_tag
 from coclib.models import UserProfile, FeatureFlag, Legal
+from coclib.config import Config
 from coclib.services.player_service import verify_token as verify_player_token
 from . import API_PREFIX
 
@@ -125,12 +126,19 @@ def get_legal():
         .order_by(Legal.created_at.desc())
         .first()
     )
-    return jsonify({"accepted": bool(record and record.accepted)})
+    return jsonify(
+        {
+            "accepted": bool(record and record.accepted and record.version == Config.LEGAL_VERSION),
+            "version": record.version if record else None,
+        }
+    )
 
 
 @bp.post("/legal")
 def accept_legal():
-    rec = Legal(user_id=g.user.id, accepted=True)
+    data = request.get_json(silent=True) or {}
+    version = data.get("version")
+    rec = Legal(user_id=g.user.id, accepted=True, version=version)
     db.session.add(rec)
     db.session.commit()
     return jsonify({"status": "ok"})
