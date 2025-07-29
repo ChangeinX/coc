@@ -22,7 +22,7 @@ const ChatPage = lazy(() => import('./pages/ChatPage.jsx'));
 const ScoutPage = lazy(() => import('./pages/Scout.jsx'));
 const StatsPage = lazy(() => import('./pages/Stats.jsx'));
 const AccountPage = lazy(() => import('./pages/Account.jsx'));
-const LoginPage = lazy(() => import('./pages/Login.jsx'));
+import LoginPage from './pages/Login.jsx';
 const PushDebugPage = lazy(() => import('./pages/PushDebug.jsx'));
 
 function getInitialsFromName(name) {
@@ -62,6 +62,7 @@ export default function App() {
   const menuRef = React.useRef(null);
 
   useEffect(() => {
+    if (!user) return;
     async function check() {
       try {
         const res = await fetchJSON('/user/legal');
@@ -74,9 +75,10 @@ export default function App() {
       }
     }
     check();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
+    if (!user) return;
     async function checkDisc() {
       try {
         const res = await fetchJSON('/user/disclaimer');
@@ -86,7 +88,7 @@ export default function App() {
       }
     }
     checkDisc();
-  }, []);
+  }, [user]);
 
   const playerInfo = usePlayerInfo(playerTag);
   const cachedClan = useClanInfo(clanTag);
