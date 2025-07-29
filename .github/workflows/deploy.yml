@@ -116,6 +116,11 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install and build public home
+        run: |
+          npm ci --prefix front-end/public-home
+          npm run --prefix front-end/public-home build
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -124,7 +129,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Sync public home to S3
-        run: aws s3 sync front-end/public-home s3://$PUBLIC_HOME_BUCKET --delete
+        run: aws s3 sync front-end/public-home/out s3://$PUBLIC_HOME_BUCKET --delete
 
       - name: Invalidate public home CloudFront cache
         run: |
