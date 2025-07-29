@@ -19,11 +19,9 @@ export default function ProfileCard({ member, onClick, refreshing = false }) {
       )}
       <div className="flex gap-1 items-center mb-1">
         <PlayerMini player={member} showTag={false} />
-        <img
-          src={getTownHallIcon(member.townHallLevel)}
-          alt={`TH${member.townHallLevel}`}
-          className="w-6 h-6"
-        />
+        <span className="w-6 h-6 flex items-center justify-center font-semibold">
+          {getTownHallIcon(member.townHallLevel)}
+        </span>
       </div>
       <RiskRing score={member.risk_score} size={48} />
       <div className="mt-2 text-center space-y-1 w-full">
