@@ -20,6 +20,7 @@ app = create_app(cfg_cls)
 asgi_app = WsgiToAsgi(app)
 
 logger = logging.getLogger(__name__)
+logger.info("Using CORS_ORIGINS: %s", app.config.get("CORS_ORIGINS"))
 
 
 
