@@ -17,6 +17,5 @@ COPY coclib/                ./coclib
 COPY migrations/            ./migrations
 
 EXPOSE 8001
-
 CMD ["sh", "-c", "uvicorn run:asgi_app --host 0.0.0.0 --port ${PORT:-80} --workers 1"]
 
