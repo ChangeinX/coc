@@ -4,6 +4,10 @@ const SW_VERSION = '';
 console.log('Service Worker', SW_VERSION);
 const API_TTL = 60 * 1000; // 1 minute
 const ASSET_TTL = 30 * 60 * 1000; // 30 minutes
+const COOKIE_PATH = '/cookies-20250729.html';
+const PRIVACY_PATH = '/privacy-policy.html';
+const TERMS_PATH = '/terms.html';
+const LEGAL_FILES = [COOKIE_PATH, PRIVACY_PATH, TERMS_PATH];
 
 
 let notificationCount = 0;
@@ -12,6 +16,12 @@ let friendDetailCount = 0;
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(LEGAL_FILES))
+      .catch(() => {})
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -183,6 +193,22 @@ self.addEventListener('pushsubscriptionchange', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  if (url.origin === self.location.origin && (url.pathname === '/privacy' || url.pathname === '/privacy.html')) {
+    event.respondWith(cacheFirst(COOKIE_PATH));
+    return;
+  }
+  if (url.origin === self.location.origin && (url.pathname === '/privacy-policy' || url.pathname === '/privacy-policy.html')) {
+    event.respondWith(cacheFirst(PRIVACY_PATH));
+    return;
+  }
+  if (url.origin === self.location.origin && (url.pathname === '/terms' || url.pathname === '/terms.html')) {
+    event.respondWith(cacheFirst(TERMS_PATH));
+    return;
+  }
+  if (url.origin === self.location.origin && url.pathname === COOKIE_PATH) {
+    event.respondWith(cacheFirst(COOKIE_PATH));
+    return;
+  }
   if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
     event.respondWith(staleWhileRevalidate(event.request));
     return;
@@ -252,4 +278,13 @@ async function staleWhileRevalidate(request) {
     });
   if (cached) return cached;
   return network; // let it reject
+}
+
+async function cacheFirst(path) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(path);
+  if (cached) return cached;
+  const resp = await fetch(path);
+  cache.put(path, resp.clone());
+  return resp;
 }

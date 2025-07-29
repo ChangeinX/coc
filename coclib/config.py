@@ -34,6 +34,8 @@ class Config:
     # How long a cached snapshot remains fresh (seconds)
     SNAPSHOT_MAX_AGE = int(os.getenv("SNAPSHOT_MAX_AGE", "600"))
 
+    LEGAL_VERSION = os.getenv("LEGAL_VERSION", "20250729")
+
     PORT = 80
 
     CORS_ORIGINS = os.getenv(
