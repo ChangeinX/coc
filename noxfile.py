@@ -28,8 +28,8 @@ def tests(session: nox.Session) -> None:
     session.run("gradle", "wrapper", external=True)
     session.run("./gradlew", "test", external=True)
     session.chdir("..")
-    session.run("npm", "--prefix", "front-end", "install", external=True)
-    session.run("npm", "--prefix", "front-end", "run", "test", external=True)
-    session.run("npm", "--prefix", "front-end", "run", "build", external=True)
+    session.run("npm", "--prefix", "front-end/app", "install", external=True)
+    session.run("npm", "--prefix", "front-end/app", "run", "test", external=True)
+    session.run("npm", "--prefix", "front-end/app", "run", "build", external=True)
 
 

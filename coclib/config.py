@@ -1,7 +1,4 @@
-import logging
 import os
-
-logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -41,8 +38,8 @@ class Config:
 
     PORT = 80
 
-    CORS_ORIGINS = os.getenv("CORS_ORIGINS").split(",")
-    logger.info("CORS_ORIGINS: %s", CORS_ORIGINS)
+    _cors = os.getenv("CORS_ORIGINS", "")
+    CORS_ORIGINS = _cors.split(",") if _cors else []
 
     JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY", "change-me")
     SESSION_MAX_AGE = int(os.getenv("SESSION_MAX_AGE", "604800"))
