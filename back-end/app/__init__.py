@@ -26,6 +26,7 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
         supports_credentials=True,
     )
     print("Enabled CORS for origins:", app.config["CORS_ORIGINS"])
+    print("Cookie domain:", app.config["COOKIE_DOMAIN"])
 
     db.init_app(app)
     cache.init_app(app)
