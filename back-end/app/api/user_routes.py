@@ -147,12 +147,23 @@ def accept_legal():
 
 @bp.get("/disclaimer")
 def get_disclaimer():
-    return jsonify({"seen": g.user.seen_supercell_disclaimer})
+    rec = (
+        Legal.query.filter_by(user_id=g.user.id, acknowledged_disclaimer=True)
+        .order_by(Legal.created_at.desc())
+        .first()
+    )
+    return jsonify({"seen": bool(rec)})
 
 
 @bp.post("/disclaimer")
 def accept_disclaimer():
     g.user.seen_supercell_disclaimer = True
-    db.session.add(g.user)
+    rec = Legal(
+        user_id=g.user.id,
+        accepted=False,
+        version=current_app.config.get("LEGAL_VERSION"),
+        acknowledged_disclaimer=True,
+    )
+    db.session.add_all([g.user, rec])
     db.session.commit()
     return jsonify({"status": "ok"})

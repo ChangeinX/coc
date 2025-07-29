@@ -92,5 +92,10 @@ def test_disclaimer_endpoints(monkeypatch):
     resp = client.post("/api/v1/user/disclaimer", headers=hdrs)
     assert resp.status_code == 200
 
+    with app.app_context():
+        assert (
+            Legal.query.filter_by(user_id=1, acknowledged_disclaimer=True).count() == 1
+        )
+
     resp = client.get("/api/v1/user/disclaimer", headers=hdrs)
     assert resp.get_json()["seen"] is True
