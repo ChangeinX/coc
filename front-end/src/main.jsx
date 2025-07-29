@@ -13,7 +13,7 @@ if (import.meta.env.VITE_COMMIT_HASH) {
 }
 
 if (import.meta.env.VITE_LEGAL_VERSION) {
-  window.__LEGAL_VERSION = import.meta.env.VITE_LEGAL_VERSION;
+  window.__LEGAL_VERSION__ = import.meta.env.VITE_LEGAL_VERSION;
 }
 
 checkForStaleBuild();
