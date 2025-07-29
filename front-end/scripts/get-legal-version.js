@@ -5,4 +5,3 @@ const file = fs.readdirSync(publicDir).find(f => /^cookies-\d{8}\.html$/.test(f)
 if (!file) process.exit(1);
 const match = file.match(/cookies-(\d{8})\.html/);
 console.log(match ? match[1] : '');
-

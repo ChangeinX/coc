@@ -50,7 +50,6 @@ def test_accept_and_get_legal(monkeypatch):
     with app.app_context():
         assert Legal.query.filter_by(user_id=1).count() == 1
 
-
 def test_requires_accept_on_version_change(monkeypatch):
     class OldConfig(TestConfig):
         LEGAL_VERSION = "20250728"
@@ -80,4 +79,3 @@ def test_requires_accept_on_version_change(monkeypatch):
     data = resp.get_json()
     assert data["accepted"] is False
     assert data["version"] == "20250728"
-

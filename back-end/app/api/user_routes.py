@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, g, abort
+from flask import Blueprint, jsonify, request, g, abort, current_app
 from coclib.extensions import db
 from coclib.utils import normalize_tag
 from coclib.models import UserProfile, FeatureFlag, Legal
@@ -121,8 +121,9 @@ def update_features():
 
 @bp.get("/legal")
 def get_legal():
+    version = current_app.config.get("LEGAL_VERSION")
     record = (
-        Legal.query.filter_by(user_id=g.user.id)
+        Legal.query.filter_by(user_id=g.user.id, version=version)
         .order_by(Legal.created_at.desc())
         .first()
     )
