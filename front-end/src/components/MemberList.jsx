@@ -17,11 +17,9 @@ function Row({ index, style, data }) {
     >
       <div className="flex flex-col">
         <div className="flex items-center gap-2">
-          <img
-            src={getTownHallIcon(m.townHallLevel)}
-            alt={`TH${m.townHallLevel}`}
-            className="w-5 h-5"
-          />
+          <span className="w-5 h-5 flex items-center justify-center font-semibold">
+            {getTownHallIcon(m.townHallLevel)}
+          </span>
           <span className="font-medium">
             <PlayerMini player={m} showTag={false} />
           </span>

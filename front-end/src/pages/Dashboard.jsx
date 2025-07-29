@@ -296,11 +296,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                 >
                                                     <td data-label="Player" className="px-4 py-2 font-medium">
                                                         <span className="flex items-center gap-2">
-                                                            <img
-                                                                src={getTownHallIcon(m.townHallLevel)}
-                                                                alt={`TH${m.townHallLevel}`}
-                                                                className="w-5 h-5"
-                                                            />
+                                                            <span className="w-5 h-5 flex items-center justify-center font-semibold">
+                                                                {getTownHallIcon(m.townHallLevel)}
+                                                            </span>
                                                             <PlayerMini player={m} showTag={false} />
                                                         </span>
                                                     </td>
@@ -364,11 +362,9 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                         <td data-label="Player" className="px-3 py-2 font-medium">
                                                             <div className="flex flex-col">
                                                                 <span className="flex items-center gap-2">
-                                                                    <img
-                                                                        src={getTownHallIcon(m.townHallLevel)}
-                                                                        alt={`TH${m.townHallLevel}`}
-                                                                        className="w-5 h-5"
-                                                                    />
+                                                                    <span className="w-5 h-5 flex items-center justify-center font-semibold">
+                                                                        {getTownHallIcon(m.townHallLevel)}
+                                                                    </span>
                                                                     <PlayerMini player={m} showTag={false} />
                                                                 </span>
                                                                 <span className="text-xs text-slate-500">

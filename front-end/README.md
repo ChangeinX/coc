@@ -69,3 +69,7 @@ by CloudFront. When a cached entry is used, the last seen `ETag` is sent with
 timestamp is refreshed. When the content changes, the new payload and `ETag`
 replace the cached version, ensuring users always see the latest data.
 
+## Legal
+
+This material is unofficial and is not endorsed by Supercell. For more information see Supercell's Fan Content Policy: www.supercell.com/fan-content-policy.
+
