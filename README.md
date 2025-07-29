@@ -27,3 +27,7 @@ These variables are generally injected from AWS Secrets Manager at runtime.
 
 Clan and player records are stored exactly as returned by the [Clash of Clans API](https://developer.clashofclans.com/#/documentation). Icon URLs such as clan badges and league emblems can be read directly from the JSON data in the database. See the official documentation for the object schema and available image sizes.
 
+## Legal
+
+This material is unofficial and is not endorsed by Supercell. For more information see Supercell's Fan Content Policy: www.supercell.com/fan-content-policy.
+
