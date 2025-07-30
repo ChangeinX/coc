@@ -5,6 +5,14 @@ import { useEffect, useState } from 'react';
 export default function Home() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
+  const [appUrl, setAppUrl] = useState('https://app.clan-boards.com');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname.replace(/^www\./, '');
+      setAppUrl(`${window.location.protocol}//app.${hostname}`);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -58,16 +66,11 @@ export default function Home() {
               </a>
             </li>
             <li>
-              <a href="/app/login" className="hover:underline">
-                Log in
-              </a>
-            </li>
-            <li>
               <a
-                href="/app/signup"
+                href={appUrl}
                 className="bg-blue-600 text-white px-3 py-1 rounded"
               >
-                Sign up
+                Open App
               </a>
             </li>
           </ul>
@@ -82,7 +85,7 @@ export default function Home() {
             Manage wars and track members with our unofficial Clash of Clans dashboard.
           </p>
           <a
-            href="/app/"
+            href={appUrl}
             className="px-6 py-3 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition"
           >
             Get Started
