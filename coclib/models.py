@@ -249,3 +249,16 @@ class ModerationRule(db.Model):
     definition = db.Column(db.JSON, nullable=False)
     active = db.Column(db.Boolean, default=True)
 
+
+class Scouting(db.Model):
+    """Templates for clan recruiting."""
+
+    __tablename__ = "scouting"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=False)
+    description = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    user = db.relationship("User", backref=db.backref("scouting_templates", lazy="dynamic"))
+
