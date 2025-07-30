@@ -57,7 +57,7 @@ docker build \
   --build-arg VITE_API_URL=https://api.example.com \
   --build-arg VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
   --build-arg VITE_VAPID_PUBLIC_KEY=your-public-key \
-  --build-arg VITE_BASE_PATH=/ \
+  --build-arg VITE_BASE_PATH=/app/ \
   -t dashboard .
 ```
 

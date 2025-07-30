@@ -199,3 +199,8 @@ notifications/.gradle/
 user_service/.gradle/
 .gradle/
 **/.gradle
+front-end/app/node_modules
+front-end/public-home/node_modules
+front-end/public-home/.next
+front-end/public-home/out/
+front-end/app/dist/
