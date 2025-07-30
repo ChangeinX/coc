@@ -11,6 +11,7 @@ import useFeatures from './hooks/useFeatures.js';
 import BottomNav from './components/BottomNav.jsx';
 import DesktopNav from './components/DesktopNav.jsx';
 import NotificationBanner from './components/NotificationBanner.jsx';
+import Toast from './components/Toast.jsx';
 import { fetchJSON } from './lib/api.js';
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
@@ -189,6 +190,7 @@ export default function App() {
   return (
     <Router>
       <NotificationBanner />
+      <Toast />
       <header className="banner bg-gradient-to-r from-blue-600 via-blue-700 to-slate-800 text-white px-4 py-2 flex items-center justify-between shadow-md sticky top-0 z-50">
         <h1 className="flex flex-row items-center gap-1 sm:flex-col sm:items-start sm:gap-0 text-left">
           <span className="text-lg font-semibold cursor-pointer" onClick={() => setShowLegal(true)}>Clan Boards</span>

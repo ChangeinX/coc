@@ -177,8 +177,19 @@ useEffect(() => {
       setText('');
     } catch (err) {
       console.error('Failed to publish message', err);
-      await addOutboxMessage(localMsg);
-      appendMessage(localMsg);
+      const msg = err.message || '';
+      if (msg.includes('TOXICITY_WARNING')) {
+        window.dispatchEvent(new CustomEvent('toast', { detail: 'Keep it civil' }));
+      } else if (msg.includes('READONLY')) {
+        window.dispatchEvent(new CustomEvent('toast', { detail: 'You are temporarily read-only' }));
+      } else if (msg.includes('MUTED')) {
+        window.dispatchEvent(new CustomEvent('toast', { detail: 'You are muted for 24h' }));
+      } else if (msg.includes('BANNED')) {
+        window.dispatchEvent(new CustomEvent('toast', { detail: 'You have been banned' }));
+      } else {
+        await addOutboxMessage(localMsg);
+        appendMessage(localMsg);
+      }
     }
     setSending(false);
   };

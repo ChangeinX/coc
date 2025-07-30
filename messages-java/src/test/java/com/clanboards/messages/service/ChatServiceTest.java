@@ -83,7 +83,7 @@ class ChatServiceTest {
     Mockito.when(moderation.verify("u", "hi")).thenReturn(ModerationResult.BLOCK);
     ChatService service = new ChatService(repo, events, moderation, modRepo);
 
-    assertThrows(RuntimeException.class, () -> service.publish("1", "hi", "u"));
+    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
   }
 
