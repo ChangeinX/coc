@@ -5,10 +5,10 @@ import graphql.ErrorType;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 
 /** Maps service exceptions to GraphQL errors. */
-@Controller
+@ControllerAdvice
 public class GraphQLExceptionHandler {
   @GraphQlExceptionHandler(ModerationException.class)
   public GraphQLError handle(ModerationException ex) {

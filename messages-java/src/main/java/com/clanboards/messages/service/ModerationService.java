@@ -10,6 +10,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class ModerationService {
   private final OpenAIClient openai;
   private static final Pattern BAD_WORDS =
       Pattern.compile("(?i)(viagra|free money|http[s]?://[^ ]+|fuck|shit|spam)");
+  private static final Logger log = LoggerFactory.getLogger(ModerationService.class);
 
   public ModerationService(
       StringRedisTemplate redis, @Value("${openai.api-key:${OPENAI_API_KEY:}}") String apiKey) {
@@ -54,6 +57,7 @@ public class ModerationService {
               .model(ModerationModel.OMNI_MODERATION_LATEST)
               .build();
       var resp = openai.moderations().create(req);
+      log.debug("OpenAI moderation response for {}: {}", userId, resp);
       if (!resp.results().isEmpty()) {
         var result = resp.results().get(0);
         var scores = result.categoryScores();
@@ -81,7 +85,9 @@ public class ModerationService {
     } catch (Exception ex) {
       json = "{}";
     }
-    return new ModerationOutcome(block ? ModerationResult.BLOCK : ModerationResult.ALLOW, json);
+    ModerationResult result = block ? ModerationResult.BLOCK : ModerationResult.ALLOW;
+    log.info("Moderation outcome for {}: {} {}", userId, result, json);
+    return new ModerationOutcome(result, json);
   }
 
   /**
