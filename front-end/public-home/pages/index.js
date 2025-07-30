@@ -14,11 +14,6 @@ export default function Home() {
     }
   }, []);
 
-  const appUrl =
-    typeof window === 'undefined'
-      ? 'https://app.clan-boards.com'
-      : `${window.location.protocol}//app.${window.location.hostname.replace(/^www\./, '')}`;
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (localStorage.getItem('disclaimerSeen') !== 'true') {
