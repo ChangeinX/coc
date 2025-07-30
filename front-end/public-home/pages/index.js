@@ -2,17 +2,25 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
-  const [show, setShow] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [showLegal, setShowLegal] = useState(false);
 
   useEffect(() => {
+    if (localStorage.getItem('disclaimerSeen') !== 'true') {
+      setShowDisclaimer(true);
+    }
     if (localStorage.getItem('legalAccepted') !== 'true') {
-      setShow(true);
+      setShowLegal(true);
     }
   }, []);
+  function acknowledge() {
+    localStorage.setItem('disclaimerSeen', 'true');
+    setShowDisclaimer(false);
+  }
 
-  function accept() {
+  function acceptLegal() {
     localStorage.setItem('legalAccepted', 'true');
-    setShow(false);
+    setShowLegal(false);
   }
 
   return (
@@ -37,34 +45,51 @@ export default function Home() {
           Get Started
         </a>
       </main>
-      {show && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-          <div className="bg-white p-6 rounded shadow-md text-center space-y-4 max-w-sm w-full">
-            <h2 className="text-xl font-semibold">Clan Boards</h2>
-            <p className="text-sm">
-              This material is unofficial and is not endorsed by Supercell. See{' '}
-              <a
-                href="https://supercell.com/en/fan-content-policy/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline"
+      {showDisclaimer && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 z-50"
+            onClick={acknowledge}
+          ></div>
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded shadow-md text-center space-y-4 max-w-sm w-full relative">
+              <button className="absolute top-3 right-3 text-slate-400" onClick={acknowledge}>✕</button>
+              <h2 className="text-xl font-semibold">Clan Boards</h2>
+              <p className="text-sm">
+                This material is unofficial and is not endorsed by Supercell. For more information see{' '}
+                <a
+                  href="https://supercell.com/en/fan-content-policy/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  Supercell's Fan Content Policy
+                </a>.
+              </p>
+              <button
+                onClick={acknowledge}
+                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
               >
-                Supercell's Fan Content Policy
-              </a>.
-            </p>
-            <p className="text-sm">
-              By using this website you agree to our{' '}
-              <a href="/privacy-policy.html" className="text-blue-600 underline">
-                Privacy Policy
-              </a>.
-            </p>
-            <button
-              onClick={accept}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Accept
-            </button>
+                OK
+              </button>
+            </div>
           </div>
+        </>
+      )}
+      {showLegal && (
+        <div className="fixed bottom-0 inset-x-0 z-40 bg-blue-50 border-t border-blue-200 p-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm">
+          <span>
+            By using this website, you agree to the storing of cookies on your device to enhance site navigation,
+            analyze site usage, and assist in our marketing efforts. View our{' '}
+            <a href="/privacy-policy.html" className="text-blue-600 underline">Privacy Policy</a>{' '}
+            for more information.
+          </span>
+          <button
+            onClick={acceptLegal}
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Accept
+          </button>
         </div>
       )}
     </div>
