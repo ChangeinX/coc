@@ -6,6 +6,11 @@ export default function Home() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
 
+  const appUrl =
+    typeof window === 'undefined'
+      ? 'https://app.clan-boards.com'
+      : `${window.location.protocol}//app.${window.location.hostname.replace(/^www\./, '')}`;
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (localStorage.getItem('disclaimerSeen') !== 'true') {
@@ -58,16 +63,11 @@ export default function Home() {
               </a>
             </li>
             <li>
-              <a href="/app/login" className="hover:underline">
-                Log in
-              </a>
-            </li>
-            <li>
               <a
-                href="/app/signup"
+                href={appUrl}
                 className="bg-blue-600 text-white px-3 py-1 rounded"
               >
-                Sign up
+                Open App
               </a>
             </li>
           </ul>
@@ -82,7 +82,7 @@ export default function Home() {
             Manage wars and track members with our unofficial Clash of Clans dashboard.
           </p>
           <a
-            href="/app/"
+            href={appUrl}
             className="px-6 py-3 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition"
           >
             Get Started
