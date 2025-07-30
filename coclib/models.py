@@ -213,3 +213,39 @@ class Legal(db.Model):
 
     user = db.relationship("User", backref=db.backref("legal_records", lazy="dynamic"))
 
+
+
+class ModerationRecord(db.Model):
+    """Store scores for rejected chat messages."""
+
+    __tablename__ = "moderation"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.String(255), index=True, nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    categories = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class BlockedUser(db.Model):
+    """Users blocked or muted by policy engine."""
+
+    __tablename__ = "blocked"
+
+    user_id = db.Column(db.String(255), primary_key=True)
+    until = db.Column(db.DateTime)
+    permanent = db.Column(db.Boolean, default=False)
+    reason = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class ModerationRule(db.Model):
+    """JSON-driven policy rules."""
+
+    __tablename__ = "rules"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    definition = db.Column(db.JSON, nullable=False)
+    active = db.Column(db.Boolean, default=True)
+
