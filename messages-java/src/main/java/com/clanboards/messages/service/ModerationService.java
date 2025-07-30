@@ -35,13 +35,17 @@ public class ModerationService {
     }
   }
 
-  /** Returns BLOCK when the message should be rejected. */
-  public ModerationResult verify(String userId, String text) {
+  /** Perform moderation checks and return the result with category details in JSON form. */
+  public ModerationOutcome verify(String userId, String text) {
+    boolean block = false;
+    var categories = new java.util.LinkedHashMap<String, Double>();
     if (checkSpam(userId, text)) {
-      return ModerationResult.BLOCK;
+      categories.put("spam", 1.0);
+      block = true;
     }
     if (BAD_WORDS.matcher(text).find()) {
-      return ModerationResult.BLOCK;
+      categories.put("profanity", 1.0);
+      block = true;
     }
     if (openai != null) {
       ModerationCreateParams req =
@@ -50,11 +54,34 @@ public class ModerationService {
               .model(ModerationModel.OMNI_MODERATION_LATEST)
               .build();
       var resp = openai.moderations().create(req);
-      if (!resp.results().isEmpty() && resp.results().get(0).flagged()) {
-        return ModerationResult.BLOCK;
+      if (!resp.results().isEmpty()) {
+        var result = resp.results().get(0);
+        var scores = result.categoryScores();
+        categories.put("harassment", scores.harassment());
+        categories.put("harassment_threatening", scores.harassmentThreatening());
+        categories.put("hate", scores.hate());
+        categories.put("hate_threatening", scores.hateThreatening());
+        categories.put("illicit", scores.illicit());
+        categories.put("illicit_violent", scores.illicitViolent());
+        categories.put("self_harm", scores.selfHarm());
+        categories.put("self_harm_instructions", scores.selfHarmInstructions());
+        categories.put("self_harm_intent", scores.selfHarmIntent());
+        categories.put("sexual", scores.sexual());
+        categories.put("sexual_minors", scores.sexualMinors());
+        categories.put("violence", scores.violence());
+        categories.put("violence_graphic", scores.violenceGraphic());
+        if (result.flagged()) {
+          block = true;
+        }
       }
     }
-    return ModerationResult.ALLOW;
+    String json;
+    try {
+      json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(categories);
+    } catch (Exception ex) {
+      json = "{}";
+    }
+    return new ModerationOutcome(block ? ModerationResult.BLOCK : ModerationResult.ALLOW, json);
   }
 
   /**
