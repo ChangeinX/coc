@@ -1,5 +1,7 @@
 package com.clanboards.messages.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.moderations.ModerationCreateParams;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 public class ModerationService {
   private final StringRedisTemplate redis;
   private final OpenAIClient openai;
+  private static final ObjectMapper mapper = new ObjectMapper();
   private static final Pattern BAD_WORDS =
       Pattern.compile("(?i)(viagra|free money|http[s]?://[^ ]+|fuck|shit|spam)");
   private static final Logger log = LoggerFactory.getLogger(ModerationService.class);
@@ -61,8 +64,14 @@ public class ModerationService {
               .model(ModerationModel.OMNI_MODERATION_LATEST)
               .build();
       var resp = openai.moderations().create(req);
-      log.debug("OpenAI moderation response for {}: {}", userId, resp);
-      log.info("OpenAI moderation response for {}: {}", userId, resp);
+      String respJson;
+      try {
+        respJson = mapper.writeValueAsString(resp);
+      } catch (JsonProcessingException e) {
+        respJson = resp.toString();
+      }
+      log.debug("OpenAI moderation response for {}: {}", userId, respJson);
+      log.info("OpenAI moderation response for {}: {}", userId, respJson);
       if (!resp.results().isEmpty()) {
         var result = resp.results().get(0);
         var scores = result.categoryScores();
