@@ -36,8 +36,10 @@ public class ModerationService {
     this.redis = redis;
     if (apiKey != null && !apiKey.isBlank()) {
       this.openai = OpenAIOkHttpClient.builder().apiKey(apiKey).build();
+      log.info("OpenAI client initialized successfully");
     } else {
       this.openai = null;
+      log.warn("OpenAI client not initialized - API key is missing or blank");
     }
   }
 
@@ -58,6 +60,7 @@ public class ModerationService {
       profanity = true;
     }
     if (openai != null) {
+      log.info("Making OpenAI moderation API call for user: {}", userId);
       ModerationCreateParams req =
           ModerationCreateParams.builder()
               .input(text)
