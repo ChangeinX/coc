@@ -10,15 +10,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+/** Chat operations with pre-save moderation checks. */
 @Service
 public class ChatService {
   private final ChatRepository repository;
   private final ApplicationEventPublisher events;
+  private final ModerationService moderation;
   private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
-  public ChatService(ChatRepository repository, ApplicationEventPublisher events) {
+  public ChatService(
+      ChatRepository repository, ApplicationEventPublisher events, ModerationService moderation) {
     this.repository = repository;
     this.events = events;
+    this.moderation = moderation;
   }
 
   public String createDirectChat(String fromUserId, String toUserId) {
@@ -30,6 +34,9 @@ public class ChatService {
   public ChatMessage publish(String chatId, String text, String userId) {
     log.info("Publishing message to chat {} by {}", chatId, userId);
     try {
+      if (moderation.verify(userId, text) == ModerationResult.BLOCK) {
+        throw new IllegalArgumentException("message rejected");
+      }
       Instant ts = Instant.now();
       String uuid = java.util.UUID.randomUUID().toString();
       ChatMessage msg = new ChatMessage(uuid, chatId, userId, text, ts);
@@ -45,6 +52,9 @@ public class ChatService {
   public ChatMessage publishGlobal(String text, String userId) {
     log.info("Publishing global message by {}", userId);
     try {
+      if (moderation.verify(userId, text) == ModerationResult.BLOCK) {
+        throw new IllegalArgumentException("message rejected");
+      }
       Instant ts = Instant.now();
       String shard = ChatRepository.globalShardKey(userId);
       String uuid = java.util.UUID.randomUUID().toString();
