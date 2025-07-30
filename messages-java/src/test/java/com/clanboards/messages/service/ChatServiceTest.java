@@ -16,7 +16,9 @@ class ChatServiceTest {
   void publishSavesMessage() {
     ChatRepository repo = Mockito.mock(ChatRepository.class);
     ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
-    ChatService service = new ChatService(repo, events);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    Mockito.when(moderation.verify("u", "hello")).thenReturn(ModerationResult.ALLOW);
+    ChatService service = new ChatService(repo, events, moderation);
 
     ChatMessage msg = service.publish("1", "hello", "u");
     assertEquals("1", msg.channel());
@@ -28,10 +30,11 @@ class ChatServiceTest {
   void historyDelegatesToRepo() {
     ChatRepository repo = Mockito.mock(ChatRepository.class);
     ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
     List<ChatMessage> expected = List.of(new ChatMessage("m1", "1", "u", "hi", Instant.now()));
     Mockito.when(repo.listMessages("1", 2, null)).thenReturn(expected);
 
-    ChatService service = new ChatService(repo, events);
+    ChatService service = new ChatService(repo, events, moderation);
     List<ChatMessage> result = service.history("1", 2, null);
     assertSame(expected, result);
   }
@@ -40,7 +43,9 @@ class ChatServiceTest {
   void publishGlobalUsesShardKey() {
     ChatRepository repo = Mockito.mock(ChatRepository.class);
     ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
-    ChatService service = new ChatService(repo, events);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    Mockito.when(moderation.verify("user1", "hi")).thenReturn(ModerationResult.ALLOW);
+    ChatService service = new ChatService(repo, events, moderation);
 
     ChatMessage msg = service.publishGlobal("hi", "user1");
     assertEquals(ChatRepository.globalShardKey("user1"), msg.channel());
@@ -48,10 +53,36 @@ class ChatServiceTest {
   }
 
   @Test
+  void publishInvokesModeration() {
+    ChatRepository repo = Mockito.mock(ChatRepository.class);
+    ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    Mockito.when(moderation.verify("u", "hi")).thenReturn(ModerationResult.ALLOW);
+    ChatService service = new ChatService(repo, events, moderation);
+
+    service.publish("1", "hi", "u");
+
+    Mockito.verify(moderation).verify("u", "hi");
+  }
+
+  @Test
+  void publishThrowsWhenModerationFails() {
+    ChatRepository repo = Mockito.mock(ChatRepository.class);
+    ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    Mockito.when(moderation.verify("u", "hi")).thenReturn(ModerationResult.BLOCK);
+    ChatService service = new ChatService(repo, events, moderation);
+
+    assertThrows(RuntimeException.class, () -> service.publish("1", "hi", "u"));
+    Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
+  }
+
+  @Test
   void createDirectChatCreatesChat() {
     ChatRepository repo = Mockito.mock(ChatRepository.class);
     ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
-    ChatService service = new ChatService(repo, events);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    ChatService service = new ChatService(repo, events, moderation);
 
     String id = service.createDirectChat("a", "b");
     assertEquals(ChatRepository.directChatId("a", "b"), id);
