@@ -62,6 +62,7 @@ public class ModerationService {
               .build();
       var resp = openai.moderations().create(req);
       log.debug("OpenAI moderation response for {}: {}", userId, resp);
+      log.info("OpenAI moderation response for {}: {}", userId, resp);
       if (!resp.results().isEmpty()) {
         var result = resp.results().get(0);
         var scores = result.categoryScores();
