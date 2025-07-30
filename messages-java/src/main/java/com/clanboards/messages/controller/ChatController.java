@@ -56,6 +56,19 @@ public class ChatController {
     return ResponseEntity.ok(body);
   }
 
+  /** Return restriction info for a user if active. */
+  @GetMapping("/restrictions/{userId}")
+  public ResponseEntity<Map<String, Object>> restriction(@PathVariable String userId) {
+    var info = chatService.getRestriction(userId);
+    if (info == null) {
+      return ResponseEntity.ok(Map.of("status", "NONE"));
+    }
+    String status = Boolean.TRUE.equals(info.getPermanent()) ? "BANNED" : "MUTED";
+    long remaining =
+        info.getUntil() != null ? Math.max(0, info.getUntil().getEpochSecond() - Instant.now().getEpochSecond()) : 0;
+    return ResponseEntity.ok(Map.of("status", status, "remaining", remaining));
+  }
+
   public static record PublishRequest(String chatId, String text, String userId) {}
 
   public static record GlobalRequest(String text, String userId) {}

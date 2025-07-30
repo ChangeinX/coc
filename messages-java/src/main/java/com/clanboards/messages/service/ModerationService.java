@@ -94,6 +94,8 @@ public class ModerationService {
           flagged = true;
         }
       }
+    } else {
+      log.debug("OpenAI moderation disabled; skipping API call for {}", userId);
     }
     String json;
     try {

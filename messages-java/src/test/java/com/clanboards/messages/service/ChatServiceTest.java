@@ -99,6 +99,13 @@ class ChatServiceTest {
 
     assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
+    Mockito.verify(blockedRepo)
+        .upsert(
+            Mockito.eq("u"),
+            Mockito.isNull(),
+            Mockito.eq(true),
+            Mockito.anyString(),
+            Mockito.any());
   }
 
   @Test
@@ -116,6 +123,8 @@ class ChatServiceTest {
 
     assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
+    Mockito.verify(blockedRepo)
+        .upsert(Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
   }
 
   @Test
@@ -133,6 +142,8 @@ class ChatServiceTest {
 
     assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
+    Mockito.verify(blockedRepo)
+        .upsert(Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
   }
 
   @Test
@@ -149,5 +160,20 @@ class ChatServiceTest {
     String id = service.createDirectChat("a", "b");
     assertEquals(ChatRepository.directChatId("a", "b"), id);
     Mockito.verify(repo).createChatIfAbsent(id);
+  }
+
+  @Test
+  void getRestrictionReturnsNullWhenNotBlocked() {
+    ChatRepository repo = Mockito.mock(ChatRepository.class);
+    ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    com.clanboards.messages.repository.ModerationRepository modRepo =
+        Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
+    com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
+        Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
+    Mockito.when(blockedRepo.findById("u")).thenReturn(java.util.Optional.empty());
+    ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
+
+    assertNull(service.getRestriction("u"));
   }
 }
