@@ -5,6 +5,14 @@ import { useEffect, useState } from 'react';
 export default function Home() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
+  const [appUrl, setAppUrl] = useState('https://app.clan-boards.com');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname.replace(/^www\./, '');
+      setAppUrl(`${window.location.protocol}//app.${hostname}`);
+    }
+  }, []);
 
   const appUrl =
     typeof window === 'undefined'
