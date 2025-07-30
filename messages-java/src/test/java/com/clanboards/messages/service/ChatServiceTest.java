@@ -19,7 +19,8 @@ class ChatServiceTest {
     ModerationService moderation = Mockito.mock(ModerationService.class);
     com.clanboards.messages.repository.ModerationRepository modRepo =
         Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
-    Mockito.when(moderation.verify("u", "hello")).thenReturn(ModerationResult.ALLOW);
+    Mockito.when(moderation.verify("u", "hello"))
+        .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo);
 
     ChatMessage msg = service.publish("1", "hello", "u");
@@ -50,7 +51,8 @@ class ChatServiceTest {
     ModerationService moderation = Mockito.mock(ModerationService.class);
     com.clanboards.messages.repository.ModerationRepository modRepo =
         Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
-    Mockito.when(moderation.verify("user1", "hi")).thenReturn(ModerationResult.ALLOW);
+    Mockito.when(moderation.verify("user1", "hi"))
+        .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo);
 
     ChatMessage msg = service.publishGlobal("hi", "user1");
@@ -65,7 +67,8 @@ class ChatServiceTest {
     ModerationService moderation = Mockito.mock(ModerationService.class);
     com.clanboards.messages.repository.ModerationRepository modRepo =
         Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
-    Mockito.when(moderation.verify("u", "hi")).thenReturn(ModerationResult.ALLOW);
+    Mockito.when(moderation.verify("u", "hi"))
+        .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo);
 
     service.publish("1", "hi", "u");
@@ -80,7 +83,8 @@ class ChatServiceTest {
     ModerationService moderation = Mockito.mock(ModerationService.class);
     com.clanboards.messages.repository.ModerationRepository modRepo =
         Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
-    Mockito.when(moderation.verify("u", "hi")).thenReturn(ModerationResult.BLOCK);
+    Mockito.when(moderation.verify("u", "hi"))
+        .thenReturn(new ModerationOutcome(ModerationResult.BLOCK, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo);
 
     assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
