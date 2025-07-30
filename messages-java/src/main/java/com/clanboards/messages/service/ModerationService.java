@@ -1,7 +1,5 @@
 package com.clanboards.messages.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.moderations.ModerationCreateParams;
@@ -11,8 +9,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -41,20 +37,11 @@ public class ModerationService {
 
   /** Returns BLOCK when the message should be rejected. */
   public ModerationResult verify(String userId, String text) {
-    return moderate(userId, text).result();
-  }
-
-  /** Performs moderation and returns details including category scores. */
-  public ModerationDetails moderate(String userId, String text) {
-    boolean blocked = false;
-    Map<String, Double> categories = new HashMap<>();
     if (checkSpam(userId, text)) {
-      blocked = true;
-      categories.put("spam", 1.0);
+      return ModerationResult.BLOCK;
     }
     if (BAD_WORDS.matcher(text).find()) {
-      blocked = true;
-      categories.put("explicit", 1.0);
+      return ModerationResult.BLOCK;
     }
     if (openai != null) {
       ModerationCreateParams req =
@@ -63,29 +50,11 @@ public class ModerationService {
               .model(ModerationModel.OMNI_MODERATION_LATEST)
               .build();
       var resp = openai.moderations().create(req);
-      if (!resp.results().isEmpty()) {
-        var result = resp.results().get(0);
-        if (result.flagged()) {
-          blocked = true;
-        }
-        try {
-          // best effort include raw scores as JSON
-          var field = result.getClass().getMethod("categoryScores");
-          Object scores = field.invoke(result);
-          if (scores != null) {
-            categories.putAll(new ObjectMapper().convertValue(scores, Map.class));
-          }
-        } catch (Exception ignored) {
-        }
+      if (!resp.results().isEmpty() && resp.results().get(0).flagged()) {
+        return ModerationResult.BLOCK;
       }
     }
-    String json;
-    try {
-      json = new ObjectMapper().writeValueAsString(categories);
-    } catch (JsonProcessingException e) {
-      json = "{}";
-    }
-    return new ModerationDetails(blocked ? ModerationResult.BLOCK : ModerationResult.ALLOW, json);
+    return ModerationResult.ALLOW;
   }
 
   /**

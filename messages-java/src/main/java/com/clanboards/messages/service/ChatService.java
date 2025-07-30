@@ -40,12 +40,11 @@ public class ChatService {
   public ChatMessage publish(String chatId, String text, String userId) {
     log.info("Publishing message to chat {} by {}", chatId, userId);
     try {
-      ModerationDetails details = moderation.moderate(userId, text);
-      if (details.result() == ModerationResult.BLOCK) {
+      if (moderation.verify(userId, text) == ModerationResult.BLOCK) {
         ModerationRecord rec = new ModerationRecord();
         rec.setUserId(userId);
         rec.setContent(text);
-        rec.setCategories(details.categories());
+        rec.setCategories("{}");
         modRepo.save(rec);
         throw new ModerationException("BANNED");
       }
@@ -66,12 +65,11 @@ public class ChatService {
   public ChatMessage publishGlobal(String text, String userId) {
     log.info("Publishing global message by {}", userId);
     try {
-      ModerationDetails details = moderation.moderate(userId, text);
-      if (details.result() == ModerationResult.BLOCK) {
+      if (moderation.verify(userId, text) == ModerationResult.BLOCK) {
         ModerationRecord rec = new ModerationRecord();
         rec.setUserId(userId);
         rec.setContent(text);
-        rec.setCategories(details.categories());
+        rec.setCategories("{}");
         modRepo.save(rec);
         throw new ModerationException("BANNED");
       }
