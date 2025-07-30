@@ -124,7 +124,8 @@ class ChatServiceTest {
     assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
     Mockito.verify(blockedRepo)
-        .upsert(Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
+        .upsert(
+            Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
   }
 
   @Test
@@ -143,7 +144,8 @@ class ChatServiceTest {
     assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
     Mockito.verify(blockedRepo)
-        .upsert(Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
+        .upsert(
+            Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
   }
 
   @Test

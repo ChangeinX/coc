@@ -65,7 +65,9 @@ public class ChatController {
     }
     String status = Boolean.TRUE.equals(info.getPermanent()) ? "BANNED" : "MUTED";
     long remaining =
-        info.getUntil() != null ? Math.max(0, info.getUntil().getEpochSecond() - Instant.now().getEpochSecond()) : 0;
+        info.getUntil() != null
+            ? Math.max(0, info.getUntil().getEpochSecond() - Instant.now().getEpochSecond())
+            : 0;
     return ResponseEntity.ok(Map.of("status", status, "remaining", remaining));
   }
 
