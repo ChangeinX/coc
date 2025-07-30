@@ -21,6 +21,7 @@ The user service issues signed JWT cookies for authentication. Configure the fol
 - `SESSION_MAX_AGE` – Lifetime of a session in seconds.
 - `COOKIE_DOMAIN` – Domain attribute for the `sid` cookie.
 - `COOKIE_SECURE` – Set to `false` to disable the `Secure` flag during local development.
+- `REDIS_URL` – Connection string for the messages service Redis instance.
 These variables are generally injected from AWS Secrets Manager at runtime.
 
 ## Clash of Clans asset links
