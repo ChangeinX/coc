@@ -1,5 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
+import MobileTabs from '../components/MobileTabs.jsx';
 
 export default function Scout() {
-  return <div className="p-4">Coming soon...</div>;
+  const [active, setActive] = useState('find');
+  return (
+    <div className="p-4">
+      <MobileTabs
+        tabs={[
+          { value: 'find', label: 'Find a Clan' },
+          { value: 'need', label: 'Need a Clan' },
+        ]}
+        active={active}
+        onChange={setActive}
+      />
+      {active === 'find' && <p>Coming soon...</p>}
+      {active === 'need' && <p>Coming soon...</p>}
+    </div>
+  );
 }
