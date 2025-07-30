@@ -1,5 +1,6 @@
 package com.clanboards.messages.controller;
 
+import com.clanboards.messages.service.ModerationException;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,12 @@ public class ErrorHandler {
   public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {
     log.warn("Bad request", ex);
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+  }
+
+  @ExceptionHandler(ModerationException.class)
+  public ResponseEntity<Map<String, String>> handleModeration(ModerationException ex) {
+    log.info("Message blocked", ex);
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
   }
 
   @ExceptionHandler(Exception.class)
