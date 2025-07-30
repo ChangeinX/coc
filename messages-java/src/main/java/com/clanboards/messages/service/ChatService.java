@@ -1,8 +1,10 @@
 package com.clanboards.messages.service;
 
 import com.clanboards.messages.events.MessageSavedEvent;
+import com.clanboards.messages.model.BlockedUser;
 import com.clanboards.messages.model.ChatMessage;
 import com.clanboards.messages.model.ModerationRecord;
+import com.clanboards.messages.repository.BlockedUserRepository;
 import com.clanboards.messages.repository.ChatRepository;
 import java.time.Instant;
 import java.util.List;
@@ -18,17 +20,20 @@ public class ChatService {
   private final ApplicationEventPublisher events;
   private final ModerationService moderation;
   private final com.clanboards.messages.repository.ModerationRepository modRepo;
+  private final BlockedUserRepository blockedRepo;
   private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
   public ChatService(
       ChatRepository repository,
       ApplicationEventPublisher events,
       ModerationService moderation,
-      com.clanboards.messages.repository.ModerationRepository modRepo) {
+      com.clanboards.messages.repository.ModerationRepository modRepo,
+      BlockedUserRepository blockedRepo) {
     this.repository = repository;
     this.events = events;
     this.moderation = moderation;
     this.modRepo = modRepo;
+    this.blockedRepo = blockedRepo;
   }
 
   public String createDirectChat(String fromUserId, String toUserId) {
@@ -40,6 +45,9 @@ public class ChatService {
   public ChatMessage publish(String chatId, String text, String userId) {
     log.info("Publishing message to chat {} by {}", chatId, userId);
     try {
+      if (isBlocked(userId)) {
+        throw new ModerationException("BANNED");
+      }
       ModerationOutcome res = moderation.verify(userId, text);
       if (res.result() == ModerationResult.BLOCK) {
         ModerationRecord rec = new ModerationRecord();
@@ -47,6 +55,7 @@ public class ChatService {
         rec.setContent(text);
         rec.setCategories(res.categories());
         modRepo.save(rec);
+        saveBlock(userId, "moderation");
         throw new ModerationException("BANNED");
       }
       Instant ts = Instant.now();
@@ -66,6 +75,9 @@ public class ChatService {
   public ChatMessage publishGlobal(String text, String userId) {
     log.info("Publishing global message by {}", userId);
     try {
+      if (isBlocked(userId)) {
+        throw new ModerationException("BANNED");
+      }
       ModerationOutcome res = moderation.verify(userId, text);
       if (res.result() == ModerationResult.BLOCK) {
         ModerationRecord rec = new ModerationRecord();
@@ -73,6 +85,7 @@ public class ChatService {
         rec.setContent(text);
         rec.setCategories(res.categories());
         modRepo.save(rec);
+        saveBlock(userId, "moderation");
         throw new ModerationException("BANNED");
       }
       Instant ts = Instant.now();
@@ -102,5 +115,24 @@ public class ChatService {
       log.error("Failed to load history", ex);
       throw new RuntimeException("Unable to load messages", ex);
     }
+  }
+
+  private boolean isBlocked(String userId) {
+    return blockedRepo
+        .findById(userId)
+        .map(
+            b ->
+                Boolean.TRUE.equals(b.getPermanent())
+                    || (b.getUntil() != null && b.getUntil().isAfter(Instant.now())))
+        .orElse(false);
+  }
+
+  private void saveBlock(String userId, String reason) {
+    BlockedUser user = blockedRepo.findById(userId).orElse(new BlockedUser());
+    user.setUserId(userId);
+    user.setPermanent(true);
+    user.setReason(reason);
+    user.setCreatedAt(Instant.now());
+    blockedRepo.save(user);
   }
 }
