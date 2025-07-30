@@ -40,15 +40,19 @@ public class ModerationService {
 
   /** Perform moderation checks and return the result with category details in JSON form. */
   public ModerationOutcome verify(String userId, String text) {
-    boolean block = false;
     var categories = new java.util.LinkedHashMap<String, Double>();
+    boolean spam = false;
+    boolean profanity = false;
+    boolean flagged = false;
+    double toxicity = 0.0;
+
     if (checkSpam(userId, text)) {
       categories.put("spam", 1.0);
-      block = true;
+      spam = true;
     }
     if (BAD_WORDS.matcher(text).find()) {
       categories.put("profanity", 1.0);
-      block = true;
+      profanity = true;
     }
     if (openai != null) {
       ModerationCreateParams req =
@@ -74,8 +78,10 @@ public class ModerationService {
         categories.put("sexual_minors", scores.sexualMinors());
         categories.put("violence", scores.violence());
         categories.put("violence_graphic", scores.violenceGraphic());
+        toxicity = scores.harassment();
+        categories.put("toxicity", toxicity);
         if (result.flagged()) {
-          block = true;
+          flagged = true;
         }
       }
     }
@@ -85,7 +91,19 @@ public class ModerationService {
     } catch (Exception ex) {
       json = "{}";
     }
-    ModerationResult result = block ? ModerationResult.BLOCK : ModerationResult.ALLOW;
+
+    ModerationResult result;
+    if (flagged) {
+      result = ModerationResult.BLOCK;
+    } else if (profanity) {
+      result = ModerationResult.MUTE;
+    } else if (spam) {
+      result = ModerationResult.READONLY;
+    } else if (toxicity >= 0.7 && toxicity < 0.8) {
+      result = ModerationResult.WARNING;
+    } else {
+      result = ModerationResult.ALLOW;
+    }
     log.info("Moderation outcome for {}: {} {}", userId, result, json);
     return new ModerationOutcome(result, json);
   }

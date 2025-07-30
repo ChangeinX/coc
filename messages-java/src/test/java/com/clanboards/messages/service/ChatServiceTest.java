@@ -102,6 +102,40 @@ class ChatServiceTest {
   }
 
   @Test
+  void publishHandlesMute() {
+    ChatRepository repo = Mockito.mock(ChatRepository.class);
+    ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    com.clanboards.messages.repository.ModerationRepository modRepo =
+        Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
+    com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
+        Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
+    Mockito.when(moderation.verify("u", "hi"))
+        .thenReturn(new ModerationOutcome(ModerationResult.MUTE, "{}"));
+    ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
+
+    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
+    Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
+  }
+
+  @Test
+  void publishHandlesReadonly() {
+    ChatRepository repo = Mockito.mock(ChatRepository.class);
+    ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    com.clanboards.messages.repository.ModerationRepository modRepo =
+        Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
+    com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
+        Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
+    Mockito.when(moderation.verify("u", "hi"))
+        .thenReturn(new ModerationOutcome(ModerationResult.READONLY, "{}"));
+    ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
+
+    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
+    Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
+  }
+
+  @Test
   void createDirectChatCreatesChat() {
     ChatRepository repo = Mockito.mock(ChatRepository.class);
     ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);

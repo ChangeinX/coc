@@ -6,6 +6,7 @@ import com.clanboards.messages.model.ChatMessage;
 import com.clanboards.messages.model.ModerationRecord;
 import com.clanboards.messages.repository.BlockedUserRepository;
 import com.clanboards.messages.repository.ChatRepository;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import org.slf4j.Logger;
@@ -49,14 +50,28 @@ public class ChatService {
         throw new ModerationException("BANNED");
       }
       ModerationOutcome res = moderation.verify(userId, text);
-      if (res.result() == ModerationResult.BLOCK) {
+      if (res.result() != ModerationResult.ALLOW) {
         ModerationRecord rec = new ModerationRecord();
         rec.setUserId(userId);
         rec.setContent(text);
         rec.setCategories(res.categories());
         modRepo.save(rec);
-        saveBlock(userId, "moderation");
-        throw new ModerationException("BANNED");
+      }
+      switch (res.result()) {
+        case BLOCK -> {
+          saveBan(userId, "moderation");
+          throw new ModerationException("BANNED");
+        }
+        case MUTE -> {
+          saveMute(userId, Duration.ofHours(24), "moderation");
+          throw new ModerationException("MUTED");
+        }
+        case READONLY -> {
+          saveReadonly(userId, Duration.ofMinutes(10), "moderation");
+          throw new ModerationException("READONLY");
+        }
+        case WARNING -> throw new ModerationException("TOXICITY_WARNING");
+        default -> {}
       }
       Instant ts = Instant.now();
       String uuid = java.util.UUID.randomUUID().toString();
@@ -79,14 +94,28 @@ public class ChatService {
         throw new ModerationException("BANNED");
       }
       ModerationOutcome res = moderation.verify(userId, text);
-      if (res.result() == ModerationResult.BLOCK) {
+      if (res.result() != ModerationResult.ALLOW) {
         ModerationRecord rec = new ModerationRecord();
         rec.setUserId(userId);
         rec.setContent(text);
         rec.setCategories(res.categories());
         modRepo.save(rec);
-        saveBlock(userId, "moderation");
-        throw new ModerationException("BANNED");
+      }
+      switch (res.result()) {
+        case BLOCK -> {
+          saveBan(userId, "moderation");
+          throw new ModerationException("BANNED");
+        }
+        case MUTE -> {
+          saveMute(userId, Duration.ofHours(24), "moderation");
+          throw new ModerationException("MUTED");
+        }
+        case READONLY -> {
+          saveReadonly(userId, Duration.ofMinutes(10), "moderation");
+          throw new ModerationException("READONLY");
+        }
+        case WARNING -> throw new ModerationException("TOXICITY_WARNING");
+        default -> {}
       }
       Instant ts = Instant.now();
       String shard = ChatRepository.globalShardKey(userId);
@@ -127,10 +156,30 @@ public class ChatService {
         .orElse(false);
   }
 
-  private void saveBlock(String userId, String reason) {
+  private void saveBan(String userId, String reason) {
     BlockedUser user = blockedRepo.findById(userId).orElse(new BlockedUser());
     user.setUserId(userId);
     user.setPermanent(true);
+    user.setReason(reason);
+    user.setCreatedAt(Instant.now());
+    blockedRepo.save(user);
+  }
+
+  private void saveMute(String userId, Duration duration, String reason) {
+    BlockedUser user = blockedRepo.findById(userId).orElse(new BlockedUser());
+    user.setUserId(userId);
+    user.setPermanent(false);
+    user.setUntil(Instant.now().plus(duration));
+    user.setReason(reason);
+    user.setCreatedAt(Instant.now());
+    blockedRepo.save(user);
+  }
+
+  private void saveReadonly(String userId, Duration duration, String reason) {
+    BlockedUser user = blockedRepo.findById(userId).orElse(new BlockedUser());
+    user.setUserId(userId);
+    user.setPermanent(false);
+    user.setUntil(Instant.now().plus(duration));
     user.setReason(reason);
     user.setCreatedAt(Instant.now());
     blockedRepo.save(user);
