@@ -156,32 +156,29 @@ public class ChatService {
         .orElse(false);
   }
 
+  /** Return the active restriction for a user or null when none apply. */
+  public BlockedUser getRestriction(String userId) {
+    return blockedRepo
+        .findById(userId)
+        .filter(
+            b ->
+                Boolean.TRUE.equals(b.getPermanent())
+                    || (b.getUntil() != null && b.getUntil().isAfter(Instant.now())))
+        .orElse(null);
+  }
+
   private void saveBan(String userId, String reason) {
-    BlockedUser user = blockedRepo.findById(userId).orElse(new BlockedUser());
-    user.setUserId(userId);
-    user.setPermanent(true);
-    user.setReason(reason);
-    user.setCreatedAt(Instant.now());
-    blockedRepo.save(user);
+    Instant now = Instant.now();
+    blockedRepo.upsert(userId, null, true, reason, now);
   }
 
   private void saveMute(String userId, Duration duration, String reason) {
-    BlockedUser user = blockedRepo.findById(userId).orElse(new BlockedUser());
-    user.setUserId(userId);
-    user.setPermanent(false);
-    user.setUntil(Instant.now().plus(duration));
-    user.setReason(reason);
-    user.setCreatedAt(Instant.now());
-    blockedRepo.save(user);
+    Instant now = Instant.now();
+    blockedRepo.upsert(userId, now.plus(duration), false, reason, now);
   }
 
   private void saveReadonly(String userId, Duration duration, String reason) {
-    BlockedUser user = blockedRepo.findById(userId).orElse(new BlockedUser());
-    user.setUserId(userId);
-    user.setPermanent(false);
-    user.setUntil(Instant.now().plus(duration));
-    user.setReason(reason);
-    user.setCreatedAt(Instant.now());
-    blockedRepo.save(user);
+    Instant now = Instant.now();
+    blockedRepo.upsert(userId, now.plus(duration), false, reason, now);
   }
 }
