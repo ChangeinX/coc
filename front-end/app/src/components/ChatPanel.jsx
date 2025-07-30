@@ -22,7 +22,16 @@ export default function ChatPanel({
   const [tab, setTab] = useState(
     initialDirectId ? 'Friends' : initialTab || (chatId ? 'Clan' : 'Global')
   );
-  const clanChat = chatId ? useChat(chatId) : { messages: [], loadMore: () => {}, hasMore: false, appendMessage: () => {} };
+  const clanChat = chatId
+    ? useChat(chatId)
+    : {
+        messages: [],
+        loadMore: () => {},
+        hasMore: false,
+        appendMessage: () => {},
+        updateMessage: () => {},
+        removeMessage: () => {},
+      };
   const globalChat = useMultiChat(globalIds);
   const friendChat = useMultiChat(friendIds);
   const [directChatId, setDirectChatId] = useState(initialDirectId);
@@ -41,7 +50,7 @@ export default function ChatPanel({
       : directChatId
       ? directChat
       : friendChat;
-  const { messages, loadMore, hasMore, appendMessage } = current;
+  const { messages, loadMore, hasMore, appendMessage, updateMessage, removeMessage } = current;
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [infoMap, setInfoMap] = useState({});
@@ -167,7 +176,9 @@ useEffect(() => {
       content: trimmed,
       senderId: userId,
       ts: new Date().toISOString(),
+      status: 'sending',
     };
+    appendMessage(localMsg);
     console.log('Publishing message', trimmed, 'to', targetId);
     try {
       await graphqlRequest(
@@ -175,6 +186,7 @@ useEffect(() => {
         { chatId: targetId, content: trimmed },
       );
       setText('');
+      removeMessage(localMsg.ts);
     } catch (err) {
       console.error('Failed to publish message', err);
       const msg = err.message || '';
@@ -187,8 +199,9 @@ useEffect(() => {
       } else if (msg.includes('BANNED')) {
         window.dispatchEvent(new CustomEvent('toast', { detail: 'You have been banned' }));
       } else {
-        await addOutboxMessage(localMsg);
-        appendMessage(localMsg);
+        const failed = { ...localMsg, status: 'failed' };
+        await addOutboxMessage(failed);
+        updateMessage(localMsg.ts, { status: 'failed' });
       }
     }
     setSending(false);

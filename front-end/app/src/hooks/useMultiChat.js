@@ -41,6 +41,16 @@ export default function useMultiChat(ids = []) {
     });
   }
 
+  function updateMessage(ts, changes) {
+    setMessages((m) =>
+      m.map((x) => (x.ts === ts ? { ...x, ...changes } : x)).sort((a, b) => new Date(a.ts) - new Date(b.ts))
+    );
+  }
+
+  function removeMessage(ts) {
+    setMessages((m) => m.filter((x) => x.ts !== ts));
+  }
+
   useEffect(() => {
     if (ids.length === 0) return;
     let ignore = false;
@@ -167,6 +177,6 @@ export default function useMultiChat(ids = []) {
     }
   }, [messages]);
 
-  return { messages, loadMore, hasMore, connected, appendMessage };
+  return { messages, loadMore, hasMore, connected, appendMessage, updateMessage, removeMessage };
 }
 

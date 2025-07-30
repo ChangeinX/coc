@@ -2,6 +2,8 @@ package com.clanboards.messages.model;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "moderation")
@@ -15,6 +17,7 @@ public class ModerationRecord {
   @Column(columnDefinition = "text")
   private String content;
 
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(columnDefinition = "jsonb")
   private String categories;
 
