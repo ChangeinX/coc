@@ -2,6 +2,7 @@ package com.clanboards.messages.service;
 
 import com.clanboards.messages.events.MessageSavedEvent;
 import com.clanboards.messages.model.ChatMessage;
+import com.clanboards.messages.model.ModerationRecord;
 import com.clanboards.messages.repository.ChatRepository;
 import java.time.Instant;
 import java.util.List;
@@ -16,13 +17,18 @@ public class ChatService {
   private final ChatRepository repository;
   private final ApplicationEventPublisher events;
   private final ModerationService moderation;
+  private final com.clanboards.messages.repository.ModerationRepository modRepo;
   private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
   public ChatService(
-      ChatRepository repository, ApplicationEventPublisher events, ModerationService moderation) {
+      ChatRepository repository,
+      ApplicationEventPublisher events,
+      ModerationService moderation,
+      com.clanboards.messages.repository.ModerationRepository modRepo) {
     this.repository = repository;
     this.events = events;
     this.moderation = moderation;
+    this.modRepo = modRepo;
   }
 
   public String createDirectChat(String fromUserId, String toUserId) {
@@ -35,6 +41,11 @@ public class ChatService {
     log.info("Publishing message to chat {} by {}", chatId, userId);
     try {
       if (moderation.verify(userId, text) == ModerationResult.BLOCK) {
+        ModerationRecord rec = new ModerationRecord();
+        rec.setUserId(userId);
+        rec.setContent(text);
+        rec.setCategories("{}");
+        modRepo.save(rec);
         throw new IllegalArgumentException("message rejected");
       }
       Instant ts = Instant.now();
@@ -53,6 +64,11 @@ public class ChatService {
     log.info("Publishing global message by {}", userId);
     try {
       if (moderation.verify(userId, text) == ModerationResult.BLOCK) {
+        ModerationRecord rec = new ModerationRecord();
+        rec.setUserId(userId);
+        rec.setContent(text);
+        rec.setCategories("{}");
+        modRepo.save(rec);
         throw new IllegalArgumentException("message rejected");
       }
       Instant ts = Instant.now();
