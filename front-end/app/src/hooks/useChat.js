@@ -22,6 +22,14 @@ export default function useChat(chatId) {
     setMessages((m) => [...m, msg]);
   }
 
+  function updateMessage(ts, changes) {
+    setMessages((m) => m.map((x) => (x.ts === ts ? { ...x, ...changes } : x)));
+  }
+
+  function removeMessage(ts) {
+    setMessages((m) => m.filter((x) => x.ts !== ts));
+  }
+
   useEffect(() => {
     if (!chatId) return;
     let ignore = false;
@@ -130,5 +138,5 @@ export default function useChat(chatId) {
     }
   }, [chatId, messages]);
 
-  return { messages, loadMore, hasMore, appendMessage };
+  return { messages, loadMore, hasMore, appendMessage, updateMessage, removeMessage };
 }

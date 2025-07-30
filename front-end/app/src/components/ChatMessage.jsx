@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import PlayerMini from './PlayerMini.jsx';
 
 export default function ChatMessage({ message, info, isSelf, cacheStrategy = 'indexed' }) {
-  const { content } = message;
+  const { content, status } = message;
   const parts = [];
   const regex = /@(?:\{(#[^}]+)\}|(\w+))/g;
   let last = 0;
@@ -93,6 +93,12 @@ export default function ChatMessage({ message, info, isSelf, cacheStrategy = 'in
               cacheStrategy={cacheStrategy}
             />
           </div>
+        )}
+        {status === 'sending' && (
+          <div className="mt-1 text-xs text-slate-500">Sending…</div>
+        )}
+        {status === 'failed' && (
+          <div className="mt-1 text-xs text-red-500">Failed to send</div>
         )}
       </div>
     </div>
