@@ -46,7 +46,7 @@ public class ChatService {
         rec.setContent(text);
         rec.setCategories("{}");
         modRepo.save(rec);
-        throw new IllegalArgumentException("message rejected");
+        throw new ModerationException("BANNED");
       }
       Instant ts = Instant.now();
       String uuid = java.util.UUID.randomUUID().toString();
@@ -54,6 +54,8 @@ public class ChatService {
       repository.saveMessage(msg);
       events.publishEvent(new MessageSavedEvent(msg));
       return msg;
+    } catch (ModerationException ex) {
+      throw ex;
     } catch (Exception ex) {
       log.error("Failed to publish message", ex);
       throw new RuntimeException("Unable to publish message", ex);
@@ -69,7 +71,7 @@ public class ChatService {
         rec.setContent(text);
         rec.setCategories("{}");
         modRepo.save(rec);
-        throw new IllegalArgumentException("message rejected");
+        throw new ModerationException("BANNED");
       }
       Instant ts = Instant.now();
       String shard = ChatRepository.globalShardKey(userId);
@@ -78,6 +80,8 @@ public class ChatService {
       repository.saveMessage(msg);
       events.publishEvent(new MessageSavedEvent(msg));
       return msg;
+    } catch (ModerationException ex) {
+      throw ex;
     } catch (Exception ex) {
       log.error("Failed to publish global message", ex);
       throw new RuntimeException("Unable to publish message", ex);
