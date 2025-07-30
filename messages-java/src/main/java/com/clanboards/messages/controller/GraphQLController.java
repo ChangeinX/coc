@@ -45,7 +45,8 @@ public class GraphQLController {
 
   @MutationMapping
   public Chat createDirectChat(
-      @Argument String recipientId, @ContextValue("userId") String userId) {
+      @Argument String recipientId,
+      @ContextValue(value = "userId", required = false) String userId) {
     if (userId == null || userId.isBlank()) {
       throw new RuntimeException("Unauthenticated");
     }
@@ -67,7 +68,9 @@ public class GraphQLController {
 
   @MutationMapping
   public Message sendMessage(
-      @Argument String chatId, @Argument String content, @ContextValue("userId") String userId) {
+      @Argument String chatId,
+      @Argument String content,
+      @ContextValue(value = "userId", required = false) String userId) {
     if (userId == null || userId.isBlank()) {
       throw new RuntimeException("Unauthenticated");
     }
