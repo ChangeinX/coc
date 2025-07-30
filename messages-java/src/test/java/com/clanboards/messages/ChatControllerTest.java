@@ -77,4 +77,13 @@ class ChatControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.error").value("bad"));
   }
+
+  @Test
+  void restrictionEndpointReturnsNone() throws Exception {
+    Mockito.when(chatService.getRestriction("u")).thenReturn(null);
+
+    mvc.perform(get("/api/v1/chat/restrictions/u"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("NONE"));
+  }
 }
