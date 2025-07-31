@@ -209,7 +209,11 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(cacheFirst(COOKIE_PATH));
     return;
   }
-  if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
+  if (
+    url.origin === self.location.origin &&
+    url.pathname.startsWith('/api/') &&
+    event.request.method === 'GET'
+  ) {
     event.respondWith(staleWhileRevalidate(event.request));
     return;
   }
