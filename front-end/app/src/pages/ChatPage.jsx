@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect, useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import Loading from '../components/Loading.jsx';
 import { graphqlRequest } from '../lib/gql.js';
+import useRestrictions from '../hooks/useRestrictions.js';
 
 const ChatPanel = lazy(() => import('../components/ChatPanel.jsx'));
 
@@ -9,6 +10,7 @@ export default function ChatPage({ verified, chatId, userId }) {
   const location = useLocation();
   const [globalIds, setGlobalIds] = useState([]);
   const [friendIds, setFriendIds] = useState([]);
+  const restriction = useRestrictions(userId);
   const search = new URLSearchParams(location.search);
   const initialTab = search.get('tab');
   const initialUser = search.get('user');
@@ -55,6 +57,13 @@ export default function ChatPage({ verified, chatId, userId }) {
 
   return (
     <div className="h-[calc(100dvh-8rem)] flex flex-col overflow-y-auto overscroll-y-contain">
+      {restriction && restriction.status !== 'NONE' && (
+        <div className="bg-yellow-100 text-yellow-800 text-center text-sm p-2">
+          {restriction.status === 'BANNED'
+            ? 'You are banned from chat.'
+            : `You are muted for ${Math.ceil((restriction.remaining || 0) / 60)}m`}
+        </div>
+      )}
       <Suspense fallback={<Loading className="py-20" />}>
         {verified ? (
           <ChatPanel

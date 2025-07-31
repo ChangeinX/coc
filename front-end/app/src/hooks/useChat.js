@@ -47,7 +47,18 @@ export default function useChat(chatId) {
           setMessages((m) => m.filter((x) => x.ts !== msg.ts));
         } catch (err) {
           console.error('Failed to resend message', err);
-          break;
+          const m = err.message || '';
+          if (
+            m.includes('BANNED') ||
+            m.includes('MUTED') ||
+            m.includes('READONLY') ||
+            m.includes('TOXICITY_WARNING')
+          ) {
+            await removeOutboxMessage(msg.id);
+            setMessages((msgs) => msgs.filter((x) => x.ts !== msg.ts));
+          } else {
+            break;
+          }
         }
       }
     }

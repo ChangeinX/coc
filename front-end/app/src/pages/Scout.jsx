@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import MobileTabs from '../components/MobileTabs.jsx';
+import Tabs from '../components/Tabs.jsx';
 
 export default function Scout() {
   const [active, setActive] = useState('find');
   return (
     <div className="p-4">
-      <MobileTabs
+      <Tabs
         tabs={[
           { value: 'find', label: 'Find a Clan' },
           { value: 'need', label: 'Need a Clan' },
