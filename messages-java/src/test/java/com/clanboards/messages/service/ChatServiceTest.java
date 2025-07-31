@@ -25,7 +25,7 @@ class ChatServiceTest {
         .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    ChatMessage msg = service.publish("1", "hello", "u");
+    ChatMessage msg = service.publish("1", "hello", "u", null, null);
     assertEquals("1", msg.channel());
     Mockito.verify(repo).saveMessage(Mockito.any(ChatMessage.class));
     Mockito.verify(events).publishEvent(Mockito.any(MessageSavedEvent.class));
@@ -61,7 +61,7 @@ class ChatServiceTest {
         .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    ChatMessage msg = service.publishGlobal("hi", "user1");
+    ChatMessage msg = service.publishGlobal("hi", "user1", null, null);
     assertEquals(ChatRepository.globalShardKey("user1"), msg.channel());
     Mockito.verify(repo).saveMessage(Mockito.any(ChatMessage.class));
   }
@@ -79,7 +79,7 @@ class ChatServiceTest {
         .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    service.publish("1", "hi", "u");
+    service.publish("1", "hi", "u", null, null);
 
     Mockito.verify(moderation).verify("u", "hi");
   }
@@ -97,7 +97,7 @@ class ChatServiceTest {
         .thenReturn(new ModerationOutcome(ModerationResult.BLOCK, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
+    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
     Mockito.verify(blockedRepo)
         .upsert(
@@ -121,7 +121,7 @@ class ChatServiceTest {
         .thenReturn(new ModerationOutcome(ModerationResult.MUTE, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
+    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
     Mockito.verify(blockedRepo)
         .upsert(
@@ -141,7 +141,7 @@ class ChatServiceTest {
         .thenReturn(new ModerationOutcome(ModerationResult.READONLY, "{}"));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u"));
+    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
     Mockito.verify(blockedRepo)
         .upsert(

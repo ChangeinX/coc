@@ -224,6 +224,8 @@ class ModerationRecord(db.Model):
     user_id = db.Column(db.String(255), index=True, nullable=False)
     content = db.Column(db.Text, nullable=False)
     categories = db.Column(db.JSON, nullable=False)
+    ip = db.Column(db.String(45))
+    user_agent = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 

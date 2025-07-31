@@ -43,7 +43,8 @@ public class ChatService {
     return id;
   }
 
-  public ChatMessage publish(String chatId, String text, String userId) {
+  public ChatMessage publish(
+      String chatId, String text, String userId, String ip, String userAgent) {
     log.info("Publishing message to chat {} by {}", chatId, userId);
     try {
       if (isBlocked(userId)) {
@@ -55,6 +56,8 @@ public class ChatService {
         rec.setUserId(userId);
         rec.setContent(text);
         rec.setCategories(res.categories());
+        rec.setIp(ip);
+        rec.setUserAgent(userAgent);
         modRepo.save(rec);
       }
       switch (res.result()) {
@@ -87,7 +90,7 @@ public class ChatService {
     }
   }
 
-  public ChatMessage publishGlobal(String text, String userId) {
+  public ChatMessage publishGlobal(String text, String userId, String ip, String userAgent) {
     log.info("Publishing global message by {}", userId);
     try {
       if (isBlocked(userId)) {
@@ -99,6 +102,8 @@ public class ChatService {
         rec.setUserId(userId);
         rec.setContent(text);
         rec.setCategories(res.categories());
+        rec.setIp(ip);
+        rec.setUserAgent(userAgent);
         modRepo.save(rec);
       }
       switch (res.result()) {

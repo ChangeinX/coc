@@ -54,4 +54,10 @@ describe('ChatPanel component', () => {
     fireEvent.scroll(container, { target: { scrollTop: 50 } });
     expect(loadMoreMock).toHaveBeenCalled();
   });
+
+  it('shows restriction message instead of input', () => {
+    render(<ChatPanel restriction={{ status: 'BANNED', remaining: 0 }} />);
+    expect(screen.getByText('You are banned from chat.')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Type a message…')).not.toBeInTheDocument();
+  });
 });
