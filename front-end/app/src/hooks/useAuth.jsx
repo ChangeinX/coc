@@ -11,10 +11,13 @@ export function AuthProvider({ children }) {
     try {
       const me = await fetchJSON('/user/me');
       setUser(me);
+      return me;
     } catch {
       setUser(null);
+      return null;
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
@@ -35,7 +38,7 @@ export function AuthProvider({ children }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
     });
-    await loadMe();
+    return loadMe();
   }
 
   async function logout() {
