@@ -54,6 +54,9 @@ export default function useChat(chatId) {
             m.includes('READONLY') ||
             m.includes('TOXICITY_WARNING')
           ) {
+            if (m.includes('BANNED') || m.includes('MUTED') || m.includes('READONLY')) {
+              window.dispatchEvent(new Event('restriction-updated'));
+            }
             await removeOutboxMessage(msg.id);
             setMessages((msgs) => msgs.filter((x) => x.ts !== msg.ts));
           } else {

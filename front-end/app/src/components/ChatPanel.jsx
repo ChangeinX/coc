@@ -194,13 +194,22 @@ useEffect(() => {
       if (msg.includes('TOXICITY_WARNING')) {
         window.dispatchEvent(new CustomEvent('toast', { detail: 'Keep it civil' }));
       } else if (msg.includes('READONLY')) {
-        window.dispatchEvent(new CustomEvent('toast', { detail: 'You are temporarily read-only' }));
+        window.dispatchEvent(
+          new CustomEvent('toast', { detail: 'You are temporarily read-only' }),
+        );
+        window.dispatchEvent(new Event('restriction-updated'));
         updateMessage(localMsg.ts, { status: 'failed' });
       } else if (msg.includes('MUTED')) {
-        window.dispatchEvent(new CustomEvent('toast', { detail: 'You are muted for 24h' }));
+        window.dispatchEvent(
+          new CustomEvent('toast', { detail: 'You are muted for 24h' }),
+        );
+        window.dispatchEvent(new Event('restriction-updated'));
         updateMessage(localMsg.ts, { status: 'failed' });
       } else if (msg.includes('BANNED')) {
-        window.dispatchEvent(new CustomEvent('toast', { detail: 'You have been banned' }));
+        window.dispatchEvent(
+          new CustomEvent('toast', { detail: 'You have been banned' }),
+        );
+        window.dispatchEvent(new Event('restriction-updated'));
         updateMessage(localMsg.ts, { status: 'failed' });
       } else {
         const failed = { ...localMsg, status: 'failed' };

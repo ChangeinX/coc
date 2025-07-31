@@ -5,18 +5,33 @@ export default function useRestrictions(userId) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    if (!userId) return;
-    let ignore = false;
-    (async () => {
+    if (!userId) {
+      setData(null);
+      return;
+    }
+    let cancelled = false;
+
+    const load = async () => {
       try {
-        const res = await fetchJSON(`/chat/restrictions/${encodeURIComponent(userId)}`);
-        if (!ignore) setData(res);
+        const res = await fetchJSON(
+          `/chat/restrictions/${encodeURIComponent(userId)}`,
+        );
+        if (!cancelled) setData(res);
       } catch (err) {
         console.error('Failed to fetch restrictions', err);
       }
-    })();
+    };
+
+    load();
+
+    const handler = () => {
+      if (!cancelled) load();
+    };
+    window.addEventListener('restriction-updated', handler);
+
     return () => {
-      ignore = true;
+      cancelled = true;
+      window.removeEventListener('restriction-updated', handler);
     };
   }, [userId]);
 
