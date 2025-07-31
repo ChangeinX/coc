@@ -60,20 +60,35 @@ public class ChatService {
         rec.setUserAgent(userAgent);
         modRepo.save(rec);
       }
+
+      boolean warned =
+          blockedRepo.findById(userId).map(b -> "warning".equals(b.getReason())).orElse(false);
+
       switch (res.result()) {
         case BLOCK -> {
           saveBan(userId, "moderation");
           throw new ModerationException("BANNED");
         }
         case MUTE -> {
+          if (!warned) {
+            saveWarning(userId);
+            throw new ModerationException("TOXICITY_WARNING");
+          }
           saveMute(userId, Duration.ofHours(6), "moderation");
           throw new ModerationException("MUTED");
         }
         case READONLY -> {
+          if (!warned) {
+            saveWarning(userId);
+            throw new ModerationException("TOXICITY_WARNING");
+          }
           saveReadonly(userId, Duration.ofMinutes(10), "moderation");
           throw new ModerationException("READONLY");
         }
-        case WARNING -> throw new ModerationException("TOXICITY_WARNING");
+        case WARNING -> {
+          saveWarning(userId);
+          throw new ModerationException("TOXICITY_WARNING");
+        }
         default -> {}
       }
       Instant ts = Instant.now();
@@ -106,20 +121,35 @@ public class ChatService {
         rec.setUserAgent(userAgent);
         modRepo.save(rec);
       }
+
+      boolean warned =
+          blockedRepo.findById(userId).map(b -> "warning".equals(b.getReason())).orElse(false);
+
       switch (res.result()) {
         case BLOCK -> {
           saveBan(userId, "moderation");
           throw new ModerationException("BANNED");
         }
         case MUTE -> {
+          if (!warned) {
+            saveWarning(userId);
+            throw new ModerationException("TOXICITY_WARNING");
+          }
           saveMute(userId, Duration.ofHours(6), "moderation");
           throw new ModerationException("MUTED");
         }
         case READONLY -> {
+          if (!warned) {
+            saveWarning(userId);
+            throw new ModerationException("TOXICITY_WARNING");
+          }
           saveReadonly(userId, Duration.ofMinutes(10), "moderation");
           throw new ModerationException("READONLY");
         }
-        case WARNING -> throw new ModerationException("TOXICITY_WARNING");
+        case WARNING -> {
+          saveWarning(userId);
+          throw new ModerationException("TOXICITY_WARNING");
+        }
         default -> {}
       }
       Instant ts = Instant.now();
@@ -185,5 +215,10 @@ public class ChatService {
   private void saveReadonly(String userId, Duration duration, String reason) {
     Instant now = Instant.now();
     blockedRepo.upsert(userId, now.plus(duration), false, reason, now);
+  }
+
+  private void saveWarning(String userId) {
+    Instant now = Instant.now();
+    blockedRepo.upsert(userId, null, false, "warning", now);
   }
 }

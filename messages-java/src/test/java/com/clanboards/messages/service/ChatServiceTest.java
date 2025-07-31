@@ -119,13 +119,20 @@ class ChatServiceTest {
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
         .thenReturn(new ModerationOutcome(ModerationResult.MUTE, "{}"));
+    Mockito.when(blockedRepo.findById("u")).thenReturn(java.util.Optional.empty());
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    ModerationException ex =
+        assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    assertTrue(ex.getMessage().contains("TOXICITY_WARNING"));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
     Mockito.verify(blockedRepo)
         .upsert(
-            Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
+            Mockito.eq("u"),
+            Mockito.isNull(),
+            Mockito.eq(false),
+            Mockito.eq("warning"),
+            Mockito.any());
   }
 
   @Test
@@ -139,10 +146,69 @@ class ChatServiceTest {
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
         .thenReturn(new ModerationOutcome(ModerationResult.READONLY, "{}"));
+    Mockito.when(blockedRepo.findById("u")).thenReturn(java.util.Optional.empty());
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    ModerationException ex =
+        assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    assertTrue(ex.getMessage().contains("TOXICITY_WARNING"));
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
+    Mockito.verify(blockedRepo)
+        .upsert(
+            Mockito.eq("u"),
+            Mockito.isNull(),
+            Mockito.eq(false),
+            Mockito.eq("warning"),
+            Mockito.any());
+  }
+
+  @Test
+  void publishMuteAfterWarning() {
+    ChatRepository repo = Mockito.mock(ChatRepository.class);
+    ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    com.clanboards.messages.repository.ModerationRepository modRepo =
+        Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
+    com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
+        Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
+    com.clanboards.messages.model.BlockedUser warned =
+        new com.clanboards.messages.model.BlockedUser();
+    warned.setUserId("u");
+    warned.setReason("warning");
+    Mockito.when(blockedRepo.findById("u")).thenReturn(java.util.Optional.of(warned));
+    Mockito.when(moderation.verify("u", "hi"))
+        .thenReturn(new ModerationOutcome(ModerationResult.MUTE, "{}"));
+    ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
+
+    ModerationException ex =
+        assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    assertTrue(ex.getMessage().contains("MUTED"));
+    Mockito.verify(blockedRepo)
+        .upsert(
+            Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
+  }
+
+  @Test
+  void publishReadonlyAfterWarning() {
+    ChatRepository repo = Mockito.mock(ChatRepository.class);
+    ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    com.clanboards.messages.repository.ModerationRepository modRepo =
+        Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
+    com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
+        Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
+    com.clanboards.messages.model.BlockedUser warned =
+        new com.clanboards.messages.model.BlockedUser();
+    warned.setUserId("u");
+    warned.setReason("warning");
+    Mockito.when(blockedRepo.findById("u")).thenReturn(java.util.Optional.of(warned));
+    Mockito.when(moderation.verify("u", "hi"))
+        .thenReturn(new ModerationOutcome(ModerationResult.READONLY, "{}"));
+    ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
+
+    ModerationException ex =
+        assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    assertTrue(ex.getMessage().contains("READONLY"));
     Mockito.verify(blockedRepo)
         .upsert(
             Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
