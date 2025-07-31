@@ -21,6 +21,10 @@ public class ModerationRecord {
   @Column(columnDefinition = "jsonb")
   private String categories;
 
+  private String ip;
+
+  private String userAgent;
+
   private Instant createdAt = Instant.now();
 
   public Long getId() {
@@ -53,6 +57,22 @@ public class ModerationRecord {
 
   public void setCategories(String categories) {
     this.categories = categories;
+  }
+
+  public String getIp() {
+    return ip;
+  }
+
+  public void setIp(String ip) {
+    this.ip = ip;
+  }
+
+  public String getUserAgent() {
+    return userAgent;
+  }
+
+  public void setUserAgent(String userAgent) {
+    this.userAgent = userAgent;
   }
 
   public Instant getCreatedAt() {

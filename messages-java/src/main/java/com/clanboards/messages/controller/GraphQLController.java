@@ -70,16 +70,18 @@ public class GraphQLController {
   public Message sendMessage(
       @Argument String chatId,
       @Argument String content,
-      @ContextValue(value = "userId", required = false) String userId) {
+      @ContextValue(value = "userId", required = false) String userId,
+      @ContextValue(value = "ip", required = false) String ip,
+      @ContextValue(value = "ua", required = false) String ua) {
     if (userId == null || userId.isBlank()) {
       throw new RuntimeException("Unauthenticated");
     }
     log.info("GraphQL sendMessage to {} by {}", chatId, userId);
     ChatMessage saved;
     if (chatId.startsWith("global#")) {
-      saved = chatService.publishGlobal(content, userId);
+      saved = chatService.publishGlobal(content, userId, ip, ua);
     } else {
-      saved = chatService.publish(chatId, content, userId);
+      saved = chatService.publish(chatId, content, userId, ip, ua);
     }
     return new Message(saved.id(), saved.channel(), saved.ts(), saved.userId(), saved.content());
   }

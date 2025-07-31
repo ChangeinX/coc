@@ -13,6 +13,8 @@ import DesktopNav from './components/DesktopNav.jsx';
 import NotificationBanner from './components/NotificationBanner.jsx';
 import Toast from './components/Toast.jsx';
 import { fetchJSON } from './lib/api.js';
+import useRestrictions from './hooks/useRestrictions.js';
+const BannedPage = lazy(() => import('./pages/Banned.jsx'));
 
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const ClanModal = lazy(() => import('./components/ClanModal.jsx'));
@@ -58,6 +60,7 @@ export default function App() {
   const [loadingUser, setLoadingUser] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [badgeCount, setBadgeCount] = useState(0);
+  const restriction = useRestrictions(user ? user.sub : null);
   const { enabled: hasFeature } = useFeatures(user);
   const chatAllowed = hasFeature('chat');
   const menuRef = React.useRef(null);
@@ -183,6 +186,18 @@ export default function App() {
     return (
       <Suspense fallback={<Loading className="h-screen" />}>
         <LoginPage />
+      </Suspense>
+    );
+  }
+
+  if (
+    restriction &&
+    restriction.status === 'BANNED' &&
+    (restriction.remaining || 0) === 0
+  ) {
+    return (
+      <Suspense fallback={<Loading className="h-screen" />}>
+        <BannedPage />
       </Suspense>
     );
   }

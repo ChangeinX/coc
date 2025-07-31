@@ -27,7 +27,7 @@ class ChatControllerTest {
   @Test
   void publishReturnsOk() throws Exception {
     Instant ts = Instant.parse("2024-01-01T00:00:00Z");
-    Mockito.when(chatService.publish("1", "hi", "u"))
+    Mockito.when(chatService.publish("1", "hi", "u", null, null))
         .thenReturn(new ChatMessage("m1", "1", "u", "hi", ts));
 
     mvc.perform(
@@ -54,7 +54,7 @@ class ChatControllerTest {
   @Test
   void publishGlobalReturnsOk() throws Exception {
     Instant ts = Instant.parse("2024-01-01T00:00:00Z");
-    Mockito.when(chatService.publishGlobal("hi", "u"))
+    Mockito.when(chatService.publishGlobal("hi", "u", null, null))
         .thenReturn(new ChatMessage("m3", "global#shard-1", "u", "hi", ts));
 
     mvc.perform(
@@ -67,7 +67,7 @@ class ChatControllerTest {
 
   @Test
   void publishHandlesBadRequest() throws Exception {
-    Mockito.when(chatService.publish("1", "hi", "u"))
+    Mockito.when(chatService.publish("1", "hi", "u", null, null))
         .thenThrow(new IllegalArgumentException("bad"));
 
     mvc.perform(
