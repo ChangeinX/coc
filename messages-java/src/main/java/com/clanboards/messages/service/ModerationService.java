@@ -107,10 +107,19 @@ public class ModerationService {
       json = "{}";
     }
 
+    double sexualMinors = categories.getOrDefault("sexual_minors", 0.0);
+    double extremism = categories.getOrDefault("extremism", 0.0);
+    double highest =
+        categories.entrySet().stream()
+            .filter(e -> !"toxicity".equals(e.getKey()))
+            .mapToDouble(java.util.Map.Entry::getValue)
+            .max()
+            .orElse(0.0);
+
     ModerationResult result;
-    if (flagged) {
+    if (sexualMinors >= 0.8 || extremism >= 0.8) {
       result = ModerationResult.BLOCK;
-    } else if (profanity) {
+    } else if (highest >= 0.8) {
       result = ModerationResult.MUTE;
     } else if (spam) {
       result = ModerationResult.READONLY;
