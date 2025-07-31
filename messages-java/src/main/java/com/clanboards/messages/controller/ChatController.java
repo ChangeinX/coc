@@ -22,16 +22,22 @@ public class ChatController {
   }
 
   @PostMapping("/publish")
-  public ResponseEntity<Map<String, String>> publish(@RequestBody PublishRequest req) {
+  public ResponseEntity<Map<String, String>> publish(
+      @RequestBody PublishRequest req,
+      @RequestHeader(value = "User-Agent", required = false) String ua,
+      @RequestHeader(value = "X-Forwarded-For", required = false) String ip) {
     log.info("Received publish request for chat {}", req.chatId());
-    ChatMessage msg = chatService.publish(req.chatId(), req.text(), req.userId());
+    ChatMessage msg = chatService.publish(req.chatId(), req.text(), req.userId(), ip, ua);
     return ResponseEntity.ok(Map.of("status", "ok", "ts", msg.ts().toString()));
   }
 
   @PostMapping("/publish/global")
-  public ResponseEntity<Map<String, String>> publishGlobal(@RequestBody GlobalRequest req) {
+  public ResponseEntity<Map<String, String>> publishGlobal(
+      @RequestBody GlobalRequest req,
+      @RequestHeader(value = "User-Agent", required = false) String ua,
+      @RequestHeader(value = "X-Forwarded-For", required = false) String ip) {
     log.info("Received global publish request by {}", req.userId());
-    ChatMessage msg = chatService.publishGlobal(req.text(), req.userId());
+    ChatMessage msg = chatService.publishGlobal(req.text(), req.userId(), ip, ua);
     return ResponseEntity.ok(Map.of("status", "ok", "ts", msg.ts().toString()));
   }
 

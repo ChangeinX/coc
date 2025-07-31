@@ -47,8 +47,18 @@ public class AuthInterceptor implements WebGraphQlInterceptor {
                 .getBody();
         String sub = claims.get("sub", String.class);
         if (sub != null) {
+          String ip = request.getHeaders().getFirst("X-Forwarded-For");
+          String ua = request.getHeaders().getFirst("User-Agent");
           request.configureExecutionInput(
-              (ei, builder) -> builder.graphQLContext(ctx -> ctx.put("userId", sub)).build());
+              (ei, builder) ->
+                  builder
+                      .graphQLContext(
+                          ctx -> {
+                            ctx.put("userId", sub);
+                            if (ip != null) ctx.put("ip", ip);
+                            if (ua != null) ctx.put("ua", ua);
+                          })
+                      .build());
         }
       } catch (Exception ignored) {
       }

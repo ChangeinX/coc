@@ -18,6 +18,7 @@ export default function ChatPanel({
   friendIds = [],
   initialTab = null,
   initialDirectId = null,
+  restriction = null,
 }) {
   const [tab, setTab] = useState(
     initialDirectId ? 'Friends' : initialTab || (chatId ? 'Clan' : 'Global')
@@ -280,21 +281,29 @@ useEffect(() => {
           )}
         </div>
         {(tab !== 'Friends' || directChatId) && !(tab === 'Clan' && !chatId) && (
-          <form onSubmit={handleSubmit} className="flex gap-2 p-2 border-t">
-            <MentionInput
-              members={clanMembers.map((m) => ({ name: m.name, tag: m.tag }))}
-              value={text}
-              onChange={setText}
-              placeholder="Type a message…"
-            />
-            <button
-              type="submit"
-              className="px-3 py-1 rounded bg-blue-600 text-white"
-              disabled={sending}
-            >
-              {sending ? 'Sending…' : 'Send'}
-            </button>
-          </form>
+          restriction && restriction.status !== 'NONE' ? (
+            <div className="p-2 border-t text-sm text-center bg-yellow-100 text-yellow-800">
+              {restriction.status === 'BANNED'
+                ? 'You are banned from chat.'
+                : `You are muted for ${Math.ceil((restriction.remaining || 0) / 60)}m`}
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex gap-2 p-2 border-t">
+              <MentionInput
+                members={clanMembers.map((m) => ({ name: m.name, tag: m.tag }))}
+                value={text}
+                onChange={setText}
+                placeholder="Type a message…"
+              />
+              <button
+                type="submit"
+                className="px-3 py-1 rounded bg-blue-600 text-white"
+                disabled={sending}
+              >
+                {sending ? 'Sending…' : 'Send'}
+              </button>
+            </form>
+          )
         )}
         </>
       )}

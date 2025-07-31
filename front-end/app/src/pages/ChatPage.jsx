@@ -57,13 +57,6 @@ export default function ChatPage({ verified, chatId, userId }) {
 
   return (
     <div className="h-[calc(100dvh-8rem)] flex flex-col overflow-y-auto overscroll-y-contain">
-      {restriction && restriction.status !== 'NONE' && (
-        <div className="bg-yellow-100 text-yellow-800 text-center text-sm p-2">
-          {restriction.status === 'BANNED'
-            ? 'You are banned from chat.'
-            : `You are muted for ${Math.ceil((restriction.remaining || 0) / 60)}m`}
-        </div>
-      )}
       <Suspense fallback={<Loading className="py-20" />}>
         {verified ? (
           <ChatPanel
@@ -73,6 +66,7 @@ export default function ChatPage({ verified, chatId, userId }) {
           friendIds={friendIds}
           initialTab={initialTab ? initialTab.charAt(0).toUpperCase() + initialTab.slice(1) : undefined}
           initialDirectId={initialDirectId}
+          restriction={restriction}
         />
         ) : (
           <div className="p-4">Verify your account to chat.</div>
