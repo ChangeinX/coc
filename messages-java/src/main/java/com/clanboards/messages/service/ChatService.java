@@ -63,7 +63,7 @@ public class ChatService {
           throw new ModerationException("BANNED");
         }
         case MUTE -> {
-          saveMute(userId, Duration.ofHours(24), "moderation");
+          saveMute(userId, Duration.ofHours(6), "moderation");
           throw new ModerationException("MUTED");
         }
         case READONLY -> {
@@ -107,7 +107,7 @@ public class ChatService {
           throw new ModerationException("BANNED");
         }
         case MUTE -> {
-          saveMute(userId, Duration.ofHours(24), "moderation");
+          saveMute(userId, Duration.ofHours(6), "moderation");
           throw new ModerationException("MUTED");
         }
         case READONLY -> {
