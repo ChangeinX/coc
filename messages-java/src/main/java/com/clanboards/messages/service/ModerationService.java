@@ -6,6 +6,10 @@ import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.moderations.ModerationCreateParams;
 import com.openai.models.moderations.ModerationModel;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -26,14 +30,19 @@ import org.springframework.stereotype.Service;
 public class ModerationService {
   private final StringRedisTemplate redis;
   private final OpenAIClient openai;
+  private final String perspectiveKey;
+  private final HttpClient http = HttpClient.newHttpClient();
   private static final ObjectMapper mapper = new ObjectMapper();
   private static final Pattern BAD_WORDS =
       Pattern.compile("(?i)(viagra|free money|http[s]?://[^ ]+|fuck|shit|spam)");
   private static final Logger log = LoggerFactory.getLogger(ModerationService.class);
 
   public ModerationService(
-      StringRedisTemplate redis, @Value("${openai.api-key:${OPENAI_API_KEY:}}") String apiKey) {
+      StringRedisTemplate redis,
+      @Value("${openai.api-key:${OPENAI_API_KEY:}}") String apiKey,
+      @Value("${perspective.api-key:${PERSPECTIVE_API_KEY:}}") String perspectiveKey) {
     this.redis = redis;
+    this.perspectiveKey = perspectiveKey;
     if (apiKey != null && !apiKey.isBlank()) {
       this.openai = OpenAIOkHttpClient.builder().apiKey(apiKey).build();
       log.info("OpenAI client initialized successfully");
@@ -60,7 +69,6 @@ public class ModerationService {
       profanity = true;
     }
     if (openai != null) {
-      log.info("Making OpenAI moderation API call for user: {}", userId);
       ModerationCreateParams req =
           ModerationCreateParams.builder()
               .input(text)
@@ -73,8 +81,6 @@ public class ModerationService {
       } catch (JsonProcessingException e) {
         respJson = resp.toString();
       }
-      log.debug("OpenAI moderation response for {}: {}", userId, respJson);
-      log.info("OpenAI moderation response for {}: {}", userId, respJson);
       if (!resp.results().isEmpty()) {
         var result = resp.results().get(0);
         var scores = result.categoryScores();
@@ -97,8 +103,54 @@ public class ModerationService {
           flagged = true;
         }
       }
-    } else {
-      log.debug("OpenAI moderation disabled; skipping API call for {}", userId);
+    }
+    if (perspectiveKey != null && !perspectiveKey.isBlank()) {
+      try {
+        var attrReq = new java.util.LinkedHashMap<String, Object>();
+        attrReq.put("TOXICITY", java.util.Map.of());
+        attrReq.put("SEVERE_TOXICITY", java.util.Map.of());
+        attrReq.put("INSULT", java.util.Map.of());
+        attrReq.put("PROFANITY", java.util.Map.of());
+        attrReq.put("THREAT", java.util.Map.of());
+        attrReq.put("IDENTITY_ATTACK", java.util.Map.of());
+        attrReq.put("SEXUALLY_EXPLICIT", java.util.Map.of());
+        attrReq.put("FLIRTATION", java.util.Map.of());
+        attrReq.put("SPAM", java.util.Map.of());
+        var reqMap =
+            java.util.Map.of(
+                "comment", java.util.Map.of("text", text), "requestedAttributes", attrReq);
+        String body = mapper.writeValueAsString(reqMap);
+        log.debug("Perspective request for {}: {}", userId, body);
+        HttpRequest request =
+            HttpRequest.newBuilder()
+                .uri(
+                    URI.create(
+                        "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key="
+                            + perspectiveKey))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        log.info("Calling Perspective API for user: {}", userId);
+        HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+        String respBody = response.body();
+        log.debug("Perspective response for {}: {}", userId, respBody);
+        var node = mapper.readTree(respBody).path("attributeScores");
+        java.util.Iterator<java.util.Map.Entry<String, com.fasterxml.jackson.databind.JsonNode>>
+            it = node.fields();
+        while (it.hasNext()) {
+          var e = it.next();
+          double score = e.getValue().path("summaryScore").path("value").asDouble(0.0);
+          String key = e.getKey().toLowerCase();
+          categories.put(key, score);
+          log.info("Perspective score {} for {}: {}", key, userId, score);
+          if ("profanity".equals(key) && score >= 0.9) {
+            profanity = true;
+          }
+          toxicity = Math.max(toxicity, score);
+        }
+      } catch (Exception ex) {
+        log.warn("Perspective API call failed", ex);
+      }
     }
     String json;
     try {
