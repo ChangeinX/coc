@@ -178,8 +178,30 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (
+      restriction &&
+      restriction.status === 'BANNED' &&
+      (restriction.remaining || 0) === 0
+    ) {
+      window.google?.accounts.id.disableAutoSelect();
+      logout();
+      window.location.hash = '#/banned';
+    }
+  }, [restriction, logout]);
+
   if (loading) {
     return <Loading className="h-screen" />;
+  }
+
+  const currentHash = window.location.hash.slice(1);
+
+  if (!user && currentHash === '/banned') {
+    return (
+      <Suspense fallback={<Loading className="h-screen" />}>
+        <BannedPage />
+      </Suspense>
+    );
   }
 
   if (!user) {
@@ -190,17 +212,6 @@ export default function App() {
     );
   }
 
-  if (
-    restriction &&
-    restriction.status === 'BANNED' &&
-    (restriction.remaining || 0) === 0
-  ) {
-    return (
-      <Suspense fallback={<Loading className="h-screen" />}>
-        <BannedPage />
-      </Suspense>
-    );
-  }
 
   return (
     <Router>
@@ -287,6 +298,7 @@ export default function App() {
               {import.meta.env.DEV && (
                 <Route path="/push-debug" element={<PushDebugPage />} />
               )}
+              <Route path="/banned" element={<BannedPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
