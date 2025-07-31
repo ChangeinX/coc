@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { fetchJSON } from '../lib/api.js';
 
 export default function Login() {
   const { login } = useAuth();
@@ -11,7 +12,24 @@ export default function Login() {
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: async (res) => {
           try {
-            await login(res.credential);
+            const me = await login(res.credential);
+            if (me) {
+              try {
+                const restriction = await fetchJSON(
+                  `/chat/restrictions/${encodeURIComponent(me.sub)}`,
+                );
+                if (
+                  restriction.status === 'BANNED' &&
+                  (restriction.remaining || 0) === 0
+                ) {
+                  window.location.hash = '#/banned';
+                  window.location.reload();
+                  return;
+                }
+              } catch (err) {
+                console.error('Failed to check restrictions', err);
+              }
+            }
             window.location.hash = '#/';
             window.location.reload();
           } catch (err) {
