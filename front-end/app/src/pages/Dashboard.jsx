@@ -2,7 +2,7 @@ import React, {useState, useEffect, useMemo, Suspense, lazy} from 'react';
 import Loading from '../components/Loading.jsx';
 import {fetchJSONCached} from '../lib/api.js';
 import { getClanCache, putClanCache } from '../lib/db.js';
-import { timeAgo } from '../lib/time.js';
+import { timeAgo, formatDays } from '../lib/time.js';
 import Tabs from '../components/Tabs.jsx';
 import RiskRing from '../components/RiskRing.jsx';
 import DonationRing from '../components/DonationRing.jsx';
@@ -54,8 +54,8 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
     const [refreshing, setRefreshing] = useState(false);
 
     const [selected, setSelected] = useState(null);
-    const [sortField, setSortField] = useState('');
-    const [sortDir, setSortDir] = useState('asc');
+    const [sortField, setSortField] = useState('loyalty');
+    const [sortDir, setSortDir] = useState('desc');
     const [activeSection, setActiveSection] = useState('health');
     const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width:640px)').matches);
     const [listHeight, setListHeight] = useState(() => Math.min(500, window.innerHeight - 200));
@@ -376,11 +376,17 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                         </td>
                                                         <td data-label="Days in Clan" className="px-3 py-2 text-center hidden sm:table-cell">{m.loyalty}</td>
                                                         <td data-label="Risk" className="px-3 py-2 text-center">
-                                                            {refreshing && !loading ? (
-                                                                <Loading size={36} />
-                                                            ) : (
-                                                                <RiskRing score={m.risk_score} size={36} />
-                                                            )}
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <div className="flex flex-col items-center text-xs">
+                                                                    <span>{formatDays(m.loyalty)}</span>
+                                                                    <span className="text-slate-500">In Clan</span>
+                                                                </div>
+                                                                {refreshing && !loading ? (
+                                                                    <Loading size={36} />
+                                                                ) : (
+                                                                    <RiskRing score={m.risk_score} size={36} />
+                                                                )}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}

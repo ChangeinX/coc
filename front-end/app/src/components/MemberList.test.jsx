@@ -17,6 +17,7 @@ const members = [
     risk_score: 5,
     donations: 0,
     donationsReceived: 0,
+    loyalty: 40,
   },
 ];
 
@@ -28,5 +29,6 @@ describe('MemberList', () => {
     expect(spy).toHaveBeenCalledWith('#B');
     expect(screen.getByAltText('league')).toHaveAttribute('src', members[0].leagueIcon);
     expect(screen.queryByText('#B')).not.toBeInTheDocument();
+    expect(screen.getByText('In Clan')).toBeInTheDocument();
   });
 });
