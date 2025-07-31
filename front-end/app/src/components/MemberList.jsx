@@ -2,7 +2,7 @@ import React from 'react';
 import { FixedSizeList as List } from 'react-window';
 import RiskRing from './RiskRing.jsx';
 import DonationRing from './DonationRing.jsx';
-import { timeAgo } from '../lib/time.js';
+import { timeAgo, formatDays } from '../lib/time.js';
 import PlayerMini from './PlayerMini.jsx';
 
 function Row({ index, style, data }) {
@@ -25,6 +25,10 @@ function Row({ index, style, data }) {
         </span>
       </div>
       <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center text-xs mr-1">
+          <span>{formatDays(m.loyalty)}</span>
+          <span className="text-slate-500">In Clan</span>
+        </div>
         <RiskRing score={m.risk_score} size={32} />
         <div className="hidden md:block">
           <DonationRing
