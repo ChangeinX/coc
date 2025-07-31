@@ -194,10 +194,13 @@ useEffect(() => {
         window.dispatchEvent(new CustomEvent('toast', { detail: 'Keep it civil' }));
       } else if (msg.includes('READONLY')) {
         window.dispatchEvent(new CustomEvent('toast', { detail: 'You are temporarily read-only' }));
+        updateMessage(localMsg.ts, { status: 'failed' });
       } else if (msg.includes('MUTED')) {
         window.dispatchEvent(new CustomEvent('toast', { detail: 'You are muted for 24h' }));
+        updateMessage(localMsg.ts, { status: 'failed' });
       } else if (msg.includes('BANNED')) {
         window.dispatchEvent(new CustomEvent('toast', { detail: 'You have been banned' }));
+        updateMessage(localMsg.ts, { status: 'failed' });
       } else {
         const failed = { ...localMsg, status: 'failed' };
         await addOutboxMessage(failed);
