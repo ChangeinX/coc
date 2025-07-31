@@ -33,3 +33,19 @@ export function shortTimeAgo(date) {
     const diffDay = Math.floor(diffHr / 24);
     return `${diffDay}d`;
 }
+
+export function formatDays(days) {
+    if (days >= 365) {
+        const years = Math.floor(days / 365);
+        return `${years}y`;
+    }
+    if (days >= 30) {
+        const months = Math.floor(days / 30);
+        return `${months}m`;
+    }
+    if (days >= 7) {
+        const weeks = Math.floor(days / 7);
+        return `${weeks}w`;
+    }
+    return `${days}d`;
+}
