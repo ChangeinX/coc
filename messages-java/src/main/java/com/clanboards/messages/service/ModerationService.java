@@ -36,6 +36,7 @@ public class ModerationService {
   private static final Pattern BAD_WORDS =
       Pattern.compile("(?i)(viagra|free money|http[s]?://[^ ]+|fuck|shit|spam)");
   private static final Logger log = LoggerFactory.getLogger(ModerationService.class);
+  private static final String WARN_PREFIX = "chat:warn:";
 
   public ModerationService(
       StringRedisTemplate redis,
@@ -241,5 +242,15 @@ public class ModerationService {
     } catch (NumberFormatException ex) {
       return 0;
     }
+  }
+
+  /** Return true when a recent warning exists for the user. */
+  public boolean hasWarning(String userId) {
+    return Boolean.TRUE.equals(redis.hasKey(WARN_PREFIX + userId));
+  }
+
+  /** Record a warning for the user with a one hour expiry. */
+  public void markWarning(String userId) {
+    redis.opsForValue().set(WARN_PREFIX + userId, "1", Duration.ofHours(1));
   }
 }

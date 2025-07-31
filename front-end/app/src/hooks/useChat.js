@@ -54,6 +54,9 @@ export default function useChat(chatId) {
             m.includes('READONLY') ||
             m.includes('TOXICITY_WARNING')
           ) {
+            if (m.includes('TOXICITY_WARNING')) {
+              window.dispatchEvent(new CustomEvent('toast', { detail: 'Keep it civil' }));
+            }
             if (m.includes('BANNED') || m.includes('MUTED') || m.includes('READONLY')) {
               window.dispatchEvent(new Event('restriction-updated'));
             }
