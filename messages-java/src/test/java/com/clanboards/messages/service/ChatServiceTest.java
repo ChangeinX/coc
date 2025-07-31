@@ -119,13 +119,39 @@ class ChatServiceTest {
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
         .thenReturn(new ModerationOutcome(ModerationResult.MUTE, "{}"));
+    Mockito.when(moderation.hasWarning("u")).thenReturn(true);
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    ModerationException ex =
+        assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    assertEquals("MUTED", ex.getMessage());
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
     Mockito.verify(blockedRepo)
         .upsert(
             Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
+  }
+
+  @Test
+  void publishWarnsBeforeMute() {
+    ChatRepository repo = Mockito.mock(ChatRepository.class);
+    ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    com.clanboards.messages.repository.ModerationRepository modRepo =
+        Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
+    com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
+        Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
+    Mockito.when(moderation.verify("u", "hi"))
+        .thenReturn(new ModerationOutcome(ModerationResult.MUTE, "{}"));
+    Mockito.when(moderation.hasWarning("u")).thenReturn(false);
+    ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
+
+    ModerationException ex =
+        assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    assertEquals("TOXICITY_WARNING", ex.getMessage());
+    Mockito.verify(blockedRepo, Mockito.never())
+        .upsert(
+            Mockito.any(), Mockito.any(), Mockito.anyBoolean(), Mockito.anyString(), Mockito.any());
+    Mockito.verify(moderation).markWarning("u");
   }
 
   @Test
@@ -139,13 +165,39 @@ class ChatServiceTest {
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
         .thenReturn(new ModerationOutcome(ModerationResult.READONLY, "{}"));
+    Mockito.when(moderation.hasWarning("u")).thenReturn(true);
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
-    assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    ModerationException ex =
+        assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    assertEquals("READONLY", ex.getMessage());
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
     Mockito.verify(blockedRepo)
         .upsert(
             Mockito.eq("u"), Mockito.any(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
+  }
+
+  @Test
+  void publishWarnsBeforeReadonly() {
+    ChatRepository repo = Mockito.mock(ChatRepository.class);
+    ApplicationEventPublisher events = Mockito.mock(ApplicationEventPublisher.class);
+    ModerationService moderation = Mockito.mock(ModerationService.class);
+    com.clanboards.messages.repository.ModerationRepository modRepo =
+        Mockito.mock(com.clanboards.messages.repository.ModerationRepository.class);
+    com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
+        Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
+    Mockito.when(moderation.verify("u", "hi"))
+        .thenReturn(new ModerationOutcome(ModerationResult.READONLY, "{}"));
+    Mockito.when(moderation.hasWarning("u")).thenReturn(false);
+    ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
+
+    ModerationException ex =
+        assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
+    assertEquals("TOXICITY_WARNING", ex.getMessage());
+    Mockito.verify(blockedRepo, Mockito.never())
+        .upsert(
+            Mockito.any(), Mockito.any(), Mockito.anyBoolean(), Mockito.anyString(), Mockito.any());
+    Mockito.verify(moderation).markWarning("u");
   }
 
   @Test

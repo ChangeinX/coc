@@ -66,14 +66,25 @@ public class ChatService {
           throw new ModerationException("BANNED");
         }
         case MUTE -> {
+          if (!moderation.hasWarning(userId)) {
+            moderation.markWarning(userId);
+            throw new ModerationException("TOXICITY_WARNING");
+          }
           saveMute(userId, Duration.ofHours(6), "moderation");
           throw new ModerationException("MUTED");
         }
         case READONLY -> {
+          if (!moderation.hasWarning(userId)) {
+            moderation.markWarning(userId);
+            throw new ModerationException("TOXICITY_WARNING");
+          }
           saveReadonly(userId, Duration.ofMinutes(10), "moderation");
           throw new ModerationException("READONLY");
         }
-        case WARNING -> throw new ModerationException("TOXICITY_WARNING");
+        case WARNING -> {
+          moderation.markWarning(userId);
+          throw new ModerationException("TOXICITY_WARNING");
+        }
         default -> {}
       }
       Instant ts = Instant.now();
@@ -112,14 +123,25 @@ public class ChatService {
           throw new ModerationException("BANNED");
         }
         case MUTE -> {
+          if (!moderation.hasWarning(userId)) {
+            moderation.markWarning(userId);
+            throw new ModerationException("TOXICITY_WARNING");
+          }
           saveMute(userId, Duration.ofHours(6), "moderation");
           throw new ModerationException("MUTED");
         }
         case READONLY -> {
+          if (!moderation.hasWarning(userId)) {
+            moderation.markWarning(userId);
+            throw new ModerationException("TOXICITY_WARNING");
+          }
           saveReadonly(userId, Duration.ofMinutes(10), "moderation");
           throw new ModerationException("READONLY");
         }
-        case WARNING -> throw new ModerationException("TOXICITY_WARNING");
+        case WARNING -> {
+          moderation.markWarning(userId);
+          throw new ModerationException("TOXICITY_WARNING");
+        }
         default -> {}
       }
       Instant ts = Instant.now();
