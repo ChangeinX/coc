@@ -22,7 +22,7 @@ class ChatServiceTest {
     com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hello"))
-        .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, "{}"));
+        .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, java.util.Map.of()));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
     ChatMessage msg = service.publish("1", "hello", "u", null, null);
@@ -58,7 +58,7 @@ class ChatServiceTest {
     com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("user1", "hi"))
-        .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, "{}"));
+        .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, java.util.Map.of()));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
     ChatMessage msg = service.publishGlobal("hi", "user1", null, null);
@@ -76,7 +76,7 @@ class ChatServiceTest {
     com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
-        .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, "{}"));
+        .thenReturn(new ModerationOutcome(ModerationResult.ALLOW, java.util.Map.of()));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
     service.publish("1", "hi", "u", null, null);
@@ -94,7 +94,7 @@ class ChatServiceTest {
     com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
-        .thenReturn(new ModerationOutcome(ModerationResult.BLOCK, "{}"));
+        .thenReturn(new ModerationOutcome(ModerationResult.BLOCK, java.util.Map.of()));
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
     assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
@@ -118,7 +118,7 @@ class ChatServiceTest {
     com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
-        .thenReturn(new ModerationOutcome(ModerationResult.MUTE, "{}"));
+        .thenReturn(new ModerationOutcome(ModerationResult.MUTE, java.util.Map.of()));
     Mockito.when(moderation.hasWarning("u")).thenReturn(true);
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
@@ -141,7 +141,7 @@ class ChatServiceTest {
     com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
-        .thenReturn(new ModerationOutcome(ModerationResult.MUTE, "{}"));
+        .thenReturn(new ModerationOutcome(ModerationResult.MUTE, java.util.Map.of()));
     Mockito.when(moderation.hasWarning("u")).thenReturn(false);
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
@@ -164,7 +164,7 @@ class ChatServiceTest {
     com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
-        .thenReturn(new ModerationOutcome(ModerationResult.READONLY, "{}"));
+        .thenReturn(new ModerationOutcome(ModerationResult.READONLY, java.util.Map.of()));
     Mockito.when(moderation.hasWarning("u")).thenReturn(true);
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
@@ -187,7 +187,7 @@ class ChatServiceTest {
     com.clanboards.messages.repository.BlockedUserRepository blockedRepo =
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
-        .thenReturn(new ModerationOutcome(ModerationResult.READONLY, "{}"));
+        .thenReturn(new ModerationOutcome(ModerationResult.READONLY, java.util.Map.of()));
     Mockito.when(moderation.hasWarning("u")).thenReturn(false);
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 

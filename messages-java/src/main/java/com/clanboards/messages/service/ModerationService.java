@@ -155,7 +155,7 @@ public class ModerationService {
     }
     String json;
     try {
-      json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(categories);
+      json = mapper.writeValueAsString(categories);
     } catch (Exception ex) {
       json = "{}";
     }
@@ -182,7 +182,7 @@ public class ModerationService {
       result = ModerationResult.ALLOW;
     }
     log.info("Moderation outcome for {}: {} {}", userId, result, json);
-    return new ModerationOutcome(result, json);
+    return new ModerationOutcome(result, categories);
   }
 
   /**
