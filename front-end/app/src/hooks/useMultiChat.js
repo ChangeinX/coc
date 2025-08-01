@@ -8,6 +8,7 @@ import {
   removeOutboxMessage,
   getMessageCache,
   putMessageCache,
+  removeMessageFromCache,
 } from '../lib/db.js';
 
 const PAGE_SIZE = 20;
@@ -85,6 +86,11 @@ export default function useMultiChat(ids = []) {
             }
             await removeOutboxMessage(msg.id);
             setMessages((msgs) => msgs.filter((x) => x.ts !== msg.ts));
+            try {
+              await removeMessageFromCache(msg.chatId, msg.ts);
+            } catch (err2) {
+              console.error('Failed to update message cache', err2);
+            }
           } else {
             break;
           }
