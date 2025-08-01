@@ -188,6 +188,7 @@ fabric.properties
 .idea
 /db/.env
 !front-end/src/lib/
+!front-end/app/src/lib/
 
 .DS_Store
 # Java build artifacts

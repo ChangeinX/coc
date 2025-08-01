@@ -78,3 +78,11 @@ export async function getMessageCache(chatId) {
 export async function putMessageCache(record) {
   return (await dbPromise).put('messages', record);
 }
+
+export async function removeMessageFromCache(chatId, ts) {
+  const db = await dbPromise;
+  const record = await db.get('messages', chatId);
+  if (!record) return;
+  record.messages = (record.messages || []).filter((m) => m.ts !== ts);
+  return db.put('messages', record);
+}
