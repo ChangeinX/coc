@@ -193,6 +193,7 @@ useEffect(() => {
       const msg = err.message || '';
       if (msg.includes('TOXICITY_WARNING')) {
         window.dispatchEvent(new CustomEvent('toast', { detail: 'Keep it civil' }));
+        updateMessage(localMsg.ts, { status: 'failed' });
       } else if (msg.includes('READONLY')) {
         window.dispatchEvent(
           new CustomEvent('toast', { detail: 'You are temporarily read-only' }),
