@@ -19,7 +19,7 @@ public class ModerationRecord {
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(columnDefinition = "jsonb")
-  private String categories;
+  private java.util.Map<String, Double> categories;
 
   private String ip;
 
@@ -51,11 +51,11 @@ public class ModerationRecord {
     this.content = content;
   }
 
-  public String getCategories() {
+  public java.util.Map<String, Double> getCategories() {
     return categories;
   }
 
-  public void setCategories(String categories) {
+  public void setCategories(java.util.Map<String, Double> categories) {
     this.categories = categories;
   }
 

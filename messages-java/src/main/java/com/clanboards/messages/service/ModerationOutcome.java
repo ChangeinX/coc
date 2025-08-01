@@ -1,4 +1,6 @@
 package com.clanboards.messages.service;
 
-/** Moderation result with category JSON. */
-public record ModerationOutcome(ModerationResult result, String categories) {}
+import java.util.Map;
+
+/** Moderation result with category scores. */
+public record ModerationOutcome(ModerationResult result, Map<String, Double> categories) {}
