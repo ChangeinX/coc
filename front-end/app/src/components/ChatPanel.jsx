@@ -192,8 +192,8 @@ useEffect(() => {
       console.error('Failed to publish message', err);
       const msg = err.message || '';
       if (msg.includes('TOXICITY_WARNING')) {
-        window.dispatchEvent(new CustomEvent('toast', { detail: 'Keep it civil' }));
-        updateMessage(localMsg.ts, { status: 'failed' });
+        alert('Keep it civil');
+        removeMessage(localMsg.ts);
       } else if (msg.includes('READONLY')) {
         window.dispatchEvent(
           new CustomEvent('toast', { detail: 'You are temporarily read-only' }),
