@@ -1,25 +1,48 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
 const loadMoreMock = vi.fn();
+const appendMessageMock = vi.fn();
+const removeMessageMock = vi.fn();
 
 vi.mock('../hooks/useChat.js', () => ({
-  default: () => ({ messages: [], loadMore: loadMoreMock, hasMore: true, appendMessage: vi.fn() }),
+  default: () => ({
+    messages: [],
+    loadMore: loadMoreMock,
+    hasMore: true,
+    appendMessage: appendMessageMock,
+    removeMessage: removeMessageMock,
+    updateMessage: vi.fn(),
+  }),
 }));
 vi.mock('../hooks/useMultiChat.js', () => ({
-  default: () => ({ messages: [], loadMore: loadMoreMock, hasMore: true, appendMessage: vi.fn() }),
+  default: () => ({
+    messages: [],
+    loadMore: loadMoreMock,
+    hasMore: true,
+    appendMessage: appendMessageMock,
+    removeMessage: removeMessageMock,
+    updateMessage: vi.fn(),
+  }),
   globalShardFor: () => 'global#shard-0',
 }));
 vi.mock('../lib/api.js', () => ({
   fetchJSON: vi.fn(() => Promise.resolve({})),
   fetchJSONCached: vi.fn(),
 }));
+vi.mock('../lib/gql.js', () => ({
+  graphqlRequest: vi.fn(),
+}));
 
 import ChatPanel from './ChatPanel.jsx';
+import { graphqlRequest } from '../lib/gql.js';
 
 beforeEach(() => {
   loadMoreMock.mockClear();
+  appendMessageMock.mockClear();
+  removeMessageMock.mockClear();
+  graphqlRequest.mockReset();
 });
 
 describe('ChatPanel component', () => {
@@ -59,5 +82,18 @@ describe('ChatPanel component', () => {
     render(<ChatPanel restriction={{ status: 'BANNED', remaining: 0 }} />);
     expect(screen.getByText('You are banned from chat.')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Type a message…')).not.toBeInTheDocument();
+  });
+
+  it('alerts and removes message when moderation fails', async () => {
+    graphqlRequest.mockRejectedValueOnce(new Error('TOXICITY_WARNING'));
+    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    render(<ChatPanel chatId="1" userId="u1" />);
+    fireEvent.change(screen.getByPlaceholderText('Type a message…'), {
+      target: { value: 'bad' },
+    });
+    fireEvent.click(screen.getAllByText('Send')[0]);
+    await waitFor(() => expect(alertMock).toHaveBeenCalledWith('Keep it civil'));
+    expect(removeMessageMock).toHaveBeenCalled();
+    alertMock.mockRestore();
   });
 });
