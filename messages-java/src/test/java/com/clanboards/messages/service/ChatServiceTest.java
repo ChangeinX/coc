@@ -130,9 +130,12 @@ class ChatServiceTest {
         org.mockito.ArgumentCaptor.forClass(java.time.Instant.class);
     Mockito.verify(blockedRepo)
         .upsert(
-            Mockito.eq("u"), until.capture(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
-    long mins =
-        java.time.Duration.between(java.time.Instant.now(), until.getValue()).toMinutes();
+            Mockito.eq("u"),
+            until.capture(),
+            Mockito.eq(false),
+            Mockito.anyString(),
+            Mockito.any());
+    long mins = java.time.Duration.between(java.time.Instant.now(), until.getValue()).toMinutes();
     assertTrue(mins >= 29 && mins <= 31);
   }
 
@@ -179,9 +182,12 @@ class ChatServiceTest {
         org.mockito.ArgumentCaptor.forClass(java.time.Instant.class);
     Mockito.verify(blockedRepo)
         .upsert(
-            Mockito.eq("u"), until.capture(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
-    long hrs =
-        java.time.Duration.between(java.time.Instant.now(), until.getValue()).toHours();
+            Mockito.eq("u"),
+            until.capture(),
+            Mockito.eq(false),
+            Mockito.anyString(),
+            Mockito.any());
+    long hrs = java.time.Duration.between(java.time.Instant.now(), until.getValue()).toHours();
     assertTrue(hrs >= 23 && hrs <= 25);
   }
 
@@ -206,9 +212,12 @@ class ChatServiceTest {
         org.mockito.ArgumentCaptor.forClass(java.time.Instant.class);
     Mockito.verify(blockedRepo)
         .upsert(
-            Mockito.eq("u"), until.capture(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
-    long hrs =
-        java.time.Duration.between(java.time.Instant.now(), until.getValue()).toHours();
+            Mockito.eq("u"),
+            until.capture(),
+            Mockito.eq(false),
+            Mockito.anyString(),
+            Mockito.any());
+    long hrs = java.time.Duration.between(java.time.Instant.now(), until.getValue()).toHours();
     assertTrue(hrs >= 1 && hrs <= 3);
   }
 
