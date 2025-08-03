@@ -61,7 +61,7 @@ class TestConfig(Config):
 
 
 env_configs = {
-    "development": DevelopmentConfig,
+    "dev": DevelopmentConfig,
     "production": Config,
     "testing": TestConfig,
 }
@@ -84,7 +84,7 @@ class MessagesTestConfig(MessagesConfig, TestConfig):
 
 
 messages_env_configs = {
-    "development": MessagesDevelopmentConfig,
+    "dev": MessagesDevelopmentConfig,
     "production": MessagesConfig,
     "testing": MessagesTestConfig,
 }
