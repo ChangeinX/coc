@@ -145,3 +145,26 @@ def test_join_records_request(monkeypatch):
     with app.app_context():
         jr = RecruitJoin.query.filter_by(post_id=post_id, user_id=1).one_or_none()
         assert jr is not None
+
+
+def test_create_recruit_post(monkeypatch):
+    app, client = _setup_app(monkeypatch)
+    payload = {
+        "name": "New Clan",
+        "description": "desc",
+        "openSlots": 5,
+        "totalSlots": 50,
+        "league": "Gold",
+        "language": "EN",
+        "war": "Always",
+    }
+    resp = client.post(
+        "/recruit",
+        json=payload,
+        headers={"Authorization": "Bearer t"},
+    )
+    assert resp.status_code == 201
+    with app.app_context():
+        post = RecruitPost.query.filter_by(name="New Clan").one_or_none()
+        assert post is not None
+        assert post.open_slots == 5
