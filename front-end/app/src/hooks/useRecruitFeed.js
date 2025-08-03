@@ -8,7 +8,14 @@ export default function useRecruitFeed(filters) {
 
   async function fetchPage(c) {
     setLoading(true);
-    const url = `/recruit?pageCursor=${c || ''}`;
+    const params = new URLSearchParams();
+    params.set('pageCursor', c || '');
+    if (filters.league) params.set('league', filters.league);
+    if (filters.language) params.set('language', filters.language);
+    if (filters.war) params.set('war', filters.war);
+    if (filters.q) params.set('q', filters.q);
+    if (filters.sort) params.set('sort', filters.sort);
+    const url = `/recruit?${params.toString()}`;
     let data;
     if (typeof window !== 'undefined' && 'caches' in window && (!c || c === '')) {
       const cache = await caches.open('recruit');
