@@ -20,6 +20,7 @@ class ClanSnapshot(db.Model):
 class Clan(db.Model):
     __tablename__ = "clans"
     tag = db.Column(db.String(15), primary_key=True)
+    deep_link = db.Column(db.String(255))
     data = db.Column(db.JSON)
     updated_at = db.Column(
         db.DateTime,
@@ -65,6 +66,7 @@ class Player(db.Model):
     town_hall = db.Column(db.Integer)
     role = db.Column(db.String(20))
     clan_tag = db.Column(db.String(15), index=True)
+    deep_link = db.Column(db.String(255))
     data = db.Column(db.JSON)
     updated_at = db.Column(
         db.DateTime,

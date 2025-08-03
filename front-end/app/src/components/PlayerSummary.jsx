@@ -36,7 +36,18 @@ export default function PlayerSummary({ tag, showHeader = true, scrollBadges = t
             <CachedImage src={player.leagueIcon} alt="league" className="w-6 h-6" />
           )}
           <span>{player.name}</span>
-          <span className="text-sm font-normal text-slate-500">{player.tag}</span>
+          {player.deep_link ? (
+            <a
+              href={player.deep_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-normal text-slate-500"
+            >
+              {player.tag}
+            </a>
+          ) : (
+            <span className="text-sm font-normal text-slate-500">{player.tag}</span>
+          )}
         </h3>
       )}
       <div

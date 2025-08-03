@@ -30,6 +30,7 @@ class ClanDict(TypedDict):
     ts: str
     description: str | None
     badgeUrls: dict | None
+    deep_link: str | None
 
 
 class PlayerDict(TypedDict):
@@ -45,6 +46,7 @@ class PlayerDict(TypedDict):
     clanTag: str | None
     leagueIcon: str | None
     labels: list | None
+    deep_link: str | None
     ts: str
 
 
@@ -60,6 +62,7 @@ def _clan_row_to_dict(row: ClanSnapshot) -> ClanDict:  # type: ignore[override]
         ts=row.ts.isoformat().replace(" ", "T") + "Z",
         description=None,
         badgeUrls=None,
+        deep_link=None,
     )
 
 
@@ -77,6 +80,7 @@ def _player_row_to_dict(row: PlayerSnapshot) -> PlayerDict:  # type: ignore[over
         clanTag=row.clan_tag or None,
         leagueIcon=(row.data or {}).get("league", {}).get("iconUrls", {}).get("tiny"),
         labels=(row.data or {}).get("labels", []),
+        deep_link=(row.data or {}).get("deep_link"),
         ts=row.ts.isoformat().replace(" ", "T") + "Z",
     )
 
@@ -131,6 +135,7 @@ def _latest_members_sync(clan_tag: str) -> list[dict]:
             "last_seen": (ps.last_seen or ps.ts).isoformat().replace(" ", "T") + "Z",
             "leagueIcon": (pdata or {}).get("league", {}).get("iconUrls", {}).get("tiny"),
             "labels": (pdata or {}).get("labels", []),
+            "deep_link": (pdata or {}).get("deep_link") or (ps.data or {}).get("deep_link"),
         }
         for ps, pdata in rows
     ]
@@ -184,6 +189,7 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
         base["badgeUrls"] = (cdata.data or {}).get("badgeUrls")
         if base.get("warWinStreak") is None:
             base["warWinStreak"] = (cdata.data or {}).get("warWinStreak")
+        base["deep_link"] = cdata.deep_link
     data = await _attach_members(base)
 
     cache.set(cache_key, data, timeout=CACHE_TTL)
@@ -219,5 +225,9 @@ async def get_player(tag: str) -> Optional[PlayerDict]:
             return None
 
     data = _player_row_to_dict(row)
+    if data.get("deep_link") is None:
+        prow = Player.query.filter_by(tag=tag).first()
+        if prow:
+            data["deep_link"] = prow.deep_link
     cache.set(cache_key, data, timeout=CACHE_TTL)
     return data

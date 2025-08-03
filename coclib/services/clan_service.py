@@ -19,7 +19,10 @@ STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 async def fetch_clan(tag: str) -> dict:
     client = await get_client()
-    return (await client.get_clan(tag))._raw_data
+    clan = await client.get_clan(tag)
+    data = clan._raw_data
+    data["deep_link"] = clan.share_link
+    return data
 
 
 async def get_clan(tag: str) -> dict:
@@ -39,10 +42,18 @@ async def get_clan(tag: str) -> dict:
 
     cache.set(key, data)
 
-    stmt = insert(Clan).values(tag=norm_tag, data=data)
+    stmt = insert(Clan).values(
+        tag=norm_tag,
+        data=data,
+        deep_link=data.get("deep_link"),
+    )
     stmt = stmt.on_conflict_do_update(
         index_elements=[Clan.tag],
-        set_={"data": stmt.excluded.data, "updated_at": db.func.now()},
+        set_={
+            "data": stmt.excluded.data,
+            "deep_link": stmt.excluded.deep_link,
+            "updated_at": db.func.now(),
+        },
     )
     db.session.execute(stmt)
 

@@ -154,3 +154,39 @@ def test_labels_returned_from_player_data(monkeypatch):
 
         result = asyncio.run(get_player_snapshot("LAB"))
         assert result["labels"] == labels
+
+
+def test_deep_link_returned(monkeypatch):
+    app = create_app(TestConfig)
+    with app.app_context():
+        db.create_all()
+        now = datetime.utcnow()
+        player = Player(tag="DLNK", name="DL", deep_link="http://example.com", data={})
+        ps = PlayerSnapshot(
+            id=6,
+            ts=now,
+            player_tag="DLNK",
+            name="DL",
+            clan_tag="CLAN",
+            role="member",
+            town_hall=10,
+            trophies=0,
+            donations=0,
+            donations_received=0,
+            war_attacks_used=None,
+            last_seen=now,
+            data={"deep_link": "http://example.com"},
+        )
+        db.session.add_all([player, ps])
+        db.session.commit()
+
+        async def dummy_player(tag: str, war_attacks_used=None):
+            raise RuntimeError("offline")
+
+        monkeypatch.setattr(
+            "coclib.services.player_service.get_player",
+            dummy_player,
+        )
+
+        result = asyncio.run(get_player_snapshot("DLNK"))
+        assert result["deep_link"] == "http://example.com"

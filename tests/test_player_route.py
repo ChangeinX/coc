@@ -45,7 +45,12 @@ def test_player_not_found_returns_404(monkeypatch):
 
 def test_player_by_user(monkeypatch):
     async def dummy(tag: str):
-        return {"name": "User", "leagueIcon": "icon", "tag": tag}
+        return {
+            "name": "User",
+            "leagueIcon": "icon",
+            "tag": tag,
+            "deep_link": "http://example.com/player",
+        }
 
     monkeypatch.setattr(
         "app.api.player_routes.get_player_snapshot",
@@ -66,3 +71,4 @@ def test_player_by_user(monkeypatch):
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["tag"] == "BBB"
+    assert data["deep_link"] == "http://example.com/player"

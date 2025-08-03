@@ -17,7 +17,10 @@ STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
 async def _fetch_player(tag: str) -> dict:
     client = await get_client()
-    return (await client.get_player(tag))._raw_data
+    player = await client.get_player(tag)
+    data = player._raw_data
+    data["deep_link"] = player.share_link
+    return data
 
 
 async def verify_token(tag: str, token: str) -> bool:
@@ -136,6 +139,7 @@ if TYPE_CHECKING:  # pragma: no cover - used for IDE type hints only
         last_seen: str
         clanTag: str | None
         leagueIcon: str | None
+        deep_link: str | None
         ts: str
 
 
@@ -195,15 +199,18 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         "clanTag": row.clan_tag or None,
         "ts": row.ts.isoformat().replace(" ", "T") + "Z",
         "leagueIcon": None,
+        "deep_link": None,
     }
 
     player_row = Player.query.filter_by(tag=norm_tag).first()
-    if player_row and player_row.data:
-        data["leagueIcon"] = (
-            player_row.data.get("league", {}).get("iconUrls", {}).get("tiny")
-        )
-        # Include player labels for badge icons (refs #117)
-        data["labels"] = player_row.data.get("labels", [])
+    if player_row:
+        if player_row.data:
+            data["leagueIcon"] = (
+                player_row.data.get("league", {}).get("iconUrls", {}).get("tiny")
+            )
+            # Include player labels for badge icons (refs #117)
+            data["labels"] = player_row.data.get("labels", [])
+        data["deep_link"] = player_row.deep_link
 
     cache.set(cache_key, data, timeout=300)
     return data
