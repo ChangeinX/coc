@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { fetchJSON } from '../lib/api.js';
 
 export default function usePlayerRecruitFeed(filters) {
   const [items, setItems] = useState([]);
@@ -15,28 +16,30 @@ export default function usePlayerRecruitFeed(filters) {
     if (filters.war) params.set('war', filters.war);
     if (filters.q) params.set('q', filters.q);
     if (filters.sort) params.set('sort', filters.sort);
-    const url = `/player-recruit?${params.toString()}`;
+    const path = `/player-recruit?${params.toString()}`;
     let data;
     if (typeof window !== 'undefined' && 'caches' in window && (!c || c === '')) {
       const cache = await caches.open('player-recruit');
-      const cached = await cache.match(url);
+      const cached = await cache.match(path);
       if (cached) {
         data = await cached.json();
-        fetch(url)
-          .then((r) => cache.put(url, r.clone()))
+        fetchJSON(path)
+          .then((d) => cache.put(path, new Response(JSON.stringify(d))))
           .catch(() => {});
       } else {
-        const res = await fetch(url).catch(() => null);
-        if (res) {
-          cache.put(url, res.clone());
-          data = await res.json();
-        } else {
+        try {
+          data = await fetchJSON(path);
+          await cache.put(path, new Response(JSON.stringify(data)));
+        } catch {
           data = { items: [], nextCursor: null };
         }
       }
     } else {
-      const res = await fetch(url).catch(() => null);
-      data = res ? await res.json() : { items: [], nextCursor: null };
+      try {
+        data = await fetchJSON(path);
+      } catch {
+        data = { items: [], nextCursor: null };
+      }
     }
     setItems((prev) => [...prev, ...data.items]);
     setCursor(data.nextCursor || '');
