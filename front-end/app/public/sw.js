@@ -191,22 +191,37 @@ self.addEventListener('pushsubscriptionchange', (event) => {
   );
 });
 
+self.addEventListener('sync', (event) => {
+  if (event.tag && event.tag.startsWith('join-')) {
+    const id = event.tag.slice(5);
+    event.waitUntil(
+      fetch(`/join/${id}`, { method: 'POST' }).catch(() =>
+        self.registration.sync.register(event.tag)
+      )
+    );
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  if (url.origin === self.location.origin && url.pathname === '/recruit') {
+    event.respondWith(staleWhileRevalidateRecruit(event));
+    return;
+  }
   if (url.origin === self.location.origin && (url.pathname === '/privacy' || url.pathname === '/privacy.html')) {
-    event.respondWith(cacheFirst(COOKIE_PATH));
+    event.respondWith(cacheFirstDoc(COOKIE_PATH));
     return;
   }
   if (url.origin === self.location.origin && (url.pathname === '/privacy-policy' || url.pathname === '/privacy-policy.html')) {
-    event.respondWith(cacheFirst(PRIVACY_PATH));
+    event.respondWith(cacheFirstDoc(PRIVACY_PATH));
     return;
   }
   if (url.origin === self.location.origin && (url.pathname === '/terms' || url.pathname === '/terms.html')) {
-    event.respondWith(cacheFirst(TERMS_PATH));
+    event.respondWith(cacheFirstDoc(TERMS_PATH));
     return;
   }
   if (url.origin === self.location.origin && url.pathname === COOKIE_PATH) {
-    event.respondWith(cacheFirst(COOKIE_PATH));
+    event.respondWith(cacheFirstDoc(COOKIE_PATH));
     return;
   }
   if (
@@ -227,11 +242,11 @@ self.addEventListener('fetch', (event) => {
       url.pathname === '/privacy'
         ? new Request('/cookies-20250729.html')
         : event.request;
-    event.respondWith(cacheFirst(req));
+    event.respondWith(cacheFirstDoc(req));
   }
 });
 
-async function cacheFirst(request) {
+async function cacheFirstDoc(request) {
   const cache = await caches.open('doc-cache-v1');
   const cached = await cache.match(request);
   if (cached) return cached;
@@ -282,6 +297,30 @@ async function staleWhileRevalidate(request) {
     });
   if (cached) return cached;
   return network; // let it reject
+}
+
+async function staleWhileRevalidateRecruit(event) {
+  const cache = await caches.open('recruit');
+  const request = event.request;
+  const cached = await cache.match(request);
+  const keys = await cache.keys();
+  const network = fetch(request)
+    .then((resp) => {
+      if (cached || keys.length < 2) {
+        cache.put(request, resp.clone());
+      }
+      return resp;
+    })
+    .catch((err) => {
+      console.error('Recruit fetch failed', err);
+      if (!cached) throw err;
+      return undefined;
+    });
+  if (cached) {
+    event.waitUntil(network);
+    return cached;
+  }
+  return network;
 }
 
 async function cacheFirst(path) {
