@@ -14,6 +14,15 @@ describe('Scout page', () => {
     expect(screen.getByText('Need a Clan')).toBeInTheDocument();
   });
 
+  it('shows find a clan form by default', () => {
+    render(
+      <MemoryRouter>
+        <Scout />
+      </MemoryRouter>
+    );
+    expect(screen.getByPlaceholderText('Clan name')).toBeInTheDocument();
+  });
+
   it('shows need a clan form when tab selected', () => {
     render(
       <MemoryRouter>

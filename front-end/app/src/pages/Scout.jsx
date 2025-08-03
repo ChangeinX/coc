@@ -16,6 +16,16 @@ export default function Scout() {
   const [params] = useSearchParams();
   const page = parseInt(params.get('page') || '1', 10);
 
+  const [clan, setClan] = useState({
+    name: '',
+    description: '',
+    openSlots: '',
+    totalSlots: '',
+    league: '',
+    language: '',
+    war: '',
+  });
+
   function joinClan(clan) {
     if (!navigator.onLine && 'serviceWorker' in navigator && 'SyncManager' in window) {
       navigator.serviceWorker.ready.then((sw) => sw.sync.register(`join-${clan.id}`));
@@ -50,6 +60,41 @@ export default function Scout() {
   const playerItems = playerFeed.items;
 
   const [message, setMessage] = useState('');
+
+  async function postClan(e) {
+    e.preventDefault();
+    try {
+      await fetch('/recruit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: clan.name,
+          description: clan.description,
+          openSlots: parseInt(clan.openSlots, 10),
+          totalSlots: parseInt(clan.totalSlots, 10),
+          league: clan.league,
+          language: clan.language,
+          war: clan.war,
+        }),
+      });
+      if (typeof window !== 'undefined' && 'caches' in window) {
+        const cache = await caches.open('recruit');
+        const keys = await cache.keys();
+        await Promise.all(keys.map((k) => cache.delete(k)));
+      }
+      setClan({
+        name: '',
+        description: '',
+        openSlots: '',
+        totalSlots: '',
+        league: '',
+        language: '',
+        war: '',
+      });
+    } catch (err) {
+      // ignore
+    }
+  }
 
   async function postPlayer(e) {
     e.preventDefault();
@@ -87,6 +132,66 @@ export default function Scout() {
       />
       {active === 'find' && (
         <>
+          <form onSubmit={postClan} className="p-3 border-b flex flex-col gap-2">
+            <input
+              value={clan.name}
+              onChange={(e) => setClan({ ...clan, name: e.target.value })}
+              placeholder="Clan name"
+              className="border p-2 rounded"
+            />
+            <textarea
+              value={clan.description}
+              onChange={(e) =>
+                setClan({ ...clan, description: e.target.value })
+              }
+              placeholder="Describe your clan"
+              className="border p-2 rounded"
+            />
+            <input
+              type="number"
+              value={clan.openSlots}
+              onChange={(e) =>
+                setClan({ ...clan, openSlots: e.target.value })
+              }
+              placeholder="Open slots"
+              className="border p-2 rounded"
+            />
+            <input
+              type="number"
+              value={clan.totalSlots}
+              onChange={(e) =>
+                setClan({ ...clan, totalSlots: e.target.value })
+              }
+              placeholder="Total slots"
+              className="border p-2 rounded"
+            />
+            <input
+              value={clan.league}
+              onChange={(e) => setClan({ ...clan, league: e.target.value })}
+              placeholder="League"
+              className="border p-2 rounded"
+            />
+            <input
+              value={clan.language}
+              onChange={(e) =>
+                setClan({ ...clan, language: e.target.value })
+              }
+              placeholder="Language"
+              className="border p-2 rounded"
+            />
+            <input
+              value={clan.war}
+              onChange={(e) => setClan({ ...clan, war: e.target.value })}
+              placeholder="War frequency"
+              className="border p-2 rounded"
+            />
+            <button
+              type="submit"
+              className="bg-blue-500 text-white py-1 px-2 rounded self-start"
+            >
+              Post
+            </button>
+          </form>
           <DiscoveryBar onChange={setFilters} />
           <div className="flex-1">
             <RecruitFeed

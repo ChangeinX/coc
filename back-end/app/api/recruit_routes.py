@@ -50,6 +50,27 @@ def list_recruit():
     })
 
 
+@bp.post("/recruit")
+def create_recruit():
+    data = request.get_json() or {}
+    try:
+        recruit_service.create_post(
+            clan_tag=data.get("clanTag"),
+            name=data["name"],
+            badge=data.get("badge"),
+            tags=data.get("tags"),
+            open_slots=data["openSlots"],
+            total_slots=data["totalSlots"],
+            league=data.get("league"),
+            language=data.get("language"),
+            war=data.get("war"),
+            description=data.get("description"),
+        )
+    except KeyError:
+        abort(400)
+    return ("", 201)
+
+
 @bp.post("/join/<int:post_id>")
 def join(post_id: int):
     try:

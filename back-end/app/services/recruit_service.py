@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Tuple, Optional
 
-from sqlalchemy import or_, cast, String
+from sqlalchemy import or_, cast, String, func
 
 from coclib.extensions import db
 from coclib.models import RecruitPost, RecruitJoin
@@ -40,6 +40,39 @@ def list_posts(
     rows = query.offset(offset).limit(PAGE_SIZE + 1).all()
     next_cursor = offset + PAGE_SIZE if len(rows) > PAGE_SIZE else None
     return rows[:PAGE_SIZE], next_cursor
+
+
+def create_post(
+    *,
+    clan_tag: Optional[str],
+    name: str,
+    badge: Optional[str],
+    tags: Optional[list[str]],
+    open_slots: int,
+    total_slots: int,
+    league: Optional[str],
+    language: Optional[str],
+    war: Optional[str],
+    description: Optional[str],
+) -> RecruitPost:
+    max_id = db.session.query(func.max(RecruitPost.id)).scalar() or 0
+    post = RecruitPost(
+        id=max_id + 1,
+        clan_tag=clan_tag,
+        name=name,
+        badge=badge,
+        tags=tags,
+        open_slots=open_slots,
+        total_slots=total_slots,
+        league=league,
+        language=language,
+        war=war,
+        description=description,
+        created_at=datetime.utcnow(),
+    )
+    db.session.add(post)
+    db.session.commit()
+    return post
 
 
 def record_join(user_id: int, post_id: int) -> None:
