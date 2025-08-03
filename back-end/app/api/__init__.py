@@ -10,6 +10,7 @@ from .health_routes import bp as health_bp
 from .user_routes import bp as user_bp
 from .asset_routes import bp as asset_bp
 from .log_routes import bp as log_bp
+from .recruit_routes import bp as recruit_bp
 
 
 def register_blueprints(app: Flask):
@@ -20,3 +21,4 @@ def register_blueprints(app: Flask):
     app.register_blueprint(user_bp)
     app.register_blueprint(asset_bp)
     app.register_blueprint(log_bp)
+    app.register_blueprint(recruit_bp)
