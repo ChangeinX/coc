@@ -11,6 +11,7 @@ from .user_routes import bp as user_bp
 from .asset_routes import bp as asset_bp
 from .log_routes import bp as log_bp
 from .recruit_routes import bp as recruit_bp
+from .invite_routes import bp as invite_bp
 
 
 def register_blueprints(app: Flask):
@@ -22,3 +23,4 @@ def register_blueprints(app: Flask):
     app.register_blueprint(asset_bp)
     app.register_blueprint(log_bp)
     app.register_blueprint(recruit_bp)
+    app.register_blueprint(invite_bp)
