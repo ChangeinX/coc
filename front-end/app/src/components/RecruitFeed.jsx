@@ -30,7 +30,7 @@ export default function RecruitFeed({ items, loadMore, hasMore, onJoin, initialP
 
   useEffect(() => {
     const last = itemsVirtual[itemsVirtual.length - 1];
-    if (last && last.index >= withChips.length - 1 && hasMore) {
+    if (last && last.index >= withChips.length - 5 && hasMore) {
       loadMore();
     }
   }, [itemsVirtual, hasMore]);
