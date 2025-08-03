@@ -298,7 +298,19 @@ export default function Dashboard({ defaultTag, showSearchForm = true, onClanLoa
                                                             <PlayerMini player={m} showTag={false} />
                                                         </span>
                                                     </td>
-                                                    <td data-label="Tag" className="px-4 py-2 text-slate-500">{m.tag}</td>
+                                                    <td data-label="Tag" className="px-4 py-2 text-slate-500">
+                                                        {m.deep_link ? (
+                                                            <a
+                                                                href={m.deep_link}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                {m.tag}
+                                                            </a>
+                                                        ) : (
+                                                            m.tag
+                                                        )}
+                                                    </td>
                                                     <td data-label="Days in Clan" className="px-4 py-2 text-center">{m.loyalty}</td>
                                                     <td data-label="Score" className="px-4 py-2">
                                                         <div className="flex items-center gap-2">
