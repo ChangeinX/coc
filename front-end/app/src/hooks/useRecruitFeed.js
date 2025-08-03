@@ -15,7 +15,7 @@ export default function useRecruitFeed(filters) {
     if (filters.war) params.set('war', filters.war);
     if (filters.q) params.set('q', filters.q);
     if (filters.sort) params.set('sort', filters.sort);
-    const url = `/recruit?${params.toString()}`;
+    const url = `/api/v1/recruiting/recruit?${params.toString()}`;
     let data;
     if (typeof window !== 'undefined' && 'caches' in window && (!c || c === '')) {
       const cache = await caches.open('recruit');

@@ -43,7 +43,10 @@ describe('service worker', () => {
     const listeners = setup();
     await import('../public/sw.js');
     await listeners.sync({ tag: 'join-1', waitUntil: (p) => p });
-    expect(fetch).toHaveBeenCalledWith('/join/1', { method: 'POST' });
+    expect(fetch).toHaveBeenCalledWith('/api/v1/recruiting/join/1', {
+      method: 'POST',
+      credentials: 'include',
+    });
   });
 
   it('caches only first two recruit pages', async () => {
@@ -53,21 +56,25 @@ describe('service worker', () => {
     const cache = await caches.open('recruit');
     let responsePromise;
     await handler({
-      request: new Request('https://example.com/recruit'),
+      request: new Request('https://example.com/api/v1/recruiting/recruit'),
       respondWith: (p) => (responsePromise = p),
       waitUntil: (p) => p,
     });
     await responsePromise;
     expect((await cache.keys()).length).toBe(1);
     await handler({
-      request: new Request('https://example.com/recruit?pageCursor=abc'),
+      request: new Request(
+        'https://example.com/api/v1/recruiting/recruit?pageCursor=abc'
+      ),
       respondWith: (p) => (responsePromise = p),
       waitUntil: (p) => p,
     });
     await responsePromise;
     expect((await cache.keys()).length).toBe(2);
     await handler({
-      request: new Request('https://example.com/recruit?pageCursor=def'),
+      request: new Request(
+        'https://example.com/api/v1/recruiting/recruit?pageCursor=def'
+      ),
       respondWith: (p) => (responsePromise = p),
       waitUntil: (p) => p,
     });
