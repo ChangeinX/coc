@@ -61,7 +61,8 @@ public class ModerationService {
     boolean flagged = false;
     double toxicity = 0.0;
 
-    if (checkSpam(userId, text)) {
+    int spamCount = checkSpam(userId, text);
+    if (spamCount > 0) {
       categories.put("spam", 1.0);
       spam = true;
     }
@@ -174,6 +175,8 @@ public class ModerationService {
       result = ModerationResult.BLOCK;
     } else if (highest >= 0.8) {
       result = ModerationResult.MUTE;
+    } else if (spamCount >= 3) {
+      result = ModerationResult.MUTE;
     } else if (spam) {
       result = ModerationResult.READONLY;
     } else if (toxicity >= 0.7 && toxicity < 0.8) {
@@ -186,29 +189,49 @@ public class ModerationService {
   }
 
   /**
-   * Detects spam by tracking send delays and repeated message hashes in Redis. Returns true when
-   * the sender should be rate limited.
+   * Detects spam by tracking send delays, repeated message hashes, and message rate in Redis.
+   * Returns the number of recent spam detections for the user (0 when none).
    */
-  private boolean checkSpam(String userId, String text) {
+  private int checkSpam(String userId, String text) {
     String delayKey = "chat:delay:" + userId;
     String nextKey = "chat:next:" + userId;
     String hashKey = "chat:hash:" + userId;
+    String countKey = "chat:spamcount:" + userId;
+    String rateKey = "chat:rate:" + userId;
     long now = Instant.now().getEpochSecond();
     long next = parse(redis.opsForValue().get(nextKey));
     long delay = parse(redis.opsForValue().get(delayKey));
     if (delay == 0) delay = 1;
 
+    // Track overall message rate using a sliding 60s window
+    long nowMs = now * 1000;
+    long windowStart = nowMs - 60_000;
+    var zset = redis.opsForZSet();
+    zset.removeRangeByScore(rateKey, 0, windowStart);
+    zset.add(rateKey, Long.toString(nowMs), nowMs);
+    Long rate = zset.size(rateKey);
+    redis.expire(rateKey, Duration.ofMinutes(2));
+
     String hash = hash(text);
     String lastHash = redis.opsForValue().get(hashKey);
+    boolean violation = (rate != null && rate > 20);
 
     if (hash.equals(lastHash) || now < next) {
+      violation = true;
+    }
+
+    if (violation) {
       delay = Math.min(delay * 2, 60);
       redis.opsForValue().set(delayKey, Long.toString(delay), Duration.ofMinutes(10));
       redis
           .opsForValue()
           .set(nextKey, Long.toString(Math.max(now, next) + delay), Duration.ofMinutes(10));
       redis.opsForValue().set(hashKey, hash, Duration.ofMinutes(10));
-      return true;
+      Long strikes = redis.opsForValue().increment(countKey);
+      if (strikes != null && strikes == 1L) {
+        redis.expire(countKey, Duration.ofMinutes(10));
+      }
+      return strikes != null ? strikes.intValue() : 1;
     }
 
     redis
@@ -216,7 +239,8 @@ public class ModerationService {
         .set(delayKey, Long.toString(Math.max(1, delay / 2)), Duration.ofMinutes(10));
     redis.opsForValue().set(nextKey, Long.toString(now + delay), Duration.ofMinutes(10));
     redis.opsForValue().set(hashKey, hash, Duration.ofMinutes(10));
-    return false;
+    redis.delete(countKey);
+    return 0;
   }
 
   private String hash(String text) {

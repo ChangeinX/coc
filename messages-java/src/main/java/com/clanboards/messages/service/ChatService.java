@@ -51,7 +51,8 @@ public class ChatService {
         throw new ModerationException("BANNED");
       }
       ModerationOutcome res = moderation.verify(userId, text);
-      if (res.result() != ModerationResult.ALLOW) {
+      long fails = modRepo.countByUserId(userId);
+      if (res.result() != ModerationResult.ALLOW && res.result() != ModerationResult.READONLY) {
         ModerationRecord rec = new ModerationRecord();
         rec.setUserId(userId);
         rec.setContent(text);
@@ -59,6 +60,7 @@ public class ChatService {
         rec.setIp(ip);
         rec.setUserAgent(userAgent);
         modRepo.save(rec);
+        fails++;
       }
       switch (res.result()) {
         case BLOCK -> {
@@ -66,19 +68,20 @@ public class ChatService {
           throw new ModerationException("BANNED");
         }
         case MUTE -> {
-          if (!moderation.hasWarning(userId)) {
-            moderation.markWarning(userId);
-            throw new ModerationException("TOXICITY_WARNING");
+          if (res.categories().containsKey("spam")) {
+            saveMute(userId, Duration.ofHours(2), "spam");
+            throw new ModerationException("MUTED");
           }
-          saveMute(userId, Duration.ofHours(6), "moderation");
+          Duration d = Duration.ofMinutes(30);
+          if (fails == 2) {
+            d = Duration.ofHours(2);
+          } else if (fails >= 3) {
+            d = Duration.ofHours(24);
+          }
+          saveMute(userId, d, "moderation");
           throw new ModerationException("MUTED");
         }
         case READONLY -> {
-          if (!moderation.hasWarning(userId)) {
-            moderation.markWarning(userId);
-            throw new ModerationException("TOXICITY_WARNING");
-          }
-          saveReadonly(userId, Duration.ofMinutes(10), "moderation");
           throw new ModerationException("READONLY");
         }
         case WARNING -> {
@@ -108,7 +111,8 @@ public class ChatService {
         throw new ModerationException("BANNED");
       }
       ModerationOutcome res = moderation.verify(userId, text);
-      if (res.result() != ModerationResult.ALLOW) {
+      long fails = modRepo.countByUserId(userId);
+      if (res.result() != ModerationResult.ALLOW && res.result() != ModerationResult.READONLY) {
         ModerationRecord rec = new ModerationRecord();
         rec.setUserId(userId);
         rec.setContent(text);
@@ -116,6 +120,7 @@ public class ChatService {
         rec.setIp(ip);
         rec.setUserAgent(userAgent);
         modRepo.save(rec);
+        fails++;
       }
       switch (res.result()) {
         case BLOCK -> {
@@ -123,19 +128,20 @@ public class ChatService {
           throw new ModerationException("BANNED");
         }
         case MUTE -> {
-          if (!moderation.hasWarning(userId)) {
-            moderation.markWarning(userId);
-            throw new ModerationException("TOXICITY_WARNING");
+          if (res.categories().containsKey("spam")) {
+            saveMute(userId, Duration.ofHours(2), "spam");
+            throw new ModerationException("MUTED");
           }
-          saveMute(userId, Duration.ofHours(6), "moderation");
+          Duration d = Duration.ofMinutes(30);
+          if (fails == 2) {
+            d = Duration.ofHours(2);
+          } else if (fails >= 3) {
+            d = Duration.ofHours(24);
+          }
+          saveMute(userId, d, "moderation");
           throw new ModerationException("MUTED");
         }
         case READONLY -> {
-          if (!moderation.hasWarning(userId)) {
-            moderation.markWarning(userId);
-            throw new ModerationException("TOXICITY_WARNING");
-          }
-          saveReadonly(userId, Duration.ofMinutes(10), "moderation");
           throw new ModerationException("READONLY");
         }
         case WARNING -> {
@@ -200,11 +206,6 @@ public class ChatService {
   }
 
   private void saveMute(String userId, Duration duration, String reason) {
-    Instant now = Instant.now();
-    blockedRepo.upsert(userId, now.plus(duration), false, reason, now);
-  }
-
-  private void saveReadonly(String userId, Duration duration, String reason) {
     Instant now = Instant.now();
     blockedRepo.upsert(userId, now.plus(duration), false, reason, now);
   }
