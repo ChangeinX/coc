@@ -53,6 +53,10 @@ public class NotificationService {
     sendNotification(userId, payload);
   }
 
+  public void sendInvite(Long userId, String payload) {
+    sendNotification(userId, payload);
+  }
+
   public boolean sendNotification(Long userId, String payload) {
     Span span = tracer.spanBuilder("sendNotification").startSpan();
     try {
