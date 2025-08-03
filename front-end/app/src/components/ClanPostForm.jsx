@@ -54,6 +54,9 @@ export default function ClanPostForm({ onPosted }) {
         war: '',
       });
       onPosted?.();
+      window.dispatchEvent(
+        new CustomEvent('toast', { detail: 'Recruiting post created!' })
+      );
     } catch (err) {
       // ignore
     }
