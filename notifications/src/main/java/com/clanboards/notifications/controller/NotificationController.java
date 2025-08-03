@@ -44,6 +44,12 @@ public class NotificationController {
     return ResponseEntity.ok(Map.of("status", "sent"));
   }
 
+  @PostMapping("/invite/{userId}")
+  public ResponseEntity<?> invite(@PathVariable Long userId) {
+    service.sendInvite(userId, "invite");
+    return ResponseEntity.ok(Map.of("status", "sent"));
+  }
+
   private Long parseUserId(jakarta.servlet.http.HttpServletRequest request, Principal principal) {
     String name = null;
     if (principal != null) {

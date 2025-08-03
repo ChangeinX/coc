@@ -298,3 +298,18 @@ class RecruitJoin(db.Model):
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), index=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+
+class Invite(db.Model):
+    """Record of clan invitations sent to players."""
+
+    __tablename__ = "invites"
+
+    id = db.Column(db.Integer, primary_key=True)
+    from_user_id = db.Column(
+        db.BigInteger, db.ForeignKey("users.id"), index=True, nullable=False
+    )
+    to_user_id = db.Column(
+        db.BigInteger, db.ForeignKey("users.id"), index=True, nullable=False
+    )
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
