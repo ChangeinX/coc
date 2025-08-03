@@ -51,8 +51,8 @@ public class ChatService {
         throw new ModerationException("BANNED");
       }
       ModerationOutcome res = moderation.verify(userId, text);
-      long fails = 0;
-      if (res.result() != ModerationResult.ALLOW) {
+      long fails = modRepo.countByUserId(userId);
+      if (res.result() != ModerationResult.ALLOW && res.result() != ModerationResult.READONLY) {
         ModerationRecord rec = new ModerationRecord();
         rec.setUserId(userId);
         rec.setContent(text);
@@ -60,7 +60,7 @@ public class ChatService {
         rec.setIp(ip);
         rec.setUserAgent(userAgent);
         modRepo.save(rec);
-        fails = modRepo.countByUserId(userId);
+        fails++;
       }
       switch (res.result()) {
         case BLOCK -> {
@@ -111,8 +111,8 @@ public class ChatService {
         throw new ModerationException("BANNED");
       }
       ModerationOutcome res = moderation.verify(userId, text);
-      long fails = 0;
-      if (res.result() != ModerationResult.ALLOW) {
+      long fails = modRepo.countByUserId(userId);
+      if (res.result() != ModerationResult.ALLOW && res.result() != ModerationResult.READONLY) {
         ModerationRecord rec = new ModerationRecord();
         rec.setUserId(userId);
         rec.setContent(text);
@@ -120,7 +120,7 @@ public class ChatService {
         rec.setIp(ip);
         rec.setUserAgent(userAgent);
         modRepo.save(rec);
-        fails = modRepo.countByUserId(userId);
+        fails++;
       }
       switch (res.result()) {
         case BLOCK -> {
