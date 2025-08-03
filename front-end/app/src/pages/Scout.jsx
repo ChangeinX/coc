@@ -4,6 +4,7 @@ import Tabs from '../components/Tabs.jsx';
 import DiscoveryBar from '../components/DiscoveryBar.jsx';
 import RecruitFeed from '../components/RecruitFeed.jsx';
 import PlayerRecruitFeed from '../components/PlayerRecruitFeed.jsx';
+import ClanPostForm from '../components/ClanPostForm.jsx';
 import useRecruitFeed from '../hooks/useRecruitFeed.js';
 import usePlayerRecruitFeed from '../hooks/usePlayerRecruitFeed.js';
 import Fuse from 'fuse.js';
@@ -87,6 +88,7 @@ export default function Scout() {
       />
       {active === 'find' && (
         <>
+          <ClanPostForm onPosted={feed.reload} />
           <DiscoveryBar onChange={setFilters} />
           <div className="flex-1">
             <RecruitFeed
