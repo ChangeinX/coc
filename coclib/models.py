@@ -298,3 +298,21 @@ class RecruitJoin(db.Model):
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), index=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+
+class PlayerRecruitPost(db.Model):
+    """Player recruitment posts."""
+
+    __tablename__ = "player_recruit_posts"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), index=True, nullable=False)
+    description = db.Column(db.Text)
+    league = db.Column(db.String(50))
+    language = db.Column(db.String(50))
+    war = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    user = db.relationship(
+        "User", backref=db.backref("player_recruit_posts", lazy="dynamic")
+    )
+
