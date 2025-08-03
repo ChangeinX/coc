@@ -119,7 +119,7 @@ class ChatServiceTest {
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
         .thenReturn(new ModerationOutcome(ModerationResult.MUTE, java.util.Map.of()));
-    Mockito.when(modRepo.countByUserId("u")).thenReturn(1L);
+    Mockito.when(modRepo.countByUserId("u")).thenReturn(0L);
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
     ModerationException ex =
@@ -130,12 +130,9 @@ class ChatServiceTest {
         org.mockito.ArgumentCaptor.forClass(java.time.Instant.class);
     Mockito.verify(blockedRepo)
         .upsert(
-            Mockito.eq("u"),
-            until.capture(),
-            Mockito.eq(false),
-            Mockito.anyString(),
-            Mockito.any());
-    long mins = java.time.Duration.between(java.time.Instant.now(), until.getValue()).toMinutes();
+            Mockito.eq("u"), until.capture(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
+    long mins =
+        java.time.Duration.between(java.time.Instant.now(), until.getValue()).toMinutes();
     assertTrue(mins >= 29 && mins <= 31);
   }
 
@@ -156,6 +153,7 @@ class ChatServiceTest {
         assertThrows(ModerationException.class, () -> service.publish("1", "hi", "u", null, null));
     assertEquals("READONLY", ex.getMessage());
     Mockito.verify(repo, Mockito.never()).saveMessage(Mockito.any());
+    Mockito.verify(modRepo, Mockito.never()).save(Mockito.any());
     Mockito.verify(blockedRepo, Mockito.never())
         .upsert(
             Mockito.any(), Mockito.any(), Mockito.anyBoolean(), Mockito.anyString(), Mockito.any());
@@ -172,7 +170,7 @@ class ChatServiceTest {
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
         .thenReturn(new ModerationOutcome(ModerationResult.MUTE, java.util.Map.of()));
-    Mockito.when(modRepo.countByUserId("u")).thenReturn(3L);
+    Mockito.when(modRepo.countByUserId("u")).thenReturn(2L);
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
     ModerationException ex =
@@ -182,12 +180,9 @@ class ChatServiceTest {
         org.mockito.ArgumentCaptor.forClass(java.time.Instant.class);
     Mockito.verify(blockedRepo)
         .upsert(
-            Mockito.eq("u"),
-            until.capture(),
-            Mockito.eq(false),
-            Mockito.anyString(),
-            Mockito.any());
-    long hrs = java.time.Duration.between(java.time.Instant.now(), until.getValue()).toHours();
+            Mockito.eq("u"), until.capture(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
+    long hrs =
+        java.time.Duration.between(java.time.Instant.now(), until.getValue()).toHours();
     assertTrue(hrs >= 23 && hrs <= 25);
   }
 
@@ -202,7 +197,7 @@ class ChatServiceTest {
         Mockito.mock(com.clanboards.messages.repository.BlockedUserRepository.class);
     Mockito.when(moderation.verify("u", "hi"))
         .thenReturn(new ModerationOutcome(ModerationResult.MUTE, java.util.Map.of("spam", 1.0)));
-    Mockito.when(modRepo.countByUserId("u")).thenReturn(5L);
+    Mockito.when(modRepo.countByUserId("u")).thenReturn(0L);
     ChatService service = new ChatService(repo, events, moderation, modRepo, blockedRepo);
 
     ModerationException ex =
@@ -212,12 +207,9 @@ class ChatServiceTest {
         org.mockito.ArgumentCaptor.forClass(java.time.Instant.class);
     Mockito.verify(blockedRepo)
         .upsert(
-            Mockito.eq("u"),
-            until.capture(),
-            Mockito.eq(false),
-            Mockito.anyString(),
-            Mockito.any());
-    long hrs = java.time.Duration.between(java.time.Instant.now(), until.getValue()).toHours();
+            Mockito.eq("u"), until.capture(), Mockito.eq(false), Mockito.anyString(), Mockito.any());
+    long hrs =
+        java.time.Duration.between(java.time.Instant.now(), until.getValue()).toHours();
     assertTrue(hrs >= 1 && hrs <= 3);
   }
 
