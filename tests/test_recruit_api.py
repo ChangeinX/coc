@@ -61,14 +61,16 @@ def _setup_app(monkeypatch):
 
 def test_recruit_pagination_and_filtering(monkeypatch):
     app, client = _setup_app(monkeypatch)
-    resp = client.get("/recruit", headers={"Authorization": "Bearer t"})
+    resp = client.get(
+        "/api/v1/recruiting/recruit", headers={"Authorization": "Bearer t"}
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert len(data["items"]) == 100
     assert data["nextCursor"] == "100"
 
     resp2 = client.get(
-        f"/recruit?pageCursor={data['nextCursor']}",
+        f"/api/v1/recruiting/recruit?pageCursor={data['nextCursor']}",
         headers={"Authorization": "Bearer t"},
     )
     data2 = resp2.get_json()
@@ -76,7 +78,7 @@ def test_recruit_pagination_and_filtering(monkeypatch):
     assert data2["nextCursor"] is None
 
     resp3 = client.get(
-        "/recruit?league=Gold",
+        "/api/v1/recruiting/recruit?league=Gold",
         headers={"Authorization": "Bearer t"},
     )
     data3 = resp3.get_json()
@@ -125,11 +127,13 @@ def test_recruit_sorting(monkeypatch):
         )
         db.session.add_all([old, new])
         db.session.commit()
-    resp = client.get("/recruit", headers={"Authorization": "Bearer t"})
+    resp = client.get(
+        "/api/v1/recruiting/recruit", headers={"Authorization": "Bearer t"}
+    )
     data = resp.get_json()
     assert data["items"][0]["name"] == "Old"
     resp2 = client.get(
-        "/recruit?sort=new",
+        "/api/v1/recruiting/recruit?sort=new",
         headers={"Authorization": "Bearer t"},
     )
     data2 = resp2.get_json()
@@ -140,7 +144,9 @@ def test_join_records_request(monkeypatch):
     app, client = _setup_app(monkeypatch)
     with app.app_context():
         post_id = db.session.query(RecruitPost.id).first()[0]
-    resp = client.post(f"/join/{post_id}", headers={"Authorization": "Bearer t"})
+    resp = client.post(
+        f"/api/v1/recruiting/join/{post_id}", headers={"Authorization": "Bearer t"}
+    )
     assert resp.status_code == 204
     with app.app_context():
         jr = RecruitJoin.query.filter_by(post_id=post_id, user_id=1).one_or_none()
@@ -159,7 +165,7 @@ def test_create_recruit_post(monkeypatch):
         "war": "Always",
     }
     resp = client.post(
-        "/recruit",
+        "/api/v1/recruiting/recruit",
         json=payload,
         headers={"Authorization": "Bearer t"},
     )
