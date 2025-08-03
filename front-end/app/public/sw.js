@@ -195,16 +195,17 @@ self.addEventListener('sync', (event) => {
   if (event.tag && event.tag.startsWith('join-')) {
     const id = event.tag.slice(5);
     event.waitUntil(
-      fetch(`/join/${id}`, { method: 'POST' }).catch(() =>
-        self.registration.sync.register(event.tag)
-      )
+      fetch(`/api/v1/recruiting/join/${id}`, {
+        method: 'POST',
+        credentials: 'include',
+      }).catch(() => self.registration.sync.register(event.tag))
     );
   }
 });
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  if (url.origin === self.location.origin && url.pathname === '/recruit') {
+  if (url.origin === self.location.origin && url.pathname === '/api/v1/recruiting/recruit') {
     event.respondWith(staleWhileRevalidateRecruit(event));
     return;
   }

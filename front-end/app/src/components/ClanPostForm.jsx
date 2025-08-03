@@ -21,7 +21,7 @@ export default function ClanPostForm({ onPosted }) {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      await fetchJSON('/recruit', {
+      await fetchJSON('/recruiting/recruit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

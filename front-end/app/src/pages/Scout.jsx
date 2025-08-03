@@ -21,7 +21,10 @@ export default function Scout() {
     if (!navigator.onLine && 'serviceWorker' in navigator && 'SyncManager' in window) {
       navigator.serviceWorker.ready.then((sw) => sw.sync.register(`join-${clan.id}`));
     } else {
-      fetch(`/join/${clan.id}`, { method: 'POST' });
+      fetch(`/api/v1/recruiting/join/${clan.id}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
     }
   }
 

@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from flask import Blueprint, jsonify, request, g, abort
 
+from . import API_PREFIX
 from ..services import recruit_service
 
-bp = Blueprint("recruit", __name__)
+bp = Blueprint("recruit", __name__, url_prefix=f"{API_PREFIX}/recruiting")
 
 
 @bp.get("/recruit")
