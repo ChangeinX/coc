@@ -44,5 +44,7 @@ describe('useRecruitFeed', () => {
     expect(url).toContain('war=always');
     expect(url).toContain('q=abc');
     expect(url).toContain('sort=new');
+    const opts = fetch.mock.calls[0][1];
+    expect(opts).toMatchObject({ credentials: 'include' });
   });
 });
