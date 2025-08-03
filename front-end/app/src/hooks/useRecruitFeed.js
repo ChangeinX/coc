@@ -44,12 +44,16 @@ export default function useRecruitFeed(filters) {
     setLoading(false);
   }
 
-  useEffect(() => {
+  function reload() {
     setItems([]);
     setCursor('');
     setHasMore(true);
     fetchPage('');
+  }
+
+  useEffect(() => {
+    reload();
   }, [filters.league, filters.language, filters.war, filters.q, filters.sort]);
 
-  return { items, loadMore: () => fetchPage(cursor), hasMore, loading };
+  return { items, loadMore: () => fetchPage(cursor), hasMore, loading, reload };
 }
