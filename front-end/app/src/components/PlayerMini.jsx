@@ -51,7 +51,18 @@ export default function PlayerMini({
       )}
       <span>{player.name}</span>
       {showTag && player.tag && (
-        <span className="text-xs text-slate-500">{player.tag}</span>
+        player.deep_link ? (
+          <a
+            href={player.deep_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-slate-500"
+          >
+            {player.tag}
+          </a>
+        ) : (
+          <span className="text-xs text-slate-500">{player.tag}</span>
+        )
       )}
     </span>
   );
