@@ -203,11 +203,14 @@ public class ModerationService {
     long delay = parse(redis.opsForValue().get(delayKey));
     if (delay == 0) delay = 1;
 
-    // Track overall message rate
-    Long rate = redis.opsForValue().increment(rateKey);
-    if (rate != null && rate == 1L) {
-      redis.expire(rateKey, Duration.ofMinutes(1));
-    }
+    // Track overall message rate using a sliding 60s window
+    long nowMs = now * 1000;
+    long windowStart = nowMs - 60_000;
+    var zset = redis.opsForZSet();
+    zset.removeRangeByScore(rateKey, 0, windowStart);
+    zset.add(rateKey, Long.toString(nowMs), nowMs);
+    Long rate = zset.size(rateKey);
+    redis.expire(rateKey, Duration.ofMinutes(2));
 
     String hash = hash(text);
     String lastHash = redis.opsForValue().get(hashKey);
