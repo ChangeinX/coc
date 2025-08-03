@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import Scout from './Scout.jsx';
@@ -12,5 +12,15 @@ describe('Scout page', () => {
     );
     expect(screen.getByText('Find a Clan')).toBeInTheDocument();
     expect(screen.getByText('Need a Clan')).toBeInTheDocument();
+  });
+
+  it('shows need a clan form when tab selected', () => {
+    render(
+      <MemoryRouter>
+        <Scout />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByText('Need a Clan'));
+    expect(screen.getByPlaceholderText('Describe yourself')).toBeInTheDocument();
   });
 });
