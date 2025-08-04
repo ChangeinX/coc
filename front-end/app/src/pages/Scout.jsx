@@ -7,6 +7,7 @@ import PlayerRecruitFeed from '../components/PlayerRecruitFeed.jsx';
 import ClanPostForm from '../components/ClanPostForm.jsx';
 import useRecruitFeed from '../hooks/useRecruitFeed.js';
 import usePlayerRecruitFeed from '../hooks/usePlayerRecruitFeed.js';
+import { fetchJSON } from '../lib/api.js';
 import Fuse from 'fuse.js';
 
 export default function Scout() {
@@ -21,10 +22,7 @@ export default function Scout() {
     if (!navigator.onLine && 'serviceWorker' in navigator && 'SyncManager' in window) {
       navigator.serviceWorker.ready.then((sw) => sw.sync.register(`join-${clan.id}`));
     } else {
-      fetch(`/api/v1/recruiting/join/${clan.id}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      fetchJSON(`/recruiting/join/${clan.id}`, { method: 'POST' }).catch(() => {});
     }
   }
 
@@ -58,7 +56,7 @@ export default function Scout() {
   async function postPlayer(e) {
     e.preventDefault();
     try {
-      await fetch('/player-recruit', {
+      await fetchJSON('/player-recruit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: message }),
@@ -76,7 +74,7 @@ export default function Scout() {
   }
 
   function invitePlayer(player) {
-    fetch(`/invite/${player.id}`, { method: 'POST' }).catch(() => {});
+    fetchJSON(`/invite/${player.id}`, { method: 'POST' }).catch(() => {});
   }
 
   return (

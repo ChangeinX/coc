@@ -13,6 +13,7 @@ import { fetchJSON } from '../lib/api.js';
 
 test('submits clan post', async () => {
   const onPosted = vi.fn();
+  const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
   render(<ClanPostForm onPosted={onPosted} />);
   fireEvent.change(screen.getByPlaceholderText('Clan name'), {
     target: { value: 'Test Clan' },
@@ -52,5 +53,9 @@ test('submits clan post', async () => {
     war: 'Always',
   });
   await waitFor(() => expect(onPosted).toHaveBeenCalled());
+  expect(dispatchSpy).toHaveBeenCalled();
+  const [evt] = dispatchSpy.mock.calls[0];
+  expect(evt.type).toBe('toast');
+  expect(evt.detail).toBe('Recruiting post created!');
 });
 
