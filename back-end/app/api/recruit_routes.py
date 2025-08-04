@@ -12,12 +12,17 @@ bp = Blueprint("recruit", __name__, url_prefix=f"{API_PREFIX}/recruiting")
 @bp.get("/recruit")
 def list_recruit():
     cursor = request.args.get("pageCursor", type=int)
-    filters = {"q": request.args.get("q")}
+    filters = {
+        "q": request.args.get("q"),
+        "league": request.args.get("league"),
+        "language": request.args.get("language"),
+        "warFrequency": request.args.get("warFrequency"),
+    }
     posts, next_cursor = recruit_service.list_posts(cursor, filters)
     now = datetime.utcnow()
     items: list[dict] = []
     for p in posts:
-        delta = now - p.created_at
+        delta = now - p["created_at"]
         age_value = int(delta.total_seconds())
         if age_value < 3600:
             age = f"{age_value // 60}m"
@@ -25,17 +30,27 @@ def list_recruit():
             age = f"{age_value // 3600}h"
         items.append(
             {
-                "id": p.id,
-                "clanTag": p.clan_tag,
-                "callToAction": p.call_to_action,
+                "id": p["id"],
+                "callToAction": p["call_to_action"],
+                "tag": p["tag"],
+                "deepLink": p["deep_link"],
+                "name": p["name"],
+                "description": p["description"],
+                "labels": p["labels"],
+                "members": p["members"],
+                "warFrequency": p["warFrequency"],
+                "chatLanguage": p["chatLanguage"],
+                "openSlots": p["openSlots"],
                 "age": age,
                 "ageValue": age_value,
             }
         )
-    return jsonify({
-        "items": items,
-        "nextCursor": str(next_cursor) if next_cursor is not None else None,
-    })
+    return jsonify(
+        {
+            "items": items,
+            "nextCursor": str(next_cursor) if next_cursor is not None else None,
+        }
+    )
 
 
 @bp.post("/recruit")
@@ -48,6 +63,8 @@ def create_recruit():
         )
     except KeyError:
         abort(400)
+    except ValueError:
+        abort(404)
     return ("", 201)
 
 
