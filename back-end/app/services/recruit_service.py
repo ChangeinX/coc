@@ -36,22 +36,16 @@ def list_posts(
 
     items: List[Dict[str, object]] = []
     for post, clan in rows[:PAGE_SIZE]:
-        data = clan.data or {}
-        members = data.get("members", 0) or 0
+        clan_data = dict(clan.data or {})
+        clan_data.setdefault("tag", clan.tag)
+        if clan.deep_link:
+            clan_data.setdefault("deep_link", clan.deep_link)
         items.append(
             {
                 "id": post.id,
                 "call_to_action": post.call_to_action,
                 "created_at": post.created_at,
-                "tag": clan.tag,
-                "deep_link": clan.deep_link,
-                "name": data.get("name"),
-                "description": data.get("description"),
-                "labels": data.get("labels", []),
-                "members": members,
-                "warFrequency": data.get("warFrequency"),
-                "chatLanguage": (data.get("chatLanguage") or {}).get("name"),
-                "openSlots": 50 - members,
+                "clan": clan_data,
             }
         )
 
