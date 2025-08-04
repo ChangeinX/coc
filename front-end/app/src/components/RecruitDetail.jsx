@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
-import Tabs from './Tabs.jsx';
+import React from 'react';
 import RecruitCard from './RecruitCard.jsx';
-import useClanInfo from '../hooks/useClanInfo.js';
-import RiskRing from './RiskRing.jsx';
-import DonationRing from './DonationRing.jsx';
 
 export default function RecruitDetail({ clan, onClose }) {
-  const [tab, setTab] = useState('health');
-  const info = useClanInfo(clan?.clanTag);
-
+  if (!clan) return null;
+  const metadata = [
+    { label: 'Description', value: clan.description },
+    { label: 'War Frequency', value: clan.warFrequency },
+    { label: 'War Wins', value: clan.warWins },
+    { label: 'Win Streak', value: clan.warWinStreak },
+    { label: 'Clan Points', value: clan.clanPoints },
+    { label: 'Versus Points', value: clan.clanBuilderBasePoints },
+    { label: 'Location', value: clan.location?.name },
+  ].filter((m) => m.value);
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose}></div>
@@ -19,55 +22,31 @@ export default function RecruitDetail({ clan, onClose }) {
             deepLink={clan.deepLink}
             name={clan.name}
             labels={clan.labels}
-            language={clan.language}
-            memberCount={clan.memberCount}
+            chatLanguage={clan.language}
+            members={clan.memberCount}
             warLeague={clan.warLeague}
             clanLevel={clan.clanLevel}
             requiredTrophies={clan.requiredTrophies}
             requiredTownhallLevel={clan.requiredTownhallLevel}
             onJoin={() => {}}
           />
-          <Tabs
-            tabs={[
-              { value: 'health', label: 'Clan Health' },
-              { value: 'overview', label: 'Clan Overview' },
-            ]}
-            active={tab}
-            onChange={setTab}
-          />
-          {tab === 'health' && (
-            <div className="p-4">
-              {!info && (
-                <div className="text-center text-slate-500">Loading…</div>
-              )}
-              {info && (
-                <ul className="divide-y">
-                  {info.members?.map((m) => (
-                    <li
-                      key={m.tag}
-                      className="flex justify-between items-center py-2"
-                    >
-                      <span className="text-sm">{m.name}</span>
-                      <div className="flex items-center gap-2">
-                        <RiskRing score={m.risk_score} size={32} />
-                        <DonationRing
-                          donations={m.donations}
-                          received={m.donationsReceived}
-                          size={32}
-                        />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-          {tab === 'overview' && (
-            <div className="p-4 text-center text-slate-500">Coming soon…</div>
-          )}
+          <div className="p-4">
+            {metadata.length === 0 && (
+              <div className="text-center text-slate-500">No additional info</div>
+            )}
+            {metadata.length > 0 && (
+              <ul className="divide-y">
+                {metadata.map((m) => (
+                  <li key={m.label} className="py-2 flex justify-between text-sm">
+                    <span className="font-medium">{m.label}</span>
+                    <span className="text-slate-700 text-right">{m.value}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </>
   );
 }
-

@@ -7,7 +7,9 @@ export default function RecruitCard({
   name,
   labels = [],
   language,
+  chatLanguage,
   memberCount,
+  members,
   warLeague,
   clanLevel,
   requiredTrophies,
@@ -15,6 +17,13 @@ export default function RecruitCard({
   onJoin,
   onClick,
 }) {
+  const lang = language || chatLanguage;
+  const count =
+    typeof memberCount === 'number'
+      ? memberCount
+      : typeof members === 'number'
+        ? members
+        : undefined;
   return (
     <div
       role="button"
@@ -39,15 +48,13 @@ export default function RecruitCard({
           </a>
         )}
       </div>
-      {language && (
+      {lang && (
         <p className="text-xs text-slate-500 mt-1">
-          {typeof language === 'string' ? language : language.name}
+          {typeof lang === 'string' ? lang : lang.name}
         </p>
       )}
       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-700">
-        {typeof memberCount === 'number' && (
-          <span>{memberCount}/50 members</span>
-        )}
+        {typeof count === 'number' && <span>{count}/50 members</span>}
         {warLeague?.name && <span>{warLeague.name}</span>}
         {clanLevel && <span>Level {clanLevel}</span>}
         {requiredTrophies && <span>{requiredTrophies}+ trophies</span>}

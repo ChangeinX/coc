@@ -62,5 +62,5 @@ def test_list_posts():
         db.session.add(clan)
         recruit_service.create_post(clan_tag="TAG", call_to_action="desc")
         items, _ = recruit_service.list_posts(None, {})
-        assert items[0]["tag"] == "TAG"
-        assert items[0]["openSlots"] == 10
+        assert items[0]["clan"]["tag"] == "TAG"
+        assert items[0]["clan"]["members"] == 40
