@@ -55,7 +55,18 @@ export default function RecruitFeed({ items, loadMore, hasMore, onJoin, initialP
               {!item && <RecruitSkeleton />}
               {item &&
                 item.type === 'card' && (
-                  <RecruitCard {...item.data} onJoin={() => onJoin?.(item.data)} />
+                  <RecruitCard
+                    clanTag={item.data.clan?.tag}
+                    deepLink={item.data.clan?.deepLink}
+                    name={item.data.clan?.name}
+                    description={item.data.clan?.description}
+                    labels={item.data.clan?.labels}
+                    members={item.data.clan?.members}
+                    warFrequency={item.data.clan?.warFrequency}
+                    language={item.data.clan?.language}
+                    callToAction={item.data.callToAction}
+                    onJoin={() => onJoin?.(item.data)}
+                  />
                 )}
               {item && item.type === 'chip' && <PageChip page={item.page} />}
             </div>
