@@ -5,16 +5,7 @@ import RecruitCard from './RecruitCard.jsx';
 
 test('renders recruit card with aria label', () => {
   render(
-    <RecruitCard
-      id="1"
-      badge="/badge.png"
-      name="Example Clan"
-      tags={['war', 'chill']}
-      openSlots={10}
-      totalSlots={50}
-      age="1d"
-      description="Join us"
-    />
+    <RecruitCard callToAction="Join us" age="1d" />
   );
-  expect(screen.getByRole('button', { name: /Join Example Clan/ })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Join clan/ })).toBeInTheDocument();
 });

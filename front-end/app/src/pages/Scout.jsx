@@ -29,25 +29,11 @@ export default function Scout() {
   const items = useMemo(() => {
     let data = feed.items;
     if (filters.q) {
-      const fuse = new Fuse(data, { keys: ['name', 'description', 'tags'] });
+      const fuse = new Fuse(data, { keys: ['callToAction'] });
       data = fuse.search(filters.q).map((r) => r.item);
     }
-    if (filters.league && filters.league !== 'None') {
-      data = data.filter((d) => d.league === filters.league);
-    }
-    if (filters.language && filters.language !== 'Any') {
-      data = data.filter((d) => d.language === filters.language);
-    }
-    if (filters.war && filters.war !== 'Any') {
-      data = data.filter((d) => d.war === filters.war);
-    }
-    if (filters.sort === 'new') {
-      data = [...data].sort((a, b) => b.ageValue - a.ageValue);
-    } else {
-      data = [...data].sort((a, b) => b.openSlots - a.openSlots);
-    }
-    return data;
-  }, [feed.items, filters]);
+    return data.sort((a, b) => b.ageValue - a.ageValue);
+  }, [feed.items, filters.q]);
 
   const playerItems = playerFeed.items;
 

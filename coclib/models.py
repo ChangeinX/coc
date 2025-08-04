@@ -274,15 +274,7 @@ class RecruitPost(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True)
     clan_tag = db.Column(db.String(15), index=True)
-    name = db.Column(db.String(50), nullable=False)
-    badge = db.Column(db.String(255))
-    tags = db.Column(db.JSON)
-    open_slots = db.Column(db.Integer, nullable=False)
-    total_slots = db.Column(db.Integer, nullable=False)
-    league = db.Column(db.String(50))
-    language = db.Column(db.String(50))
-    war = db.Column(db.String(50))
-    description = db.Column(db.Text)
+    call_to_action = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 

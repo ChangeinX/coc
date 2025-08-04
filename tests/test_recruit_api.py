@@ -2,8 +2,6 @@ import sys
 import pathlib
 from datetime import datetime, timedelta
 
-from flask.testing import FlaskClient
-
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "back-end"))
 from app import create_app  # noqa: E402
 from coclib.config import Config  # noqa: E402
@@ -26,7 +24,7 @@ def _mock_verify(monkeypatch):
 def _setup_app(monkeypatch):
     _mock_verify(monkeypatch)
     app = create_app(TestConfig)
-    client: FlaskClient = app.test_client()
+    client = app.test_client()
     with app.app_context():
         db.create_all()
         user = User(
@@ -41,15 +39,7 @@ def _setup_app(monkeypatch):
         posts = [
             RecruitPost(
                 id=i + 1,
-                name=f"Clan {i}",
-                description="desc",
-                open_slots=i % 5,
-                total_slots=50,
-                league="Gold" if i % 2 == 0 else "Silver",
-                language="EN",
-                war="Always",
-                tags=["fun"],
-                badge="",
+                call_to_action="desc",
                 created_at=now - timedelta(minutes=i),
             )
             for i in range(150)
@@ -78,17 +68,18 @@ def test_recruit_pagination_and_filtering(monkeypatch):
     assert data2["nextCursor"] is None
 
     resp3 = client.get(
-        "/api/v1/recruiting/recruit?league=Gold",
+        "/api/v1/recruiting/recruit?q=desc",
         headers={"Authorization": "Bearer t"},
     )
     data3 = resp3.get_json()
-    assert all(item["league"] == "Gold" for item in data3["items"])  # type: ignore
+    assert len(data3["items"]) == 100
+    assert data3["nextCursor"] == "100"
 
 
 def test_recruit_sorting(monkeypatch):
     _mock_verify(monkeypatch)
     app = create_app(TestConfig)
-    client: FlaskClient = app.test_client()
+    client = app.test_client()
     with app.app_context():
         db.create_all()
         user = User(
@@ -101,28 +92,12 @@ def test_recruit_sorting(monkeypatch):
         db.session.add(user)
         old = RecruitPost(
             id=1,
-            name="Old",
-            description="",
-            open_slots=10,
-            total_slots=50,
-            league="Gold",
-            language="EN",
-            war="Always",
-            tags=[],
-            badge="",
+            call_to_action="old",
             created_at=datetime.utcnow() - timedelta(days=1),
         )
         new = RecruitPost(
             id=2,
-            name="New",
-            description="",
-            open_slots=1,
-            total_slots=50,
-            league="Gold",
-            language="EN",
-            war="Always",
-            tags=[],
-            badge="",
+            call_to_action="new",
             created_at=datetime.utcnow(),
         )
         db.session.add_all([old, new])
@@ -131,13 +106,7 @@ def test_recruit_sorting(monkeypatch):
         "/api/v1/recruiting/recruit", headers={"Authorization": "Bearer t"}
     )
     data = resp.get_json()
-    assert data["items"][0]["name"] == "Old"
-    resp2 = client.get(
-        "/api/v1/recruiting/recruit?sort=new",
-        headers={"Authorization": "Bearer t"},
-    )
-    data2 = resp2.get_json()
-    assert data2["items"][0]["name"] == "New"
+    assert data["items"][0]["callToAction"] == "new"
 
 
 def test_join_records_request(monkeypatch):
@@ -155,15 +124,7 @@ def test_join_records_request(monkeypatch):
 
 def test_create_recruit_post(monkeypatch):
     app, client = _setup_app(monkeypatch)
-    payload = {
-        "name": "New Clan",
-        "description": "desc",
-        "openSlots": 5,
-        "totalSlots": 50,
-        "league": "Gold",
-        "language": "EN",
-        "war": "Always",
-    }
+    payload = {"callToAction": "desc"}
     resp = client.post(
         "/api/v1/recruiting/recruit",
         json=payload,
@@ -171,6 +132,5 @@ def test_create_recruit_post(monkeypatch):
     )
     assert resp.status_code == 201
     with app.app_context():
-        post = RecruitPost.query.filter_by(name="New Clan").one_or_none()
+        post = RecruitPost.query.get(151)
         assert post is not None
-        assert post.open_slots == 5
