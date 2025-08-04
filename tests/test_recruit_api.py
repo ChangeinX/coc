@@ -6,7 +6,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "back-end"))
 from app import create_app  # noqa: E402
 from coclib.config import Config  # noqa: E402
 from coclib.extensions import db  # noqa: E402
-from coclib.models import User, RecruitPost, RecruitJoin  # noqa: E402
+from coclib.models import User, RecruitPost, RecruitJoin, Clan  # noqa: E402
 
 
 class TestConfig(Config):
@@ -34,11 +34,24 @@ def _setup_app(monkeypatch):
             name="U",
             player_tag="AAA",
         )
-        db.session.add(user)
+        clan = Clan(
+            tag="TAG",
+            deep_link="link",
+            data={
+                "name": "N",
+                "members": 40,
+                "description": "D",
+                "chatLanguage": {"name": "English"},
+                "warFrequency": "always",
+                "labels": [1],
+            },
+        )
+        db.session.add_all([user, clan])
         now = datetime.utcnow()
         posts = [
             RecruitPost(
                 id=i + 1,
+                clan_tag="TAG",
                 call_to_action="desc",
                 created_at=now - timedelta(minutes=i),
             )
@@ -58,6 +71,8 @@ def test_recruit_pagination_and_filtering(monkeypatch):
     data = resp.get_json()
     assert len(data["items"]) == 100
     assert data["nextCursor"] == "100"
+    assert data["items"][0]["tag"] == "TAG"
+    assert data["items"][0]["openSlots"] == 10
 
     resp2 = client.get(
         f"/api/v1/recruiting/recruit?pageCursor={data['nextCursor']}",
@@ -89,14 +104,17 @@ def test_recruit_sorting(monkeypatch):
             name="U",
             player_tag="AAA",
         )
-        db.session.add(user)
+        clan = Clan(tag="TAG", deep_link="link", data={"members": 40})
+        db.session.add_all([user, clan])
         old = RecruitPost(
             id=1,
+            clan_tag="TAG",
             call_to_action="old",
             created_at=datetime.utcnow() - timedelta(days=1),
         )
         new = RecruitPost(
             id=2,
+            clan_tag="TAG",
             call_to_action="new",
             created_at=datetime.utcnow(),
         )
@@ -124,7 +142,7 @@ def test_join_records_request(monkeypatch):
 
 def test_create_recruit_post(monkeypatch):
     app, client = _setup_app(monkeypatch)
-    payload = {"callToAction": "desc"}
+    payload = {"callToAction": "desc", "clanTag": "TAG"}
     resp = client.post(
         "/api/v1/recruiting/recruit",
         json=payload,
