@@ -32,17 +32,12 @@ def list_recruit():
             {
                 "id": p["id"],
                 "callToAction": p["call_to_action"],
-                "tag": p["tag"],
-                "deepLink": p["deep_link"],
-                "name": p["name"],
-                "description": p["description"],
-                "labels": p["labels"],
-                "members": p["members"],
-                "warFrequency": p["warFrequency"],
-                "chatLanguage": p["chatLanguage"],
-                "openSlots": p["openSlots"],
                 "age": age,
                 "ageValue": age_value,
+                "data": {
+                    "clan": p["clan"],
+                    "call_to_action": p["call_to_action"],
+                },
             }
         )
     return jsonify(

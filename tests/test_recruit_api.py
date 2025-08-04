@@ -71,8 +71,8 @@ def test_recruit_pagination_and_filtering(monkeypatch):
     data = resp.get_json()
     assert len(data["items"]) == 100
     assert data["nextCursor"] == "100"
-    assert data["items"][0]["tag"] == "TAG"
-    assert data["items"][0]["openSlots"] == 10
+    assert data["items"][0]["data"]["clan"]["tag"] == "TAG"
+    assert data["items"][0]["data"]["clan"]["members"] == 40
 
     resp2 = client.get(
         f"/api/v1/recruiting/recruit?pageCursor={data['nextCursor']}",
