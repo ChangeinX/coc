@@ -9,6 +9,12 @@ from alembic import op
 import sqlalchemy as sa
 
 
+revision = 'fead6a7c7712'
+down_revision = 'f901db3f1df2'
+branch_labels = None
+depends_on = None
+
+
 def upgrade():
     with op.batch_alter_table("recruit_posts") as batch_op:
         batch_op.alter_column("description", new_column_name="call_to_action")
