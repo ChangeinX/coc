@@ -1,6 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
+import { vi } from 'vitest';
+
+vi.mock('../components/ClanPostForm.jsx', () => ({
+  default: () => <div data-testid="clan-form" />,
+}));
+
 import Scout from './Scout.jsx';
 
 describe('Scout page', () => {
@@ -20,7 +26,7 @@ describe('Scout page', () => {
         <Scout />
       </MemoryRouter>
     );
-    expect(screen.getByPlaceholderText('Describe your clan')).toBeInTheDocument();
+    expect(screen.getByTestId('clan-form')).toBeInTheDocument();
   });
 
   it('shows need a clan form when tab selected', () => {

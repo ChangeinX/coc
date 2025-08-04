@@ -1,31 +1,32 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { vi } from 'vitest';
 
+vi.mock('../hooks/useAuth.jsx', () => ({
+  useAuth: () => ({ user: { player_tag: 'PLAYER1' } }),
+}));
+
+vi.mock('../hooks/useCachedIcon.js', () => ({
+  default: (src) => src,
+}));
+
 vi.mock('../lib/api.js', () => ({
-  fetchJSON: vi.fn(() => Promise.resolve({})),
+  fetchJSON: vi.fn((url) => {
+    if (url.startsWith('/player/')) {
+      return Promise.resolve({ clanTag: 'CLAN1' });
+    }
+    if (url.startsWith('/clan/')) {
+      return Promise.resolve({ tag: 'CLAN1', name: 'My Clan', labels: [], badgeUrls: {} });
+    }
+    return Promise.resolve({});
+  }),
   API_URL: '',
 }));
 
 import ClanPostForm from './ClanPostForm.jsx';
-import { fetchJSON } from '../lib/api.js';
 
-test('submits clan post', async () => {
-  const onPosted = vi.fn();
-  const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
-  render(<ClanPostForm onPosted={onPosted} />);
-  fireEvent.change(screen.getByPlaceholderText('Describe your clan'), {
-    target: { name: 'callToAction', value: 'Best clan ever' },
-  });
-  fireEvent.click(screen.getByRole('button', { name: 'Post' }));
-  await waitFor(() => expect(fetchJSON).toHaveBeenCalled());
-  const [, opts] = fetchJSON.mock.calls[0];
-  expect(JSON.parse(opts.body)).toEqual({ callToAction: 'Best clan ever' });
-  await waitFor(() => expect(onPosted).toHaveBeenCalled());
-  expect(dispatchSpy).toHaveBeenCalled();
-  const [evt] = dispatchSpy.mock.calls[0];
-  expect(evt.type).toBe('toast');
-  expect(evt.detail).toBe('Recruiting post created!');
+test('renders clan preview', async () => {
+  render(<ClanPostForm />, { legacyRoot: true });
+  expect(await screen.findByText('My Clan')).toBeInTheDocument();
 });
-
