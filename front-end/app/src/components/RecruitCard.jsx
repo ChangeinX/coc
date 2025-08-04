@@ -7,14 +7,14 @@ export default function RecruitCard({
   name,
   description,
   labels = [],
-  members = 0,
+  openSlots,
   warFrequency,
   language,
   callToAction,
   onJoin,
 }) {
   const [showLabels, setShowLabels] = useState(false);
-  const openSlots = 50 - members;
+  const showOpenSlots = typeof openSlots === 'number' && !Number.isNaN(openSlots);
 
   function handleClick() {
     setShowLabels((s) => !s);
@@ -42,24 +42,30 @@ export default function RecruitCard({
           {clanTag}
         </a>
       </div>
-      <p className="text-xs text-slate-500 mt-1">
-        {warFrequency} • {typeof language === 'string' ? language : language?.name}
-      </p>
+      {(warFrequency || language) && (
+        <p className="text-xs text-slate-500 mt-1">
+          {warFrequency}
+          {warFrequency && language ? ' • ' : ''}
+          {typeof language === 'string' ? language : language?.name}
+        </p>
+      )}
       {description && (
         <p className="text-sm line-clamp-2 mt-1 text-slate-700">{description}</p>
       )}
       {callToAction && (
         <p className="text-sm line-clamp-2 mt-1 text-slate-700">{callToAction}</p>
       )}
-      <div className="mt-2">
-        <div className="h-2 bg-slate-200 rounded">
-          <div
-            className="h-2 bg-blue-500 rounded"
-            style={{ width: `${(openSlots / 50) * 100}%` }}
-          />
+      {showOpenSlots && (
+        <div className="mt-2">
+          <div className="h-2 bg-slate-200 rounded">
+            <div
+              className="h-2 bg-blue-500 rounded"
+              style={{ width: `${(openSlots / 50) * 100}%` }}
+            />
+          </div>
+          <p className="text-xs text-slate-500 mt-1">{openSlots} open slots</p>
         </div>
-        <p className="text-xs text-slate-500 mt-1">{openSlots} open slots</p>
-      </div>
+      )}
       {labels.length > 0 && (
         <div className="flex gap-2 mt-2">
           {labels.map((l) => (

@@ -37,7 +37,25 @@ export default function useRecruitFeed(filters) {
         data = { items: [], nextCursor: null };
       }
     }
-    setItems((prev) => [...prev, ...data.items]);
+    const normalized = data.items.map((item) => {
+      const { clan = {}, call_to_action, callToAction, ...rest } = item.data || {};
+      return {
+        ...item,
+        data: {
+          ...rest,
+          clanTag: clan.tag,
+          deepLink: clan.deep_link ?? clan.deepLink,
+          name: clan.name,
+          description: clan.description,
+          labels: clan.labels,
+          warFrequency: clan.warFrequency,
+          language: clan.chatLanguage ?? clan.language,
+          openSlots: rest.openSlots ?? clan.openSlots,
+          callToAction: call_to_action ?? callToAction,
+        },
+      };
+    });
+    setItems((prev) => [...prev, ...normalized]);
     setCursor(data.nextCursor || '');
     setHasMore(Boolean(data.nextCursor));
     setLoading(false);
