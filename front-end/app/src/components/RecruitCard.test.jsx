@@ -7,29 +7,31 @@ vi.mock('./CachedImage.jsx', () => ({
   default: (props) => <img {...props} />,
 }));
 
-test('renders recruit card and toggles label names', () => {
-  const labels = [{ id: 1, name: 'Label1', iconUrls: { small: '/l1.png' } }];
+test('renders summary info and handles click', () => {
+  const handleClick = vi.fn();
   render(
     <RecruitCard
       clanTag="#CLAN"
       deepLink="https://link"
       name="Clan"
-      description="Desc"
-      labels={labels}
-      openSlots={10}
-      warFrequency="Always"
+      labels={[{ id: 1, name: 'Label1', iconUrls: { small: '/l1.png' } }]}
       language="EN"
-      callToAction="Join us"
+      memberCount={30}
+      warLeague={{ name: 'Gold League' }}
+      clanLevel={5}
+      requiredTrophies={1200}
+      requiredTownhallLevel={8}
+      onClick={handleClick}
     />
   );
-
-  expect(screen.getByRole('link', { name: '#CLAN' })).toHaveAttribute(
-    'href',
-    'https://link'
-  );
-  expect(screen.getByText('10 open slots')).toBeInTheDocument();
-  expect(screen.queryByText('Label1')).not.toBeInTheDocument();
+  expect(screen.getByText('Clan')).toBeInTheDocument();
+  expect(screen.getByText('EN')).toBeInTheDocument();
+  expect(screen.getByText('30/50 members')).toBeInTheDocument();
+  expect(screen.getByText('Gold League')).toBeInTheDocument();
+  expect(screen.getByText('Level 5')).toBeInTheDocument();
+  expect(screen.getByText('1200+ trophies')).toBeInTheDocument();
+  expect(screen.getByText('TH 8+')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button'));
-  expect(screen.getByText('Label1')).toBeInTheDocument();
+  expect(handleClick).toHaveBeenCalled();
 });
 
