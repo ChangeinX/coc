@@ -36,10 +36,9 @@ def list_posts(
 
     items: List[Dict[str, object]] = []
     for post, clan in rows[:PAGE_SIZE]:
-        clan_data = dict(clan.data or {})
-        clan_data.setdefault("tag", clan.tag)
+        clan_data = {**(clan.data or {}), "tag": clan.tag}
         if clan.deep_link:
-            clan_data.setdefault("deep_link", clan.deep_link)
+            clan_data["deep_link"] = clan.deep_link
         items.append(
             {
                 "id": post.id,

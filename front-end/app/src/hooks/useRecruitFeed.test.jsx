@@ -42,18 +42,16 @@ describe('useRecruitFeed', () => {
     const data = {
       items: [
         {
-          data: {
-            clan: {
-              tag: '#1',
-              name: 'Clan',
-              warLeague: { name: 'Gold' },
-              clanLevel: 3,
-              requiredTrophies: 1000,
-              requiredTownhallLevel: 9,
-              members: 20,
-              labels: [],
-              language: 'EN',
-            },
+          clan: {
+            tag: '#1',
+            name: 'Clan',
+            warLeague: { name: 'Gold' },
+            clanLevel: 3,
+            requiredTrophies: 1000,
+            requiredTownhallLevel: 9,
+            members: 20,
+            labels: [],
+            language: 'EN',
           },
         },
       ],
