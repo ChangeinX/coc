@@ -20,7 +20,7 @@ describe('Scout page', () => {
         <Scout />
       </MemoryRouter>
     );
-    expect(screen.getByPlaceholderText('Clan name')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Describe your clan')).toBeInTheDocument();
   });
 
   it('shows need a clan form when tab selected', () => {

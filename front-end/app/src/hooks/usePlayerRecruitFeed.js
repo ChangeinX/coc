@@ -11,11 +11,7 @@ export default function usePlayerRecruitFeed(filters) {
     setLoading(true);
     const params = new URLSearchParams();
     params.set('pageCursor', c || '');
-    if (filters.league) params.set('league', filters.league);
-    if (filters.language) params.set('language', filters.language);
-    if (filters.war) params.set('war', filters.war);
     if (filters.q) params.set('q', filters.q);
-    if (filters.sort) params.set('sort', filters.sort);
     const path = `/player-recruit?${params.toString()}`;
     let data;
     if (typeof window !== 'undefined' && 'caches' in window && (!c || c === '')) {
@@ -56,7 +52,7 @@ export default function usePlayerRecruitFeed(filters) {
 
   useEffect(() => {
     reload();
-  }, [filters.league, filters.language, filters.war, filters.q, filters.sort]);
+  }, [filters.q]);
 
   return { items, loadMore: () => fetchPage(cursor), hasMore, loading, reload };
 }

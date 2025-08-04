@@ -29,21 +29,11 @@ describe('useRecruitFeed', () => {
   });
 
   it('sends filters as query params', async () => {
-    const filters = {
-      league: 'Gold',
-      language: 'EN',
-      war: 'always',
-      q: 'abc',
-      sort: 'new',
-    };
+    const filters = { q: 'abc' };
     render(<Wrapper filters={filters} />);
     await waitFor(() => expect(fetch).toHaveBeenCalled());
     const url = fetch.mock.calls[0][0];
-    expect(url).toContain('league=Gold');
-    expect(url).toContain('language=EN');
-    expect(url).toContain('war=always');
     expect(url).toContain('q=abc');
-    expect(url).toContain('sort=new');
     const opts = fetch.mock.calls[0][1];
     expect(opts).toMatchObject({ credentials: 'include' });
   });
