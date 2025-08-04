@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Tabs from '../components/Tabs.jsx';
 import DiscoveryBar from '../components/DiscoveryBar.jsx';
 import RecruitFeed from '../components/RecruitFeed.jsx';
 import PlayerRecruitFeed from '../components/PlayerRecruitFeed.jsx';
 import ClanPostForm from '../components/ClanPostForm.jsx';
+import RecruitDetail from '../components/RecruitDetail.jsx';
 import useRecruitFeed from '../hooks/useRecruitFeed.js';
 import usePlayerRecruitFeed from '../hooks/usePlayerRecruitFeed.js';
 import { fetchJSON } from '../lib/api.js';
@@ -17,6 +18,7 @@ export default function Scout() {
   const playerFeed = usePlayerRecruitFeed(filters);
   const [params] = useSearchParams();
   const page = parseInt(params.get('page') || '1', 10);
+  const [selected, setSelected] = useState(null);
 
   function joinClan(clan) {
     if (!navigator.onLine && 'serviceWorker' in navigator && 'SyncManager' in window) {
@@ -63,6 +65,10 @@ export default function Scout() {
     fetchJSON(`/invite/${player.id}`, { method: 'POST' }).catch(() => {});
   }
 
+  useEffect(() => {
+    setSelected(null);
+  }, [active]);
+
   return (
     <div className="h-full flex flex-col">
       <Tabs
@@ -83,6 +89,7 @@ export default function Scout() {
               loadMore={feed.loadMore}
               hasMore={feed.hasMore}
               onJoin={joinClan}
+              onSelect={setSelected}
               initialPage={page}
             />
           </div>
@@ -115,6 +122,9 @@ export default function Scout() {
             />
           </div>
         </>
+      )}
+      {selected && (
+        <RecruitDetail clan={selected} onClose={() => setSelected(null)} />
       )}
     </div>
   );

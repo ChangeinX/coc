@@ -39,6 +39,12 @@ export default function useRecruitFeed(filters) {
     }
     const normalized = data.items.map((item) => {
       const { clan = {}, call_to_action, callToAction, ...rest } = item.data || {};
+      const memberCount =
+        rest.memberCount ??
+        clan.members ??
+        (typeof (rest.openSlots ?? clan.openSlots) === 'number'
+          ? 50 - (rest.openSlots ?? clan.openSlots)
+          : undefined);
       return {
         ...item,
         data: {
@@ -49,8 +55,14 @@ export default function useRecruitFeed(filters) {
           description: clan.description,
           labels: clan.labels,
           warFrequency: clan.warFrequency,
+          warLeague: clan.warLeague,
+          clanLevel: clan.clanLevel,
           language: clan.chatLanguage ?? clan.language,
           openSlots: rest.openSlots ?? clan.openSlots,
+          memberCount,
+          requiredTrophies: clan.requiredTrophies,
+          requiredTownhallLevel:
+            clan.requiredTownhallLevel ?? clan.requiredTownHallLevel,
           callToAction: call_to_action ?? callToAction,
         },
       };
