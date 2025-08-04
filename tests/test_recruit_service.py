@@ -56,6 +56,7 @@ def test_list_posts():
                 "description": "D",
                 "chatLanguage": {"name": "English"},
                 "warFrequency": "always",
+                "warLeague": {"name": "Gold"},
                 "labels": [1],
             },
         )
@@ -64,3 +65,5 @@ def test_list_posts():
         items, _ = recruit_service.list_posts(None, {})
         assert items[0]["clan"]["tag"] == "TAG"
         assert items[0]["clan"]["members"] == 40
+        assert items[0]["clan"]["name"] == "N"
+        assert items[0]["clan"]["warLeague"]["name"] == "Gold"
