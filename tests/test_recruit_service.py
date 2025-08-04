@@ -21,16 +21,7 @@ def test_create_post():
         db.create_all()
         recruit_service.create_post(
             clan_tag="TAG",
-            name="My Clan",
-            badge="",
-            tags=["fun"],
-            open_slots=1,
-            total_slots=50,
-            league="Gold",
-            language="EN",
-            war="Always",
-            description="desc",
+            call_to_action="desc",
         )
-        post = RecruitPost.query.filter_by(name="My Clan").one_or_none()
+        post = RecruitPost.query.filter_by(call_to_action="desc").one_or_none()
         assert post is not None
-        assert post.open_slots == 1

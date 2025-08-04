@@ -12,14 +12,8 @@ bp = Blueprint("recruit", __name__, url_prefix=f"{API_PREFIX}/recruiting")
 @bp.get("/recruit")
 def list_recruit():
     cursor = request.args.get("pageCursor", type=int)
-    filters = {
-        "league": request.args.get("league"),
-        "language": request.args.get("language"),
-        "war": request.args.get("war"),
-        "q": request.args.get("q"),
-    }
-    sort = request.args.get("sort", "slots")
-    posts, next_cursor = recruit_service.list_posts(cursor, filters, sort)
+    filters = {"q": request.args.get("q")}
+    posts, next_cursor = recruit_service.list_posts(cursor, filters)
     now = datetime.utcnow()
     items: list[dict] = []
     for p in posts:
@@ -32,17 +26,10 @@ def list_recruit():
         items.append(
             {
                 "id": p.id,
-                "badge": p.badge,
-                "name": p.name,
-                "tags": p.tags or [],
-                "openSlots": p.open_slots,
-                "totalSlots": p.total_slots,
+                "clanTag": p.clan_tag,
+                "callToAction": p.call_to_action,
                 "age": age,
                 "ageValue": age_value,
-                "league": p.league,
-                "language": p.language,
-                "war": p.war,
-                "description": p.description,
             }
         )
     return jsonify({
@@ -57,15 +44,7 @@ def create_recruit():
     try:
         recruit_service.create_post(
             clan_tag=data.get("clanTag"),
-            name=data["name"],
-            badge=data.get("badge"),
-            tags=data.get("tags"),
-            open_slots=data["openSlots"],
-            total_slots=data["totalSlots"],
-            league=data.get("league"),
-            language=data.get("language"),
-            war=data.get("war"),
-            description=data.get("description"),
+            call_to_action=data.get("callToAction"),
         )
     except KeyError:
         abort(400)

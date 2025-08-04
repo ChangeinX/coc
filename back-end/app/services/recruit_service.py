@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Tuple, Optional
 
-from sqlalchemy import or_, cast, String, func
+from sqlalchemy import func
 
 from coclib.extensions import db
 from coclib.models import RecruitPost, RecruitJoin
@@ -14,28 +14,12 @@ PAGE_SIZE = 100
 def list_posts(
     cursor: Optional[int],
     filters: dict,
-    sort: str,
 ) -> Tuple[List[RecruitPost], Optional[int]]:
     query = RecruitPost.query
-    if league := filters.get("league"):
-        query = query.filter_by(league=league)
-    if language := filters.get("language"):
-        query = query.filter_by(language=language)
-    if war := filters.get("war"):
-        query = query.filter_by(war=war)
     if q := filters.get("q"):
         pattern = f"%{q}%"
-        query = query.filter(
-            or_(
-                RecruitPost.name.ilike(pattern),
-                RecruitPost.description.ilike(pattern),
-                cast(RecruitPost.tags, String).ilike(pattern),
-            )
-        )
-    if sort == "new":
-        query = query.order_by(RecruitPost.created_at.desc())
-    else:
-        query = query.order_by(RecruitPost.open_slots.desc())
+        query = query.filter(RecruitPost.call_to_action.ilike(pattern))
+    query = query.order_by(RecruitPost.created_at.desc())
     offset = int(cursor or 0)
     rows = query.offset(offset).limit(PAGE_SIZE + 1).all()
     next_cursor = offset + PAGE_SIZE if len(rows) > PAGE_SIZE else None
@@ -45,29 +29,13 @@ def list_posts(
 def create_post(
     *,
     clan_tag: Optional[str],
-    name: str,
-    badge: Optional[str],
-    tags: Optional[list[str]],
-    open_slots: int,
-    total_slots: int,
-    league: Optional[str],
-    language: Optional[str],
-    war: Optional[str],
-    description: Optional[str],
+    call_to_action: Optional[str],
 ) -> RecruitPost:
     max_id = db.session.query(func.max(RecruitPost.id)).scalar() or 0
     post = RecruitPost(
         id=max_id + 1,
         clan_tag=clan_tag,
-        name=name,
-        badge=badge,
-        tags=tags,
-        open_slots=open_slots,
-        total_slots=total_slots,
-        league=league,
-        language=language,
-        war=war,
-        description=description,
+        call_to_action=call_to_action,
         created_at=datetime.utcnow(),
     )
     db.session.add(post)
