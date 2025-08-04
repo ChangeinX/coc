@@ -8,7 +8,7 @@
     "prebuild": "LEGAL_VERSION=$(node scripts/get-legal-version.js) LEGAL_VERSION=$LEGAL_VERSION node scripts/replace-sw-key.js",
     "build": "LEGAL_VERSION=$(node scripts/get-legal-version.js) VITE_COMMIT_HASH=$(git rev-parse --short HEAD) LEGAL_VERSION=$LEGAL_VERSION VITE_LEGAL_VERSION=$LEGAL_VERSION vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run"
   },
   "dependencies": {
     "@stomp/stompjs": "^7.1.1",

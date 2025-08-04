@@ -29,7 +29,7 @@ vi.mock('../hooks/useMultiChat.js', () => ({
 }));
 vi.mock('../lib/api.js', () => ({
   fetchJSON: vi.fn(() => Promise.resolve({})),
-  fetchJSONCached: vi.fn(),
+  fetchJSONCached: vi.fn(() => Promise.resolve({ memberList: [] })),
 }));
 vi.mock('../lib/gql.js', () => ({
   graphqlRequest: vi.fn(),

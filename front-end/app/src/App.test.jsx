@@ -60,9 +60,22 @@ describe('App authentication', () => {
     });
     currentUser = { sub: 'u1', id: 1, name: 'Test' };
     restrictionsMock.mockReturnValue({ status: 'BANNED', remaining: 0 });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({ version: window.__LEGAL_VERSION__, seen: true }),
+          text: () => Promise.resolve(''),
+        }),
+      ),
+    );
     render(<App />);
     expect(await screen.findByText(/access denied/i)).toBeInTheDocument();
     expect(logoutSpy).toHaveBeenCalled();
     expect(window.location.hash).toBe('#/banned');
+    vi.unstubAllGlobals();
   });
 });
