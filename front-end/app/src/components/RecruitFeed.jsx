@@ -56,14 +56,14 @@ export default function RecruitFeed({ items, loadMore, hasMore, onJoin, initialP
               {item &&
                 item.type === 'card' && (
                   <RecruitCard
-                    clanTag={item.data.clan?.tag}
-                    deepLink={item.data.clan?.deepLink}
-                    name={item.data.clan?.name}
-                    description={item.data.clan?.description}
-                    labels={item.data.clan?.labels}
-                    members={item.data.clan?.members}
-                    warFrequency={item.data.clan?.warFrequency}
-                    language={item.data.clan?.language}
+                    clanTag={item.data.clanTag}
+                    deepLink={item.data.deepLink}
+                    name={item.data.name}
+                    description={item.data.description}
+                    labels={item.data.labels}
+                    openSlots={item.data.openSlots}
+                    warFrequency={item.data.warFrequency}
+                    language={item.data.language}
                     callToAction={item.data.callToAction}
                     onJoin={() => onJoin?.(item.data)}
                   />
