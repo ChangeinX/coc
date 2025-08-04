@@ -4,9 +4,14 @@ import RecruitCard from './RecruitCard.jsx';
 import PageChip from './PageChip.jsx';
 import RecruitSkeleton from './RecruitSkeleton.jsx';
 
-const ROW_HEIGHT = 112;
-
-export default function RecruitFeed({ items, loadMore, hasMore, onJoin, initialPage = 1 }) {
+export default function RecruitFeed({
+  items,
+  loadMore,
+  hasMore,
+  onJoin,
+  onSelect,
+  initialPage = 1,
+}) {
   const parentRef = useRef(null);
   const withChips = [];
   items.forEach((item, i) => {
@@ -21,9 +26,10 @@ export default function RecruitFeed({ items, loadMore, hasMore, onJoin, initialP
   const virtualizer = useVirtualizer({
     count,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => ROW_HEIGHT,
+    estimateSize: () => 140,
+    measureElement: (el) => el.getBoundingClientRect().height,
     overscan: 8,
-    initialOffset: (initialPage - 1) * ROW_HEIGHT * 100,
+    initialOffset: (initialPage - 1) * 140 * 100,
   });
 
   const itemsVirtual = virtualizer.getVirtualItems();
@@ -49,6 +55,7 @@ export default function RecruitFeed({ items, loadMore, hasMore, onJoin, initialP
           return (
             <div
               key={virtual.index}
+              ref={virtualizer.measureElement}
               className="absolute top-0 left-0 w-full"
               style={{ transform: `translateY(${virtual.start}px)` }}
             >
@@ -59,13 +66,15 @@ export default function RecruitFeed({ items, loadMore, hasMore, onJoin, initialP
                     clanTag={item.data.clanTag}
                     deepLink={item.data.deepLink}
                     name={item.data.name}
-                    description={item.data.description}
                     labels={item.data.labels}
-                    openSlots={item.data.openSlots}
-                    warFrequency={item.data.warFrequency}
                     language={item.data.language}
-                    callToAction={item.data.callToAction}
+                    memberCount={item.data.memberCount}
+                    warLeague={item.data.warLeague}
+                    clanLevel={item.data.clanLevel}
+                    requiredTrophies={item.data.requiredTrophies}
+                    requiredTownhallLevel={item.data.requiredTownhallLevel}
                     onJoin={() => onJoin?.(item.data)}
+                    onClick={() => onSelect?.(item.data)}
                   />
                 )}
               {item && item.type === 'chip' && <PageChip page={item.page} />}
