@@ -15,8 +15,14 @@ export default function RecruitDetail({ clan, onClose }) {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose}></div>
-      <div className="fixed inset-0 overflow-auto z-50 flex items-start justify-center p-4">
-        <div className="bg-white w-full max-w-xl rounded-xl shadow-xl">
+      <div
+        className="fixed inset-0 overflow-auto z-50 flex items-start justify-center p-4"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white w-full max-w-xl rounded-xl shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
           <RecruitCard
             clanTag={clan.clanTag}
             deepLink={clan.deepLink}

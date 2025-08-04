@@ -38,17 +38,16 @@ export default function useRecruitFeed(filters) {
       }
     }
     const normalized = data.items.map((item) => {
-      const { clan = {}, call_to_action, callToAction, ...rest } = item.data || {};
+      const { clan = {}, call_to_action, callToAction, openSlots, memberCount: mCount } = item;
       const memberCount =
-        rest.memberCount ??
+        mCount ??
         clan.members ??
-        (typeof (rest.openSlots ?? clan.openSlots) === 'number'
-          ? 50 - (rest.openSlots ?? clan.openSlots)
+        (typeof (openSlots ?? clan.openSlots) === 'number'
+          ? 50 - (openSlots ?? clan.openSlots)
           : undefined);
       return {
         ...item,
         data: {
-          ...rest,
           clanTag: clan.tag,
           deepLink: clan.deep_link ?? clan.deepLink,
           name: clan.name,
@@ -58,7 +57,7 @@ export default function useRecruitFeed(filters) {
           warLeague: clan.warLeague,
           clanLevel: clan.clanLevel,
           language: clan.chatLanguage ?? clan.language,
-          openSlots: rest.openSlots ?? clan.openSlots,
+          openSlots: openSlots ?? clan.openSlots,
           memberCount,
           requiredTrophies: clan.requiredTrophies,
           requiredTownhallLevel:
