@@ -12,7 +12,7 @@ export default function usePlayerRecruitFeed(filters) {
     const params = new URLSearchParams();
     params.set('pageCursor', c || '');
     if (filters.q) params.set('q', filters.q);
-    const path = `/player-recruit?${params.toString()}`;
+    const path = `/recruiting/player-recruit?${params.toString()}`;
     let data;
     if (typeof window !== 'undefined' && 'caches' in window && (!c || c === '')) {
       const cache = await caches.open('player-recruit');
