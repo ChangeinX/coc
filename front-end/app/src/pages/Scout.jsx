@@ -44,7 +44,7 @@ export default function Scout() {
   async function postPlayer(e) {
     e.preventDefault();
     try {
-      await fetchJSON('/player-recruit', {
+      await fetchJSON('/recruiting/player-recruit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: message }),

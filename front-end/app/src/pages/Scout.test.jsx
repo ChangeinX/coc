@@ -17,8 +17,9 @@ describe('Scout page', () => {
       if (path === '/user/me') return Promise.resolve({ player_tag: 'PLAYER' });
       if (path.startsWith('/player/')) return Promise.resolve({ clanTag: 'CLAN' });
       if (path.startsWith('/clan/')) return Promise.resolve({ tag: 'CLAN', name: 'Clan', labels: [] });
+      if (path.startsWith('/recruiting/player-recruit'))
+        return Promise.resolve({ items: [], next: null });
       if (path.startsWith('/recruiting')) return Promise.resolve({ items: [], next: null });
-      if (path.startsWith('/player-recruit')) return Promise.resolve({ items: [], next: null });
       return Promise.resolve({});
     });
   });
