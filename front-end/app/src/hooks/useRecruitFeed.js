@@ -38,7 +38,14 @@ export default function useRecruitFeed(filters) {
       }
     }
     const normalized = data.items.map((item) => {
-      const { clan = {}, call_to_action, callToAction, openSlots, memberCount: mCount } = item;
+      const src = item.data || item;
+      const {
+        clan = {},
+        call_to_action,
+        callToAction,
+        openSlots,
+        memberCount: mCount,
+      } = src;
       const memberCount =
         mCount ??
         clan.members ??
