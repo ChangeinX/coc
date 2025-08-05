@@ -92,13 +92,12 @@ export default function Scout() {
           <ClanPostForm onPosted={feed.reload} />
           <DiscoveryBar onChange={setFilters} />
           <div className="flex-1">
-            <RecruitFeed
+          <RecruitFeed
               items={items}
               loadMore={feed.loadMore}
               hasMore={feed.hasMore}
               onJoin={joinClan}
               onSelect={setSelected}
-              initialPage={page}
             />
           </div>
         </>
@@ -122,12 +121,11 @@ export default function Scout() {
           </form>
           <DiscoveryBar onChange={setFilters} />
           <div className="flex-1">
-            <PlayerRecruitFeed
+          <PlayerRecruitFeed
               items={playerItems}
               loadMore={playerFeed.loadMore}
               hasMore={playerFeed.hasMore}
               onInvite={invitePlayer}
-              initialPage={page}
             />
           </div>
         </>

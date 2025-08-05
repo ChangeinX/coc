@@ -2,15 +2,6 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import RecruitFeed from './RecruitFeed.jsx';
-import { vi } from 'vitest';
-
-vi.mock('@tanstack/react-virtual', () => ({
-  useVirtualizer: () => ({
-    getTotalSize: () => 140,
-    getVirtualItems: () => [{ index: 0, start: 0 }],
-    measureElement: () => {},
-  }),
-}));
 
 function noop() {}
 
