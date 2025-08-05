@@ -1,5 +1,6 @@
 import React from 'react';
 import CachedImage from './CachedImage.jsx';
+import { Users, Shield, Trophy, Crown, Home } from 'lucide-react';
 
 export default function RecruitCard({
   clanTag,
@@ -14,6 +15,7 @@ export default function RecruitCard({
   clanLevel,
   requiredTrophies,
   requiredTownhallLevel,
+  callToAction,
   onJoin,
   onClick,
 }) {
@@ -53,12 +55,42 @@ export default function RecruitCard({
           {typeof lang === 'string' ? lang : lang.name}
         </p>
       )}
-      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-700">
-        {typeof count === 'number' && <span>{count}/50 members</span>}
-        {warLeague?.name && <span>{warLeague.name}</span>}
-        {clanLevel && <span>Level {clanLevel}</span>}
-        {requiredTrophies && <span>{requiredTrophies}+ trophies</span>}
-        {requiredTownhallLevel && <span>TH {requiredTownhallLevel}+</span>}
+      {callToAction && (
+        <p className="mt-2 text-sm text-slate-700 whitespace-pre-line">
+          {callToAction}
+        </p>
+      )}
+      <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-slate-700">
+        {typeof count === 'number' && (
+          <div className="flex items-center gap-1">
+            <Users className="w-4 h-4 text-slate-500" />
+            <span>{count}/50</span>
+          </div>
+        )}
+        {warLeague?.name && (
+          <div className="flex items-center gap-1">
+            <Shield className="w-4 h-4 text-slate-500" />
+            <span>{warLeague.name}</span>
+          </div>
+        )}
+        {clanLevel && (
+          <div className="flex items-center gap-1">
+            <Crown className="w-4 h-4 text-slate-500" />
+            <span>Lv {clanLevel}</span>
+          </div>
+        )}
+        {requiredTrophies && (
+          <div className="flex items-center gap-1">
+            <Trophy className="w-4 h-4 text-slate-500" />
+            <span>{requiredTrophies}+</span>
+          </div>
+        )}
+        {requiredTownhallLevel && (
+          <div className="flex items-center gap-1">
+            <Home className="w-4 h-4 text-slate-500" />
+            <span>TH {requiredTownhallLevel}+</span>
+          </div>
+        )}
       </div>
       {labels.length > 0 && (
         <div className="flex gap-2 mt-2 flex-wrap">
