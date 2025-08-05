@@ -18,7 +18,12 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
     signing_key = app.config["JWT_SIGNING_KEY"]
 
     def require_auth():
-        if request.method == "OPTIONS":
+        path = request.path.rstrip("/")
+        if (
+                request.method == "OPTIONS"
+                or path.endswith("/health")
+                or path.endswith("/log")
+        ):
             return
         token = request.cookies.get("sid")
         if not token:
