@@ -29,7 +29,7 @@ export default function RecruitCard({
       role="button"
       tabIndex={0}
       onClick={onClick}
-      className="w-full text-left p-3 border rounded bg-white"
+      className="w-full text-left p-3 border rounded-md bg-white shadow-sm"
     >
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">{name}</h3>

@@ -8,6 +8,7 @@ export default function useRecruitFeed(filters) {
   const [hasMore, setHasMore] = useState(true);
 
   async function fetchPage(c) {
+    if (loading) return;
     setLoading(true);
     const params = new URLSearchParams();
     params.set('pageCursor', c || '');

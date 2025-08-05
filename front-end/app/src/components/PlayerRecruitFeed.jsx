@@ -22,6 +22,7 @@ export default function PlayerRecruitFeed({ items, loadMore, hasMore, onInvite, 
     count,
     getScrollElement: () => parentRef.current,
     estimateSize: () => ROW_HEIGHT,
+    measureElement: (el) => el.getBoundingClientRect().height,
     overscan: 8,
     initialOffset: (initialPage - 1) * ROW_HEIGHT * 100,
   });
@@ -49,7 +50,8 @@ export default function PlayerRecruitFeed({ items, loadMore, hasMore, onInvite, 
           return (
             <div
               key={virtual.index}
-              className="absolute top-0 left-0 w-full"
+              ref={virtualizer.measureElement}
+              className="absolute top-0 left-0 w-full p-2"
               style={{ transform: `translateY(${virtual.start}px)` }}
             >
               {!item && <RecruitSkeleton />}
