@@ -56,7 +56,7 @@ export default function RecruitFeed({
             <div
               key={virtual.index}
               ref={virtualizer.measureElement}
-              className="absolute top-0 left-0 w-full"
+              className="absolute top-0 left-0 w-full p-2"
               style={{ transform: `translateY(${virtual.start}px)` }}
             >
               {!item && <RecruitSkeleton />}

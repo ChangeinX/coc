@@ -52,4 +52,25 @@ describe('Scout page', () => {
     fireEvent.click(screen.getByText('Need a Clan'));
     await screen.findByPlaceholderText('Describe yourself');
   });
+
+  it('posts a player recruit and clears form', async () => {
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    render(
+      <MemoryRouter>
+        <Scout />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByText('Need a Clan'));
+    const textarea = await screen.findByPlaceholderText('Describe yourself');
+    fireEvent.change(textarea, { target: { value: 'Looking for clan' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Post' }));
+    await screen.findByRole('button', { name: 'Post' });
+    expect(fetchJSON).toHaveBeenCalledWith(
+      '/recruiting/player-recruit',
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(textarea.value).toBe('');
+    expect(dispatchSpy).toHaveBeenCalled();
+    dispatchSpy.mockRestore();
+  });
 });
