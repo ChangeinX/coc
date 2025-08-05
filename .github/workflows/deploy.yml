@@ -25,6 +25,8 @@ env:
   MESSAGES_SERVICE: ${{ secrets.MESSAGES_SERVICE }}
   USER_SERVICE: ${{ secrets.USER_SERVICE }}
   NOTIFICATIONS_SERVICE: ${{ secrets.NOTIFICATIONS_SERVICE }}
+  RECRUITING_REPOSITORY: ${{ secrets.RECRUITING_REPOSITORY }}
+  RECRUITING_SERVICE: ${{ secrets.RECRUITING_SERVICE }}
   VITE_API_URL: ${{ secrets.VITE_API_URL }}
   VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
   VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
@@ -40,6 +42,7 @@ jobs:
       messages_any_changed: ${{ steps.changes.outputs.messages_any_changed }}
       user_any_changed: ${{ steps.changes.outputs.user_any_changed }}
       notifications_any_changed: ${{ steps.changes.outputs.notifications_any_changed }}
+      recruiting_any_changed: ${{ steps.changes.outputs.recruiting_any_changed }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -64,6 +67,8 @@ jobs:
               - user_service/**
             notifications:
               - notifications/**
+            recruiting:
+              - recruiting-py/**
 
   app:
     needs: detect
@@ -137,11 +142,11 @@ jobs:
 
   build-push:
     needs: detect
-    if: needs.detect.outputs.worker_any_changed == 'true' || needs.detect.outputs.messages_any_changed == 'true' || needs.detect.outputs.user_any_changed == 'true' || needs.detect.outputs.notifications_any_changed == 'true'
+    if: needs.detect.outputs.worker_any_changed == 'true' || needs.detect.outputs.messages_any_changed == 'true' || needs.detect.outputs.user_any_changed == 'true' || needs.detect.outputs.notifications_any_changed == 'true' || needs.detect.outputs.recruiting_any_changed == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [worker, messages, user, notifications]
+        service: [worker, messages, user, notifications, recruiting]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -209,6 +214,13 @@ jobs:
               REPOSITORY=$NOTIFICATIONS_REPOSITORY
               SERVICE_NAME=$NOTIFICATIONS_SERVICE
               CHANGED=${{ needs.detect.outputs.notifications_any_changed }}
+              ;;
+            recruiting)
+              DOCKERFILE=recruiting-py/Dockerfile
+              CONTEXT=.
+              REPOSITORY=$RECRUITING_REPOSITORY
+              SERVICE_NAME=$RECRUITING_SERVICE
+              CHANGED=${{ needs.detect.outputs.recruiting_any_changed }}
               ;;
           esac
 
