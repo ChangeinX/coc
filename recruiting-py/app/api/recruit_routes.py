@@ -48,6 +48,39 @@ def list_recruit():
     )
 
 
+@bp.get("/player-recruit")
+def list_player_recruit():
+    cursor = request.args.get("pageCursor", type=int)
+    filters = {"q": request.args.get("q")}
+    posts, next_cursor = recruit_service.list_player_posts(cursor, filters)
+    now = datetime.utcnow()
+    items: list[dict] = []
+    for p in posts:
+        delta = now - p["created_at"]
+        age_value = int(delta.total_seconds())
+        if age_value < 3600:
+            age = f"{age_value // 60}m"
+        else:
+            age = f"{age_value // 3600}h"
+        items.append(
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "tag": p["tag"],
+                "avatar": p.get("avatar"),
+                "description": p["description"],
+                "age": age,
+                "ageValue": age_value,
+            }
+        )
+    return jsonify(
+        {
+            "items": items,
+            "nextCursor": str(next_cursor) if next_cursor is not None else None,
+        }
+    )
+
+
 @bp.post("/recruit")
 def create_recruit():
     data = request.get_json() or {}
@@ -55,6 +88,24 @@ def create_recruit():
         recruit_service.create_post(
             clan_tag=data.get("clanTag"),
             call_to_action=data.get("callToAction"),
+        )
+    except KeyError:
+        abort(400)
+    except ValueError:
+        abort(404)
+    return ("", 201)
+
+
+@bp.post("/player-recruit")
+def create_player_recruit():
+    data = request.get_json() or {}
+    try:
+        recruit_service.create_player_post(
+            user_id=g.user.id,
+            description=data.get("description"),
+            league=data.get("league"),
+            language=data.get("language"),
+            war=data.get("war"),
         )
     except KeyError:
         abort(400)

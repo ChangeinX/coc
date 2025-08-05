@@ -3,7 +3,7 @@ import nox
 @nox.session(python="3.11")
 def lint(session: nox.Session) -> None:
     session.install("ruff")
-    session.run("ruff", "check", "back-end", "coclib", "db")
+    session.run("ruff", "check", "back-end", "coclib", "db", "recruiting-py")
     for project in ("messages-java", "user_service", "notifications"):
         session.chdir(project)
         session.run("gradle", "wrapper", external=True)
@@ -15,6 +15,7 @@ def lint(session: nox.Session) -> None:
 def tests(session: nox.Session) -> None:
     session.install("pytest")
     session.install("-r", "back-end/requirements.txt")
+    session.install("-r", "recruiting-py/requirements.txt")
     session.run("pytest", "-q")
     session.chdir("messages-java")
     session.run("gradle", "wrapper", external=True)
