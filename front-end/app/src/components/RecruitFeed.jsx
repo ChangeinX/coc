@@ -18,7 +18,7 @@ export default function RecruitFeed({
     if (i > 0 && i % 100 === 0) {
       withChips.push({ type: 'chip', page: i / 100 + 1 });
     }
-    withChips.push({ type: 'card', data: item });
+    withChips.push({ type: 'card', data: { ...item.data, id: item.id } });
   });
 
   const count = hasMore ? withChips.length + 1 : withChips.length;
