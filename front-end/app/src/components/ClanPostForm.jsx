@@ -7,6 +7,7 @@ export default function ClanPostForm({ onPosted }) {
   const [clan, setClan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [posting, setPosting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,6 +37,8 @@ export default function ClanPostForm({ onPosted }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (posting || !callToAction.trim()) return;
+    setPosting(true);
     try {
       await fetchJSON('/recruiting/recruit', {
         method: 'POST',
@@ -48,12 +51,14 @@ export default function ClanPostForm({ onPosted }) {
         await Promise.all(keys.map((k) => cache.delete(k)));
       }
       setCallToAction('');
-      onPosted?.();
+      await onPosted?.();
       window.dispatchEvent(
         new CustomEvent('toast', { detail: 'Recruiting post created!' })
       );
     } catch (err) {
       // ignore
+    } finally {
+      setPosting(false);
     }
   }
 
@@ -91,9 +96,10 @@ export default function ClanPostForm({ onPosted }) {
       />
       <button
         type="submit"
-        className="bg-blue-500 text-white py-1 px-2 rounded self-start"
+        disabled={posting}
+        className="bg-blue-500 text-white py-1 px-2 rounded self-start disabled:opacity-50"
       >
-        Post
+        {posting ? 'Posting...' : 'Post'}
       </button>
     </form>
   );

@@ -34,6 +34,7 @@ export default function RecruitDetail({ clan, onClose }) {
             clanLevel={clan.clanLevel}
             requiredTrophies={clan.requiredTrophies}
             requiredTownhallLevel={clan.requiredTownhallLevel}
+            callToAction={clan.callToAction}
             onJoin={() => {}}
           />
           <div className="p-4">
