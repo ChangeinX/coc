@@ -21,15 +21,17 @@ test('renders summary info and handles click', () => {
       clanLevel={5}
       requiredTrophies={1200}
       requiredTownhallLevel={8}
+      callToAction="Join us!"
       onClick={handleClick}
     />
   );
   expect(screen.getByText('Clan')).toBeInTheDocument();
   expect(screen.getByText('EN')).toBeInTheDocument();
-  expect(screen.getByText('30/50 members')).toBeInTheDocument();
+  expect(screen.getByText('Join us!')).toBeInTheDocument();
+  expect(screen.getByText('30/50')).toBeInTheDocument();
   expect(screen.getByText('Gold League')).toBeInTheDocument();
-  expect(screen.getByText('Level 5')).toBeInTheDocument();
-  expect(screen.getByText('1200+ trophies')).toBeInTheDocument();
+  expect(screen.getByText('Lv 5')).toBeInTheDocument();
+  expect(screen.getByText('1200+')).toBeInTheDocument();
   expect(screen.getByText('TH 8+')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button'));
   expect(handleClick).toHaveBeenCalled();
