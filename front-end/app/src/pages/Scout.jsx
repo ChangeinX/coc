@@ -40,9 +40,12 @@ export default function Scout() {
   const playerItems = playerFeed.items;
 
   const [message, setMessage] = useState('');
+  const [posting, setPosting] = useState(false);
 
   async function postPlayer(e) {
     e.preventDefault();
+    if (posting || !message.trim()) return;
+    setPosting(true);
     try {
       await fetchJSON('/recruiting/player-recruit', {
         method: 'POST',
@@ -56,8 +59,13 @@ export default function Scout() {
       }
       setMessage('');
       playerFeed.reload();
+      window.dispatchEvent(
+        new CustomEvent('toast', { detail: 'Recruit post created!' })
+      );
     } catch (err) {
       // ignore
+    } finally {
+      setPosting(false);
     }
   }
 
@@ -106,9 +114,10 @@ export default function Scout() {
             />
             <button
               type="submit"
-              className="bg-blue-500 text-white py-1 px-2 rounded self-start"
+              disabled={posting}
+              className="bg-blue-500 text-white py-1 px-2 rounded self-start disabled:opacity-50"
             >
-              Post
+              {posting ? 'Posting...' : 'Post'}
             </button>
           </form>
           <DiscoveryBar onChange={setFilters} />
