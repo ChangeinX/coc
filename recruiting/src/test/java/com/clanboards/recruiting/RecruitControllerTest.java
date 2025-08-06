@@ -6,11 +6,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.clanboards.recruiting.model.Clan;
+import com.clanboards.recruiting.repository.ClanRepository;
 import com.clanboards.recruiting.repository.RecruitJoinRepository;
 import com.clanboards.recruiting.repository.RecruitPostRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,6 +27,7 @@ class RecruitControllerTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private RecruitPostRepository recruitPostRepository;
   @Autowired private RecruitJoinRepository recruitJoinRepository;
+  @Autowired private ClanRepository clanRepository;
 
   private static final byte[] KEY =
       "0123456789abcdef0123456789abcdef".getBytes(StandardCharsets.UTF_8);
@@ -42,6 +46,12 @@ class RecruitControllerTest {
 
   @Test
   void createAndListRecruit() throws Exception {
+    Clan clan = new Clan();
+    clan.setTag("ABC");
+    clan.setDeepLink("https://link.clashofclans.com/?action=OpenClanProfile&tag=%23ABC");
+    clan.setData(Map.of("name", "TestClan", "requiredTrophies", 1000));
+    clanRepository.save(clan);
+
     mockMvc
         .perform(
             post("/api/v1/recruiting/recruit")
@@ -52,7 +62,9 @@ class RecruitControllerTest {
     mockMvc
         .perform(get("/api/v1/recruiting/recruit"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.items[0].clanTag").value("#ABC"));
+        .andExpect(jsonPath("$.items[0].clan.tag").value("#ABC"))
+        .andExpect(jsonPath("$.items[0].clan.requiredTrophies").value(1000))
+        .andExpect(jsonPath("$.items[0].clan.deep_link").value(clan.getDeepLink()));
   }
 
   @Test
