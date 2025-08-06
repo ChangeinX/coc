@@ -1,11 +1,15 @@
 package com.clanboards.recruiting.service;
 
+import com.clanboards.recruiting.model.Clan;
 import com.clanboards.recruiting.model.PlayerRecruitPost;
 import com.clanboards.recruiting.model.RecruitJoin;
 import com.clanboards.recruiting.model.RecruitPost;
+import com.clanboards.recruiting.repository.ClanRepository;
 import com.clanboards.recruiting.repository.PlayerRecruitPostRepository;
 import com.clanboards.recruiting.repository.RecruitJoinRepository;
 import com.clanboards.recruiting.repository.RecruitPostRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -18,14 +22,20 @@ public class RecruitService {
   private final RecruitPostRepository recruitRepo;
   private final PlayerRecruitPostRepository playerRepo;
   private final RecruitJoinRepository joinRepo;
+  private final ClanRepository clanRepo;
+  private final ObjectMapper objectMapper;
 
   public RecruitService(
       RecruitPostRepository recruitRepo,
       PlayerRecruitPostRepository playerRepo,
-      RecruitJoinRepository joinRepo) {
+      RecruitJoinRepository joinRepo,
+      ClanRepository clanRepo,
+      ObjectMapper objectMapper) {
     this.recruitRepo = recruitRepo;
     this.playerRepo = playerRepo;
     this.joinRepo = joinRepo;
+    this.clanRepo = clanRepo;
+    this.objectMapper = objectMapper;
   }
 
   public List<Map<String, Object>> listRecruitPosts() {
@@ -36,9 +46,38 @@ public class RecruitService {
               m.put("id", p.getId());
               m.put("clanTag", p.getClanTag());
               m.put("callToAction", p.getCallToAction());
+
+              String normTag = normalizeTag(p.getClanTag());
+              Clan clan = clanRepo.findById(normTag).orElse(null);
+              if (clan != null) {
+                Map<String, Object> clanMap = new java.util.HashMap<>();
+                clanMap.put("tag", p.getClanTag());
+                String deepLink = clan.getDeepLink();
+                if (deepLink == null || deepLink.isBlank()) {
+                  deepLink =
+                      "https://link.clashofclans.com/?action=OpenClanProfile&tag=%23" + normTag;
+                }
+                clanMap.put("deep_link", deepLink);
+                String data = clan.getData();
+                if (data != null && !data.isBlank()) {
+                  try {
+                    Map<String, Object> parsed =
+                        objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {});
+                    clanMap.putAll(parsed);
+                  } catch (Exception e) {
+                    // ignore malformed json
+                  }
+                }
+                m.put("clan", clanMap);
+              }
+
               return m;
             })
         .collect(Collectors.toList());
+  }
+
+  private static String normalizeTag(String tag) {
+    return tag == null ? "" : tag.replace("#", "").toUpperCase();
   }
 
   public void createRecruitPost(String clanTag, String callToAction) {
