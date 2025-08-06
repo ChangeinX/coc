@@ -68,7 +68,7 @@ jobs:
             notifications:
               - notifications/**
             recruiting:
-              - recruiting-py/**
+              - recruiting/**
 
   app:
     needs: detect
@@ -216,8 +216,8 @@ jobs:
               CHANGED=${{ needs.detect.outputs.notifications_any_changed }}
               ;;
             recruiting)
-              DOCKERFILE=recruiting-py/Dockerfile
-              CONTEXT=.
+              DOCKERFILE=recruiting/Dockerfile
+              CONTEXT=recruiting
               REPOSITORY=$RECRUITING_REPOSITORY
               SERVICE_NAME=$RECRUITING_SERVICE
               CHANGED=${{ needs.detect.outputs.recruiting_any_changed }}

@@ -195,9 +195,12 @@ fabric.properties
 messages-java/build/
 user_service/build/
 notifications/build/
+recruiting/build/
 messages-java/.gradle/
 notifications/.gradle/
 user_service/.gradle/
+recruiting/.gradle/
+recruiting/gradle/wrapper/gradle-wrapper.jar
 .gradle/
 **/.gradle
 front-end/app/node_modules
