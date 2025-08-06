@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchJSON } from '../lib/api.js';
 import Loading from './Loading.jsx';
+import RecruitCard from './RecruitCard.jsx';
 
 export default function ClanPostForm({ onPosted }) {
   const [callToAction, setCallToAction] = useState('');
@@ -71,22 +72,19 @@ export default function ClanPostForm({ onPosted }) {
     );
 
   return (
-    <form onSubmit={handleSubmit} className="p-3 border-b flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        {clan.badgeUrls?.small && (
-          <img src={clan.badgeUrls.small} alt="clan badge" className="w-8 h-8" />
-        )}
-        <div>
-          <div className="font-semibold">{clan.name}</div>
-          <div className="flex flex-wrap gap-1">
-            {clan.labels?.map((l) => (
-              <span key={l.id} className="text-xs bg-slate-200 px-1 rounded">
-                {l.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
+    <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-2">
+      <RecruitCard
+        clanTag={clan.tag}
+        name={clan.name}
+        labels={clan.labels}
+        language={clan.language}
+        memberCount={clan.memberCount}
+        warLeague={clan.warLeague}
+        clanLevel={clan.clanLevel}
+        requiredTrophies={clan.requiredTrophies}
+        requiredTownhallLevel={clan.requiredTownhallLevel}
+        callToAction={callToAction}
+      />
       <textarea
         name="callToAction"
         value={callToAction}
