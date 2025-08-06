@@ -35,6 +35,7 @@ export default function RecruitFeed({ items, loadMore, hasMore, onJoin, onSelect
         warLeague={item.data.warLeague}
         clanLevel={item.data.clanLevel}
         requiredTrophies={item.data.requiredTrophies}
+        requiredBuilderBaseTrophies={item.data.requiredBuilderBaseTrophies}
         requiredTownhallLevel={item.data.requiredTownhallLevel}
         callToAction={item.data.callToAction}
         onJoin={() => onJoin?.(item.data)}
