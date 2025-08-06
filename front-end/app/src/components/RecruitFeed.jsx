@@ -38,6 +38,7 @@ export default function RecruitFeed({ items, loadMore, hasMore, onJoin, onSelect
         requiredBuilderBaseTrophies={item.data.requiredBuilderBaseTrophies}
         requiredTownhallLevel={item.data.requiredTownhallLevel}
         callToAction={item.data.callToAction}
+        createdAt={item.createdAt || item.created_at}
         onJoin={() => onJoin?.(item.data)}
         onClick={() => onSelect?.(item.data)}
       />
