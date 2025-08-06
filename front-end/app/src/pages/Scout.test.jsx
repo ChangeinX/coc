@@ -34,12 +34,24 @@ describe('Scout page', () => {
     expect(screen.getByText('Need a Clan')).toBeInTheDocument();
   });
 
-  it('shows find a clan form by default', async () => {
+  it('shows create post button by default', () => {
     render(
       <MemoryRouter>
         <Scout />
       </MemoryRouter>
     );
+    expect(
+      screen.getByRole('button', { name: 'Create clan post' })
+    ).toBeInTheDocument();
+  });
+
+  it('opens clan post form when button clicked', async () => {
+    render(
+      <MemoryRouter>
+        <Scout />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Create clan post' }));
     await screen.findByPlaceholderText('Describe your clan');
   });
 

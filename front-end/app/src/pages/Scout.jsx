@@ -6,6 +6,8 @@ import RecruitFeed from '../components/RecruitFeed.jsx';
 import PlayerRecruitFeed from '../components/PlayerRecruitFeed.jsx';
 import ClanPostForm from '../components/ClanPostForm.jsx';
 import RecruitDetail from '../components/RecruitDetail.jsx';
+import BottomSheet from '../components/BottomSheet.jsx';
+import { Plus } from 'lucide-react';
 import useRecruitFeed from '../hooks/useRecruitFeed.js';
 import usePlayerRecruitFeed from '../hooks/usePlayerRecruitFeed.js';
 import { fetchJSON } from '../lib/api.js';
@@ -19,6 +21,7 @@ export default function Scout() {
   const [params] = useSearchParams();
   const page = parseInt(params.get('page') || '1', 10);
   const [selected, setSelected] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   function joinClan(clan) {
     if (!navigator.onLine && 'serviceWorker' in navigator && 'SyncManager' in window) {
@@ -89,10 +92,9 @@ export default function Scout() {
       />
       {active === 'find' && (
         <>
-          <ClanPostForm onPosted={feed.reload} />
           <DiscoveryBar onChange={setFilters} />
           <div className="flex-1">
-          <RecruitFeed
+            <RecruitFeed
               items={items}
               loadMore={feed.loadMore}
               hasMore={feed.hasMore}
@@ -100,6 +102,21 @@ export default function Scout() {
               onSelect={setSelected}
             />
           </div>
+          <button
+            aria-label="Create clan post"
+            className="fixed bottom-20 right-4 w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg"
+            onClick={() => setShowForm(true)}
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+          <BottomSheet open={showForm} onClose={() => setShowForm(false)}>
+            <ClanPostForm
+              onPosted={() => {
+                setShowForm(false);
+                feed.reload();
+              }}
+            />
+          </BottomSheet>
         </>
       )}
       {active === 'need' && (
