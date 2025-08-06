@@ -40,8 +40,8 @@ test('renders summary info and handles click', () => {
     screen.getByText('Builder Base Trophies: 500+')
   ).toBeInTheDocument();
   expect(screen.getByText('TH 8+')).toBeInTheDocument();
-  expect(screen.getByTitle('Label1')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button'));
+  expect(screen.getByText('Label1')).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Clan'));
   expect(handleClick).toHaveBeenCalled();
 });
 
