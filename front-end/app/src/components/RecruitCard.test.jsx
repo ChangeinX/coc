@@ -20,13 +20,14 @@ test('renders summary info and handles click', () => {
       warLeague={{ name: 'Gold League' }}
       clanLevel={5}
       requiredTrophies={1200}
+      requiredBuilderBaseTrophies={500}
       requiredTownhallLevel={8}
       callToAction="Join us!"
       onClick={handleClick}
     />
   );
   expect(screen.getByText('Clan')).toBeInTheDocument();
-  expect(screen.getByText('EN')).toBeInTheDocument();
+  expect(screen.getByText('Language: EN')).toBeInTheDocument();
   expect(screen.getByText('Requirements')).toBeInTheDocument();
   expect(screen.getByText('Clan Info')).toBeInTheDocument();
   expect(screen.getByText('Description')).toBeInTheDocument();
@@ -34,8 +35,12 @@ test('renders summary info and handles click', () => {
   expect(screen.getByText('30/50')).toBeInTheDocument();
   expect(screen.getByText('Gold League')).toBeInTheDocument();
   expect(screen.getByText('Lv 5')).toBeInTheDocument();
-  expect(screen.getByText('1200+')).toBeInTheDocument();
+  expect(screen.getByText('Base Trophies: 1200+')).toBeInTheDocument();
+  expect(
+    screen.getByText('Builder Base Trophies: 500+')
+  ).toBeInTheDocument();
   expect(screen.getByText('TH 8+')).toBeInTheDocument();
+  expect(screen.getByTitle('Label1')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button'));
   expect(handleClick).toHaveBeenCalled();
 });

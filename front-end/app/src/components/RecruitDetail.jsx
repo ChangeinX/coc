@@ -33,6 +33,7 @@ export default function RecruitDetail({ clan, onClose }) {
             warLeague={clan.warLeague}
             clanLevel={clan.clanLevel}
             requiredTrophies={clan.requiredTrophies}
+            requiredBuilderBaseTrophies={clan.requiredBuilderBaseTrophies}
             requiredTownhallLevel={clan.requiredTownhallLevel}
             callToAction={clan.callToAction}
             onJoin={() => {}}
