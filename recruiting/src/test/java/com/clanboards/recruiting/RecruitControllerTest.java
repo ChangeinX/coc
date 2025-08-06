@@ -13,6 +13,7 @@ import com.clanboards.recruiting.repository.RecruitPostRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -48,7 +49,7 @@ class RecruitControllerTest {
     Clan clan = new Clan();
     clan.setTag("ABC");
     clan.setDeepLink("https://link.clashofclans.com/?action=OpenClanProfile&tag=%23ABC");
-    clan.setData("{\"name\":\"TestClan\",\"requiredTrophies\":1000}");
+    clan.setData(Map.of("name", "TestClan", "requiredTrophies", 1000));
     clanRepository.save(clan);
 
     mockMvc
