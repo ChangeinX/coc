@@ -8,8 +8,6 @@ import com.clanboards.recruiting.repository.ClanRepository;
 import com.clanboards.recruiting.repository.PlayerRecruitPostRepository;
 import com.clanboards.recruiting.repository.RecruitJoinRepository;
 import com.clanboards.recruiting.repository.RecruitPostRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -23,19 +21,16 @@ public class RecruitService {
   private final PlayerRecruitPostRepository playerRepo;
   private final RecruitJoinRepository joinRepo;
   private final ClanRepository clanRepo;
-  private final ObjectMapper objectMapper;
 
   public RecruitService(
       RecruitPostRepository recruitRepo,
       PlayerRecruitPostRepository playerRepo,
       RecruitJoinRepository joinRepo,
-      ClanRepository clanRepo,
-      ObjectMapper objectMapper) {
+      ClanRepository clanRepo) {
     this.recruitRepo = recruitRepo;
     this.playerRepo = playerRepo;
     this.joinRepo = joinRepo;
     this.clanRepo = clanRepo;
-    this.objectMapper = objectMapper;
   }
 
   public List<Map<String, Object>> listRecruitPosts() {
@@ -58,15 +53,9 @@ public class RecruitService {
                       "https://link.clashofclans.com/?action=OpenClanProfile&tag=%23" + normTag;
                 }
                 clanMap.put("deep_link", deepLink);
-                String data = clan.getData();
-                if (data != null && !data.isBlank()) {
-                  try {
-                    Map<String, Object> parsed =
-                        objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {});
-                    clanMap.putAll(parsed);
-                  } catch (Exception e) {
-                    // ignore malformed json
-                  }
+                Map<String, Object> details = clan.getData();
+                if (details != null) {
+                  clanMap.putAll(details);
                 }
                 m.put("clan", clanMap);
               }

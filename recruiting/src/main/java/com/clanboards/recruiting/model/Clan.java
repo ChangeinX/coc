@@ -1,6 +1,9 @@
 package com.clanboards.recruiting.model;
 
 import jakarta.persistence.*;
+import java.util.Map;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "clans")
@@ -12,9 +15,9 @@ public class Clan {
   @Column(name = "deep_link")
   private String deepLink;
 
-  @Lob
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "data")
-  private String data;
+  private Map<String, Object> data;
 
   public String getTag() {
     return tag;
@@ -32,11 +35,11 @@ public class Clan {
     this.deepLink = deepLink;
   }
 
-  public String getData() {
+  public Map<String, Object> getData() {
     return data;
   }
 
-  public void setData(String data) {
+  public void setData(Map<String, Object> data) {
     this.data = data;
   }
 }
