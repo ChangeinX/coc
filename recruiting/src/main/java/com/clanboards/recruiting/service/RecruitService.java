@@ -8,6 +8,8 @@ import com.clanboards.recruiting.repository.ClanRepository;
 import com.clanboards.recruiting.repository.PlayerRecruitPostRepository;
 import com.clanboards.recruiting.repository.RecruitJoinRepository;
 import com.clanboards.recruiting.repository.RecruitPostRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
