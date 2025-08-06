@@ -87,19 +87,19 @@ export default function RecruitCard({
           </h4>
           <div className="mt-1 grid grid-cols-3 gap-2 text-xs text-slate-700">
             {typeof count === 'number' && (
-              <span className="flex items-center gap-1 bg-slate-200 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1">
                 <Users className="w-4 h-4 text-slate-500" />
                 <span>{count}/50</span>
               </span>
             )}
             {warLeague?.name && (
-              <span className="flex items-center gap-1 bg-slate-200 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1">
                 <Shield className="w-4 h-4 text-slate-500" />
                 <span>{warLeague.name}</span>
               </span>
             )}
             {clanLevel && (
-              <span className="flex items-center gap-1 bg-slate-200 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1">
                 <Crown className="w-4 h-4 text-slate-500" />
                 <span>Lv {clanLevel}</span>
               </span>
@@ -107,7 +107,7 @@ export default function RecruitCard({
             {labels.map((l) => (
               <span
                 key={l.id || l.name}
-                className="flex items-center justify-center bg-slate-200 px-2 py-0.5 rounded-full"
+                className="flex items-center justify-center"
                 title={l.name}
               >
                 <CachedImage
