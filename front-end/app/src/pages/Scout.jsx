@@ -11,6 +11,8 @@ import { Plus } from 'lucide-react';
 import useRecruitFeed from '../hooks/useRecruitFeed.js';
 import usePlayerRecruitFeed from '../hooks/usePlayerRecruitFeed.js';
 import { fetchJSON } from '../lib/api.js';
+import { useAuth } from '../hooks/useAuth.jsx';
+import usePlayerInfo from '../hooks/usePlayerInfo.js';
 import Fuse from 'fuse.js';
 
 export default function Scout() {
@@ -22,6 +24,12 @@ export default function Scout() {
   const page = parseInt(params.get('page') || '1', 10);
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const { user } = useAuth();
+  const playerInfo = usePlayerInfo(user?.player_tag);
+  const canPost =
+    playerInfo &&
+    playerInfo.clanTag &&
+    ['leader', 'coLeader'].includes(playerInfo.role);
 
   function joinClan(clan) {
     if (!navigator.onLine && 'serviceWorker' in navigator && 'SyncManager' in window) {
@@ -102,21 +110,25 @@ export default function Scout() {
               onSelect={setSelected}
             />
           </div>
-          <button
-            aria-label="Create clan post"
-            className="fixed bottom-20 right-4 w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg"
-            onClick={() => setShowForm(true)}
-          >
-            <Plus className="w-6 h-6" />
-          </button>
-          <BottomSheet open={showForm} onClose={() => setShowForm(false)}>
-            <ClanPostForm
-              onPosted={() => {
-                setShowForm(false);
-                feed.reload();
-              }}
-            />
-          </BottomSheet>
+          {canPost && (
+            <>
+              <button
+                aria-label="Create clan post"
+                className="fixed bottom-20 right-4 w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg"
+                onClick={() => setShowForm(true)}
+              >
+                <Plus className="w-6 h-6" />
+              </button>
+              <BottomSheet open={showForm} onClose={() => setShowForm(false)}>
+                <ClanPostForm
+                  onPosted={() => {
+                    setShowForm(false);
+                    feed.reload();
+                  }}
+                />
+              </BottomSheet>
+            </>
+          )}
         </>
       )}
       {active === 'need' && (

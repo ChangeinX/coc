@@ -1,27 +1,40 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 
-vi.mock('../lib/api.js', () => ({
-  fetchJSON: vi.fn(),
-  API_URL: '',
-}));
+vi.mock('../lib/api.js', () => {
+  const fetchJSON = vi.fn();
+  const fetchJSONCached = vi.fn();
+  return { fetchJSON, fetchJSONCached, API_URL: '' };
+});
 
-import { fetchJSON } from '../lib/api.js';
+import { fetchJSON, fetchJSONCached } from '../lib/api.js';
+vi.mock('../hooks/useAuth.jsx', () => ({
+  useAuth: () => ({ user: { player_tag: 'PLAYER' } }),
+}));
 import Scout from './Scout.jsx';
 
 describe('Scout page', () => {
-  beforeEach(() => {
-    fetchJSON.mockImplementation((path) => {
+  function mockApi(role = 'member') {
+    const handler = (path) => {
       if (path === '/user/me') return Promise.resolve({ player_tag: 'PLAYER' });
-      if (path.startsWith('/player/')) return Promise.resolve({ clanTag: 'CLAN' });
-      if (path.startsWith('/clan/')) return Promise.resolve({ tag: 'CLAN', name: 'Clan', labels: [] });
+      if (path.startsWith('/player/')) return Promise.resolve({ clanTag: 'CLAN', role });
+      if (path.startsWith('/clan/'))
+        return Promise.resolve({ tag: 'CLAN', name: 'Clan', labels: [] });
       if (path.startsWith('/recruiting/player-recruit'))
         return Promise.resolve({ items: [], next: null });
       if (path.startsWith('/recruiting')) return Promise.resolve({ items: [], next: null });
       return Promise.resolve({});
-    });
+    };
+    fetchJSON.mockReset();
+    fetchJSONCached.mockReset();
+    fetchJSON.mockImplementation(handler);
+    fetchJSONCached.mockImplementation(handler);
+  }
+
+  beforeEach(() => {
+    mockApi();
   });
 
   it('renders tabs', () => {
@@ -34,24 +47,28 @@ describe('Scout page', () => {
     expect(screen.getByText('Need a Clan')).toBeInTheDocument();
   });
 
-  it('shows create post button by default', () => {
+  it('does not show create post button for non-leaders', async () => {
     render(
       <MemoryRouter>
         <Scout />
       </MemoryRouter>
     );
-    expect(
-      screen.getByRole('button', { name: 'Create clan post' })
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'Create clan post' })
+      ).not.toBeInTheDocument()
+    );
   });
 
-  it('opens clan post form when button clicked', async () => {
+  it('shows create post button and opens form for leaders', async () => {
+    mockApi('leader');
     render(
       <MemoryRouter>
         <Scout />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Create clan post' }));
+    const btn = await screen.findByRole('button', { name: 'Create clan post' });
+    fireEvent.click(btn);
     await screen.findByPlaceholderText('Describe your clan');
   });
 
