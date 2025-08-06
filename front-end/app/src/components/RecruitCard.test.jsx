@@ -27,6 +27,9 @@ test('renders summary info and handles click', () => {
   );
   expect(screen.getByText('Clan')).toBeInTheDocument();
   expect(screen.getByText('EN')).toBeInTheDocument();
+  expect(screen.getByText('Requirements')).toBeInTheDocument();
+  expect(screen.getByText('Clan Info')).toBeInTheDocument();
+  expect(screen.getByText('Description')).toBeInTheDocument();
   expect(screen.getByText('Join us!')).toBeInTheDocument();
   expect(screen.getByText('30/50')).toBeInTheDocument();
   expect(screen.getByText('Gold League')).toBeInTheDocument();
