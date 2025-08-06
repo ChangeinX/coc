@@ -1,6 +1,7 @@
 import React from 'react';
 import CachedImage from './CachedImage.jsx';
-import { Users, Shield, Crown } from 'lucide-react';
+import { Users, Shield, Crown, Trash2 } from 'lucide-react';
+import { timeAgo } from '../lib/time.js';
 
 export default function RecruitCard({
   clanTag,
@@ -19,6 +20,7 @@ export default function RecruitCard({
   callToAction,
   onJoin,
   onClick,
+  createdAt,
 }) {
   const lang = language || chatLanguage;
   const count =
@@ -34,22 +36,32 @@ export default function RecruitCard({
       onClick={onClick}
       className="w-full text-left p-3 border rounded-md bg-white shadow-sm"
     >
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{name}</h3>
-        {deepLink && (
-          <a
-            href={deepLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => {
-              e.stopPropagation();
-              onJoin?.();
-            }}
-            className="text-xs text-slate-500"
-          >
-            {clanTag}
-          </a>
-        )}
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="font-semibold">{name}</h3>
+          {deepLink && (
+            <a
+              href={deepLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onJoin?.();
+              }}
+              className="text-xs text-slate-500 block"
+            >
+              {clanTag}
+            </a>
+          )}
+        </div>
+        <button
+          type="button"
+          aria-label="Delete post"
+          className="text-slate-500"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
       </div>
       {lang && (
         <p className="text-xs text-slate-500 mt-1">
@@ -85,7 +97,7 @@ export default function RecruitCard({
           <h4 className="text-xs font-semibold text-slate-500 uppercase">
             Clan Info
           </h4>
-          <div className="mt-1 grid grid-cols-3 gap-2 text-xs text-slate-700">
+          <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-700">
             {typeof count === 'number' && (
               <span className="flex items-center gap-1">
                 <Users className="w-4 h-4 text-slate-500" />
@@ -107,14 +119,15 @@ export default function RecruitCard({
             {labels.map((l) => (
               <span
                 key={l.id || l.name}
-                className="flex items-center justify-center"
+                className="flex items-center gap-1"
                 title={l.name}
               >
                 <CachedImage
                   src={l.iconUrls?.small || l.iconUrls?.medium}
                   alt={l.name}
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                 />
+                <span>{l.name}</span>
               </span>
             ))}
           </div>
@@ -129,6 +142,11 @@ export default function RecruitCard({
             {callToAction}
           </p>
         </div>
+      )}
+      {createdAt && (
+        <p className="mt-2 text-xs text-slate-500 text-right">
+          {timeAgo(createdAt)}
+        </p>
       )}
     </div>
   );
