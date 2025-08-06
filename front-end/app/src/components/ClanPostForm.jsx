@@ -82,6 +82,7 @@ export default function ClanPostForm({ onPosted }) {
         warLeague={clan.warLeague}
         clanLevel={clan.clanLevel}
         requiredTrophies={clan.requiredTrophies}
+        requiredBuilderBaseTrophies={clan.requiredBuilderBaseTrophies}
         requiredTownhallLevel={clan.requiredTownhallLevel}
         callToAction={callToAction}
       />

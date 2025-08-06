@@ -14,6 +14,7 @@ export default function RecruitCard({
   warLeague,
   clanLevel,
   requiredTrophies,
+  requiredBuilderBaseTrophies,
   requiredTownhallLevel,
   callToAction,
   onJoin,
@@ -52,10 +53,10 @@ export default function RecruitCard({
       </div>
       {lang && (
         <p className="text-xs text-slate-500 mt-1">
-          {typeof lang === 'string' ? lang : lang.name}
+          Language: {typeof lang === 'string' ? lang : lang.name}
         </p>
       )}
-      {(requiredTownhallLevel || requiredTrophies) && (
+      {(requiredTownhallLevel || requiredTrophies || requiredBuilderBaseTrophies) && (
         <div className="mt-2">
           <h4 className="text-xs font-semibold text-slate-500 uppercase">
             Requirements
@@ -68,7 +69,12 @@ export default function RecruitCard({
             )}
             {requiredTrophies && (
               <span className="bg-slate-200 px-2 py-0.5 rounded-full text-xs">
-                {requiredTrophies}+
+                Base Trophies: {requiredTrophies}+
+              </span>
+            )}
+            {requiredBuilderBaseTrophies && (
+              <span className="bg-slate-200 px-2 py-0.5 rounded-full text-xs">
+                Builder Base Trophies: {requiredBuilderBaseTrophies}+
               </span>
             )}
           </div>
@@ -79,38 +85,39 @@ export default function RecruitCard({
           <h4 className="text-xs font-semibold text-slate-500 uppercase">
             Clan Info
           </h4>
-          <div className="mt-1 grid grid-cols-2 gap-2 text-sm text-slate-700">
+          <div className="mt-1 grid grid-cols-3 gap-2 text-xs text-slate-700">
             {typeof count === 'number' && (
-              <div className="flex items-center gap-1">
+              <span className="flex items-center gap-1 bg-slate-200 px-2 py-0.5 rounded-full">
                 <Users className="w-4 h-4 text-slate-500" />
                 <span>{count}/50</span>
-              </div>
+              </span>
             )}
             {warLeague?.name && (
-              <div className="flex items-center gap-1">
+              <span className="flex items-center gap-1 bg-slate-200 px-2 py-0.5 rounded-full">
                 <Shield className="w-4 h-4 text-slate-500" />
                 <span>{warLeague.name}</span>
-              </div>
+              </span>
             )}
             {clanLevel && (
-              <div className="flex items-center gap-1">
+              <span className="flex items-center gap-1 bg-slate-200 px-2 py-0.5 rounded-full">
                 <Crown className="w-4 h-4 text-slate-500" />
                 <span>Lv {clanLevel}</span>
-              </div>
+              </span>
             )}
-          </div>
-          {labels.length > 0 && (
-            <div className="flex gap-2 mt-2 flex-wrap">
-              {labels.map((l) => (
+            {labels.map((l) => (
+              <span
+                key={l.id || l.name}
+                className="flex items-center justify-center bg-slate-200 px-2 py-0.5 rounded-full"
+                title={l.name}
+              >
                 <CachedImage
-                  key={l.id || l.name}
                   src={l.iconUrls?.small || l.iconUrls?.medium}
                   alt={l.name}
-                  className="w-8 h-8"
+                  className="w-5 h-5"
                 />
-              ))}
-            </div>
-          )}
+              </span>
+            ))}
+          </div>
         </div>
       )}
       {callToAction && (
