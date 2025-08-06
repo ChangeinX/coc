@@ -10,6 +10,7 @@ This monorepo hosts several microservices and a front-end that make up a Clash o
 - `messages-java/` - Chat service implemented in Spring Boot
 - `user_service/` - Friend service implemented in Spring Boot
 - `notifications/` - Notifications service implemented in Spring Boot
+- `recruiting/` - Recruiting service implemented in Spring Boot
 - `lambdas/` - Lambdas for notifications from DynamoDB
 
 Each directory contains its own `AGENTS.md` with project specific notes. Check those files when working in a subfolder.

@@ -99,8 +99,12 @@ jobs:
       run: |
         gradle -p messages-java wrapper
         gradle -p user_service wrapper
+        gradle -p notifications wrapper
+        gradle -p recruiting wrapper
         ./messages-java/gradlew -p messages-java test
         ./user_service/gradlew -p user_service test
+        ./notifications/gradlew -p notifications test
+        ./recruiting/gradlew -p recruiting test
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
