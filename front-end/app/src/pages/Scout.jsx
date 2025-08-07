@@ -26,10 +26,9 @@ export default function Scout() {
   const [showForm, setShowForm] = useState(false);
   const { user } = useAuth();
   const playerInfo = usePlayerInfo(user?.player_tag);
-  const canPost =
-    playerInfo &&
-    playerInfo.clanTag &&
-    ['leader', 'coLeader'].includes(playerInfo.role);
+  const canPost = Boolean(
+    playerInfo?.clanTag && ['leader', 'coLeader'].includes(playerInfo.role)
+  );
 
   function joinClan(clan) {
     if (!navigator.onLine && 'serviceWorker' in navigator && 'SyncManager' in window) {
@@ -40,7 +39,7 @@ export default function Scout() {
   }
 
   const items = useMemo(() => {
-    let data = feed.items;
+    let data = [...(feed.items || [])];
     if (filters.q) {
       const fuse = new Fuse(data, { keys: ['callToAction'] });
       data = fuse.search(filters.q).map((r) => r.item);
@@ -48,7 +47,7 @@ export default function Scout() {
     return data.sort((a, b) => b.ageValue - a.ageValue);
   }, [feed.items, filters.q]);
 
-  const playerItems = playerFeed.items;
+  const playerItems = playerFeed.items || [];
 
   const [message, setMessage] = useState('');
   const [posting, setPosting] = useState(false);
