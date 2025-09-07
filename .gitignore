@@ -200,7 +200,6 @@ messages-java/.gradle/
 notifications/.gradle/
 user_service/.gradle/
 recruiting/.gradle/
-recruiting/gradle/wrapper/gradle-wrapper.jar
 .gradle/
 **/.gradle
 front-end/app/node_modules
