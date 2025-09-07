@@ -5,17 +5,33 @@
     "scheme": "clanboards",
     "version": "0.0.1",
     "orientation": "portrait",
-    
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1e3a8a"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.clanboards.app"
+      "bundleIdentifier": "com.clanboards.app",
+      "infoPlist": {
+        "LSSupportsOpeningDocumentsInPlace": true
+      }
     },
     "android": {
-      "package": "com.clanboards.app"
+      "package": "com.clanboards.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1e3a8a"
+      }
     },
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": []
   }
