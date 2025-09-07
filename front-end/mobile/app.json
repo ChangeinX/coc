@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Clan Boards",
+    "slug": "clan-boards",
+    "scheme": "clanboards",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.clanboards.app"
+    },
+    "android": {
+      "package": "com.clanboards.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": []
+  }
+}
