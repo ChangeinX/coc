@@ -208,3 +208,17 @@ front-end/public-home/node_modules
 front-end/public-home/.next
 front-end/public-home/out/
 front-end/app/dist/
+
+# Expo
+front-end/app/.expo/
+front-end/mobile/.expo/
+
+# Mobile development files
+front-end/mobile/.APPLE_SETTINGS
+front-end/mobile/.bundle/
+*.p8
+*.swp
+
+# Android
+front-end/mobile/android/app/debug.keystore
+front-end/mobile/android/gradle/wrapper/gradle-wrapper.jar
