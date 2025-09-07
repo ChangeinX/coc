@@ -45,15 +45,15 @@ jobs:
         include:
         - language: actions
           build-mode: none
-        - language: java-kotlin
+        - language: java
           build-mode: manual
         - language: javascript-typescript
           build-mode: none
         - language: python
           build-mode: none
-        # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
+        # CodeQL supports the following language keywords: 'actions', 'c-cpp', 'csharp', 'go', 'java', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
         # Use `c-cpp` to analyze code written in C, C++ or both
-        # Use 'java-kotlin' to analyze code written in Java, Kotlin or both
+        # Use 'java' to analyze code written in Java, Kotlin or both
         # Use 'javascript-typescript' to analyze code written in JavaScript, TypeScript or both
         # To learn more about changing the languages that are analyzed or customizing the build mode for your analysis,
         # see https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning.
@@ -94,7 +94,7 @@ jobs:
     # to build your code.
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
-    - if: matrix.build-mode == 'manual' && matrix.language == 'java-kotlin'
+    - if: matrix.build-mode == 'manual' && matrix.language == 'java'
       shell: bash
       run: |
         gradle -p messages-java wrapper
