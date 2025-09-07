@@ -34,8 +34,17 @@ public class OidcController {
   private final TokenService tokens;
   private final OidcProperties props;
 
-  public OidcController(KeyHolder keys, SessionRepository sessions, UserRepository users, TokenService tokens, OidcProperties props) {
-    this.keys = keys; this.sessions = sessions; this.users = users; this.tokens = tokens; this.props = props;
+  public OidcController(
+      KeyHolder keys,
+      SessionRepository sessions,
+      UserRepository users,
+      TokenService tokens,
+      OidcProperties props) {
+    this.keys = keys;
+    this.sessions = sessions;
+    this.users = users;
+    this.tokens = tokens;
+    this.props = props;
   }
 
   @GetMapping(path = "/oauth2/jwks.json", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -43,7 +52,10 @@ public class OidcController {
     return ResponseEntity.ok(keys.jwksJson());
   }
 
-  @PostMapping(path = "/oauth2/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  @PostMapping(
+      path = "/oauth2/token",
+      consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<?> token(@RequestBody MultiValueMap<String, String> form) {
     String grantType = Optional.ofNullable(form.getFirst("grant_type")).orElse("");
     if (!"refresh_token".equals(grantType)) {
@@ -56,7 +68,9 @@ public class OidcController {
     // Lookup session by hashed refresh token
     String hash = sha256Hex(refreshToken);
     Session sess = sessions.findByRefreshTokenHash(hash).orElse(null);
-    if (sess == null || sess.getExpiresAt() == null || sess.getExpiresAt().isBefore(Instant.now())) {
+    if (sess == null
+        || sess.getExpiresAt() == null
+        || sess.getExpiresAt().isBefore(Instant.now())) {
       return ResponseEntity.status(401).body(Map.of("error", "invalid_grant"));
     }
     User user = users.findById(sess.getUserId()).orElse(null);
@@ -64,11 +78,12 @@ public class OidcController {
       return ResponseEntity.status(401).body(Map.of("error", "invalid_grant"));
     }
     var pair = tokens.issueAccessAndId(user, sess.getId());
-    return ResponseEntity.ok(Map.of(
-        "access_token", pair.accessToken(),
-        "id_token", pair.idToken(),
-        "token_type", "Bearer",
-        "expires_in", pair.expiresInSeconds()));
+    return ResponseEntity.ok(
+        Map.of(
+            "access_token", pair.accessToken(),
+            "id_token", pair.idToken(),
+            "token_type", "Bearer",
+            "expires_in", pair.expiresInSeconds()));
   }
 
   @PostMapping(path = "/oauth2/revoke", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
@@ -82,7 +97,9 @@ public class OidcController {
     return ResponseEntity.ok().build();
   }
 
-  @GetMapping(path = "/.well-known/openid-configuration", produces = MediaType.APPLICATION_JSON_VALUE)
+  @GetMapping(
+      path = "/.well-known/openid-configuration",
+      produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Map<String, Object>> discovery() {
     String base = props.getIssuer();
     var map = new java.util.HashMap<String, Object>();
@@ -108,7 +125,8 @@ public class OidcController {
     }
     String token = auth.substring("Bearer ".length());
     try {
-      Jws<Claims> jws = Jwts.parserBuilder().setSigningKey(keys.getPublicKey()).build().parseClaimsJws(token);
+      Jws<Claims> jws =
+          Jwts.parserBuilder().setSigningKey(keys.getPublicKey()).build().parseClaimsJws(token);
       Claims c = jws.getBody();
       if (!props.getIssuer().equals(c.get("iss")) || !props.getAudience().equals(c.get("aud"))) {
         return ResponseEntity.status(401).body(Map.of("error", "invalid_token"));

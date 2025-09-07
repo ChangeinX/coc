@@ -23,11 +23,19 @@ public class TokenService {
   private final KeyHolder keys;
   private final SessionRepository sessions;
 
-  public record IssueResult(String accessToken, String idToken, String refreshToken, long expiresInSeconds, Long sessionId) {}
+  public record IssueResult(
+      String accessToken,
+      String idToken,
+      String refreshToken,
+      long expiresInSeconds,
+      Long sessionId) {}
+
   public record TokenPair(String accessToken, String idToken, long expiresInSeconds) {}
 
   public TokenService(OidcProperties props, KeyHolder keys, SessionRepository sessions) {
-    this.props = props; this.keys = keys; this.sessions = sessions;
+    this.props = props;
+    this.keys = keys;
+    this.sessions = sessions;
   }
 
   private String sign(Map<String, Object> claims, Instant exp) {
@@ -45,11 +53,12 @@ public class TokenService {
     Instant idExp = now.plus(props.getIdTtl());
     String sub = Objects.requireNonNullElse(user.getSub(), String.valueOf(user.getId()));
 
-    Map<String, Object> base = Map.of(
-        "iss", props.getIssuer(),
-        "aud", props.getAudience(),
-        "sub", sub,
-        "iat", Date.from(now));
+    Map<String, Object> base =
+        Map.of(
+            "iss", props.getIssuer(),
+            "aud", props.getAudience(),
+            "sub", sub,
+            "iat", Date.from(now));
 
     var accessClaims = new java.util.HashMap<String, Object>(base);
     if (sessionId != null) accessClaims.put("sid", sessionId);
@@ -75,7 +84,8 @@ public class TokenService {
     sessions.save(sess);
 
     TokenPair pair = issueAccessAndId(user, sess.getId());
-    return new IssueResult(pair.accessToken(), pair.idToken(), refresh, pair.expiresInSeconds(), sess.getId());
+    return new IssueResult(
+        pair.accessToken(), pair.idToken(), refresh, pair.expiresInSeconds(), sess.getId());
   }
 
   public TokenPair refreshFromToken(String refreshToken, User user) {
@@ -110,4 +120,3 @@ public class TokenService {
     }
   }
 }
-

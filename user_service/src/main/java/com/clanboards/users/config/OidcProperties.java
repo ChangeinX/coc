@@ -27,12 +27,31 @@ public class OidcProperties {
   @Value("${apple.services-id:com.example.app}")
   private String appleServicesId;
 
-  public String getIssuer() { return issuer; }
-  public String getAudience() { return audience; }
-  public Duration getAccessTtl() { return accessTtl; }
-  public Duration getIdTtl() { return idTtl; }
-  public Duration getRefreshTtl() { return refreshTtl; }
-  public String getKid() { return kid; }
-  public String getAppleServicesId() { return appleServicesId; }
-}
+  public String getIssuer() {
+    return issuer;
+  }
 
+  public String getAudience() {
+    return audience;
+  }
+
+  public Duration getAccessTtl() {
+    return accessTtl;
+  }
+
+  public Duration getIdTtl() {
+    return idTtl;
+  }
+
+  public Duration getRefreshTtl() {
+    return refreshTtl;
+  }
+
+  public String getKid() {
+    return kid;
+  }
+
+  public String getAppleServicesId() {
+    return appleServicesId;
+  }
+}

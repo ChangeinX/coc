@@ -2,6 +2,8 @@ package com.clanboards.users.service;
 
 import com.clanboards.users.config.OidcProperties;
 import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.jwk.source.RemoteJWKSet;
 import com.nimbusds.jose.proc.JWSAlgorithmFamilyJWSKeySelector;
 import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -9,10 +11,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.RemoteJWKSet;
 import java.net.URL;
-import java.text.ParseException;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -29,7 +28,9 @@ public class AppleTokenVerifier {
     public final boolean emailVerified;
 
     public AppleIdentity(String sub, String email, boolean emailVerified) {
-      this.sub = sub; this.email = email; this.emailVerified = emailVerified;
+      this.sub = sub;
+      this.email = email;
+      this.emailVerified = emailVerified;
     }
   }
 
@@ -72,4 +73,3 @@ public class AppleTokenVerifier {
     return new AppleIdentity(sub, email, emailVerified);
   }
 }
-

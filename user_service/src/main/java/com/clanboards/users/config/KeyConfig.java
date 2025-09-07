@@ -2,8 +2,6 @@ package com.clanboards.users.config;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -26,10 +24,11 @@ public class KeyConfig {
 
   private static byte[] parsePemToDer(String pem) throws Exception {
     String normalized = pem.replace("\r", "").replace("\n", "\n");
-    String base64 = normalized
-        .replace("-----BEGIN PRIVATE KEY-----", "")
-        .replace("-----END PRIVATE KEY-----", "")
-        .replaceAll("\n", "");
+    String base64 =
+        normalized
+            .replace("-----BEGIN PRIVATE KEY-----", "")
+            .replace("-----END PRIVATE KEY-----", "")
+            .replaceAll("\n", "");
     return Base64.getDecoder().decode(base64);
   }
 
@@ -51,7 +50,8 @@ public class KeyConfig {
       try {
         // If key is RSAPrivateCrtKey, we can derive public key from modulus + publicExponent
         var crt = (java.security.interfaces.RSAPrivateCrtKey) priv;
-        var pubSpec = new java.security.spec.RSAPublicKeySpec(crt.getModulus(), crt.getPublicExponent());
+        var pubSpec =
+            new java.security.spec.RSAPublicKeySpec(crt.getModulus(), crt.getPublicExponent());
         pub = kf.generatePublic(pubSpec);
       } catch (ClassCastException e) {
         // Fallback: generate a new pair (JWKS will not match private; only for dev)
@@ -75,29 +75,34 @@ public class KeyConfig {
       this.kid = kid;
     }
 
-    public PrivateKey getPrivateKey() { return (PrivateKey) keyPair.getPrivate(); }
-    public PublicKey getPublicKey() { return keyPair.getPublic(); }
-    public String getKid() { return kid; }
-    public Instant getLoadedAt() { return loadedAt; }
+    public PrivateKey getPrivateKey() {
+      return (PrivateKey) keyPair.getPrivate();
+    }
+
+    public PublicKey getPublicKey() {
+      return keyPair.getPublic();
+    }
+
+    public String getKid() {
+      return kid;
+    }
+
+    public Instant getLoadedAt() {
+      return loadedAt;
+    }
 
     public Map<String, Object> toJwk() {
       RSAPublicKey pub = (RSAPublicKey) getPublicKey();
       String n = base64Url(pub.getModulus().toByteArray());
       String e = base64Url(pub.getPublicExponent().toByteArray());
-      return Map.of(
-          "kty", "RSA",
-          "alg", "RS256",
-          "use", "sig",
-          "kid", kid,
-          "n", n,
-          "e", e);
+      return Map.of("kty", "RSA", "alg", "RS256", "use", "sig", "kid", kid, "n", n, "e", e);
     }
 
     public String jwksJson() {
       try {
         var mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        return mapper.writeValueAsString(Map.of("keys", new Object[] { toJwk() }));
+        return mapper.writeValueAsString(Map.of("keys", new Object[] {toJwk()}));
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
