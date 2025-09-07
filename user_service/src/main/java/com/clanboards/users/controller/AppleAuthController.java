@@ -49,6 +49,10 @@ public class AppleAuthController {
                   () -> {
                     User u = new User();
                     u.setSub(ident.sub);
+                    // Set email from Apple token (includes proxy emails for Hide My Email)
+                    u.setEmail(ident.email);
+                    // Use email as name if no specific name provided
+                    u.setName(ident.email);
                     return users.save(u);
                   });
 
