@@ -2,6 +2,7 @@ package com.clanboards.users.controller;
 
 import com.clanboards.users.model.User;
 import com.clanboards.users.repository.UserRepository;
+import com.clanboards.users.service.AccountLinkingService;
 import com.clanboards.users.service.AppleTokenVerifier;
 import com.clanboards.users.service.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,12 +26,17 @@ public class AppleAuthController {
   private final AppleTokenVerifier verifier;
   private final UserRepository users;
   private final TokenService tokens;
+  private final AccountLinkingService accountLinking;
 
   public AppleAuthController(
-      AppleTokenVerifier verifier, UserRepository users, TokenService tokens) {
+      AppleTokenVerifier verifier,
+      UserRepository users,
+      TokenService tokens,
+      AccountLinkingService accountLinking) {
     this.verifier = verifier;
     this.users = users;
     this.tokens = tokens;
+    this.accountLinking = accountLinking;
   }
 
   @PostMapping("/auth/apple/exchange")
@@ -41,20 +47,9 @@ public class AppleAuthController {
       HttpServletRequest httpReq) {
     try {
       var ident = verifier.verify(req.id_token());
-      // Upsert user by Apple subject
-      User user =
-          users
-              .findBySub(ident.sub)
-              .orElseGet(
-                  () -> {
-                    User u = new User();
-                    u.setSub(ident.sub);
-                    // Set email from Apple token (includes proxy emails for Hide My Email)
-                    u.setEmail(ident.email);
-                    // Use email as name if no specific name provided
-                    u.setName(ident.email);
-                    return users.save(u);
-                  });
+      // Use account linking service to handle email-based account linking
+      var linkingResult = accountLinking.findOrCreateUser(ident.sub, ident.email, ident.email);
+      User user = linkingResult.getUser();
 
       var res = tokens.issueAll(user, ua, ip);
       return ResponseEntity.ok(
