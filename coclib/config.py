@@ -62,7 +62,7 @@ class Config:
     
     # User service OIDC configuration
     # Default to internal service DNS in cluster; allow override via AUTH_URL when valid
-    AUTH_URL = _validated_url(os.getenv("AUTH_URL"), "http://user.clanboards.local:8020")
+    AUTH_URL = _validated_url(os.getenv("AUTH_URL"), "http://user.webapp.local:8020")
 
 
 class DevelopmentConfig(Config):
