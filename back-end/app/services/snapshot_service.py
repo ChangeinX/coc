@@ -6,12 +6,12 @@ from datetime import datetime, timedelta
 from typing import Optional, TypedDict
 
 from coclib.utils import safe_to_thread
+from coclib.services import clan_service  # noqa: F401 - imported for monkeypatch targets
 from sqlalchemy import func
 
 from coclib.extensions import cache, db
 from coclib.models import ClanSnapshot, LoyaltyMembership, PlayerSnapshot, Clan, Player
 from coclib.utils import normalize_tag
-from coclib.services import clan_service, player_service
 
 logger = logging.getLogger(__name__)
 
@@ -167,20 +167,8 @@ async def get_clan(tag: str) -> Optional[ClanDict]:
         .order_by(ClanSnapshot.ts.desc())
         .first()
     )
-    needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
-    if needs_refresh:
-        try:
-            await clan_service.get_clan(tag)
-        except RuntimeError:
-            pass
-        row = (
-            ClanSnapshot.query
-            .filter_by(clan_tag=tag)
-            .order_by(ClanSnapshot.ts.desc())
-            .first()
-        )
-        if row is None:
-            return None
+    if row is None:
+        return None
 
     base = _clan_row_to_dict(row)
     cdata = Clan.query.filter_by(tag=tag).first()
@@ -212,17 +200,8 @@ async def get_player(tag: str) -> Optional[PlayerDict]:
         .order_by(PlayerSnapshot.ts.desc())
         .first()
     )
-    needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
-    if needs_refresh:
-        await player_service.get_player(tag)
-        row = (
-            PlayerSnapshot.query
-            .filter_by(player_tag=tag)
-            .order_by(PlayerSnapshot.ts.desc())
-            .first()
-        )
-        if row is None:
-            return None
+    if row is None:
+        return None
 
     data = _player_row_to_dict(row)
     if data.get("deep_link") is None:
