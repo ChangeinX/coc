@@ -34,20 +34,14 @@ def test_verify_sets_flag(monkeypatch):
     client: FlaskClient = app.test_client()
     with app.app_context():
         db.create_all()
-        db.session.add(User(id=1, sub="abc", email="u@example.com", name="U"))
+        # Set up a user with a player tag (would normally come from Java service)
+        user = User(id=1, sub="abc", email="u@example.com", name="U", player_tag="ABC")
+        db.session.add(user)
         db.session.commit()
 
     hdrs = {"Authorization": "Bearer t"}
-    resp = client.get("/api/v1/user/me", headers=hdrs)
-    assert resp.status_code == 200
-
-    resp = client.post(
-        "/api/v1/user/player-tag",
-        json={"player_tag": "abc"},
-        headers=hdrs,
-    )
-    assert resp.status_code == 200
-
+    
+    # Test the verify endpoint (this remains in Flask)
     resp = client.post(
         "/api/v1/user/verify",
         json={"token": "tok"},
@@ -56,10 +50,9 @@ def test_verify_sets_flag(monkeypatch):
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["status"] == "ok"
-
-    resp = client.post(
-        "/api/v1/user/player-tag",
-        json={"player_tag": "zzz"},
-        headers=hdrs,
-    )
-    assert resp.status_code == 400
+    assert data["player_tag"] == "ABC"
+    
+    # Verify the user is now marked as verified
+    with app.app_context():
+        user = User.query.get(1)
+        assert user.is_verified is True
