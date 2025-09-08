@@ -5,8 +5,6 @@ Revises: 000_add_clans_table, f9040a4059c4
 Create Date: 2025-07-14 22:16:41.448765
 
 """
-from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.

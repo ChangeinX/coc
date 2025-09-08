@@ -1,7 +1,6 @@
 """add legal version column"""
 
 from alembic import op
-import sqlalchemy as sa
 
 revision = '02f5fd601c20'
 down_revision = 'f3d74c7759b3'
