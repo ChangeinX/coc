@@ -62,7 +62,7 @@ public class AuthInterceptor implements WebGraphQlInterceptor {
                     builder
                         .graphQLContext(
                             ctx -> {
-                              ctx.put("userId", sess.getUserId());
+                              ctx.put("userId", String.valueOf(sess.getUserId()));
                               if (ip != null) ctx.put("ip", ip);
                               if (ua != null) ctx.put("ua", ua);
                             })
