@@ -14,7 +14,12 @@ from coclib.utils import normalize_tag
 logger = logging.getLogger(__name__)
 STALE_AFTER = timedelta(seconds=int(os.getenv("SNAPSHOT_MAX_AGE", "600")))
 
-async def current_war(clan_tag: str) -> dict:
+async def refresh_war_from_api(clan_tag: str) -> dict:
+    """Refresh war data from CoC API and update database.
+    
+    This function is used by background refresh workers to update stale data.
+    It performs the full API fetch and database update.
+    """
     client = await get_client()
     clan_tag = normalize_tag(clan_tag)
     data = (await client.get_current_war(clan_tag))._raw_data
@@ -48,20 +53,30 @@ def _last_war_sync(clan_tag: str) -> "WarSnapshot | None":
 
 
 async def current_war_snapshot(clan_tag: str) -> "dict | None":
+    """Return war data from database only, never make API calls.
+    
+    Returns cached data if available, otherwise returns data from database.
+    Returns None if no war data exists for the clan.
+    """
     clan_tag = normalize_tag(clan_tag)
     cache_key = f"snapshot:war:{clan_tag}"
     if (cached := cache.get(cache_key)) is not None:
         return cached
+    
     row = await safe_to_thread(_last_war_sync, clan_tag)
-    needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
-    if needs_refresh:
-        await current_war(clan_tag)
-        row = await safe_to_thread(_last_war_sync, clan_tag)
-        if row is None:
-            return None
+    if row is None:
+        # No war data exists for this clan
+        return None
+    
     data = row.data
+    
+    # Add staleness metadata for mobile apps
+    if row:
+        data["last_updated"] = row.ts.isoformat() + "Z"
+        data["is_stale"] = (datetime.utcnow() - row.ts) > STALE_AFTER
+    
     cache.set(cache_key, data, timeout=CACHE_TTL)
     return data
 
 
-__all__ = [*globals().get("__all__", []), "current_war", "current_war_snapshot"]
+__all__ = [*globals().get("__all__", []), "refresh_war_from_api", "current_war_snapshot"]

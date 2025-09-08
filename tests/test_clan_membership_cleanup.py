@@ -77,7 +77,7 @@ def test_memberships_closed_on_departure(monkeypatch):
         assert data["memberList"]
 
         monkeypatch.setattr(clan_service, "fetch_clan", dummy_fetch_clan)
-        asyncio.run(clan_service.get_clan("CLN"))
+        asyncio.run(clan_service.refresh_clan_from_api("CLN"))
 
         snapshot_service.cache.clear()
         data = asyncio.run(snapshot_service.get_clan("CLN"))
@@ -122,7 +122,10 @@ def test_memberships_unchanged_on_fetch_error(monkeypatch):
         db.session.commit()
 
         monkeypatch.setattr(clan_service, "fetch_clan", dummy_fetch_failure)
-        asyncio.run(clan_service.get_clan("CLN"))
+        try:
+            asyncio.run(clan_service.refresh_clan_from_api("CLN"))
+        except RuntimeError:
+            pass  # Expected failure
 
         snapshot_service.cache.clear()
         data = asyncio.run(snapshot_service.get_clan("CLN"))

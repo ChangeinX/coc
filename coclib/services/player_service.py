@@ -62,7 +62,50 @@ def _resolve_last_seen(
     return last_seen
 
 
-async def get_player(tag: str, war_attacks_used: int | None = None) -> dict:
+async def get_player(tag: str, war_attacks_used: int | None = None) -> dict | None:
+    """Return player data from database only, never make API calls.
+    
+    Returns cached data if available, otherwise returns None if no data exists.
+    This replaces the old API-calling get_player function.
+    """
+    tag = tag.upper()
+    cache_key = f"player:{tag}"
+    if cached := cache.get(cache_key):
+        return cached
+
+    # Try to get data from database via get_player_snapshot
+    snapshot_data = await get_player_snapshot(tag)
+    if snapshot_data is None:
+        return None
+    
+    # Convert snapshot format to the format expected by get_player
+    # This maintains compatibility with existing code
+    data = {
+        "tag": snapshot_data["tag"],
+        "name": snapshot_data["name"],
+        "townHallLevel": snapshot_data["townHallLevel"],
+        "trophies": snapshot_data["trophies"],
+        "donations": snapshot_data["donations"],
+        "donationsReceived": snapshot_data["donationsReceived"],
+        "role": snapshot_data.get("role"),
+        "warAttacksUsed": snapshot_data.get("warAttacksUsed"),
+        "last_seen": snapshot_data["last_seen"],
+    }
+    
+    # Add clan info if available
+    if snapshot_data.get("clanTag"):
+        data["clan"] = {"tag": snapshot_data["clanTag"]}
+    
+    cache.set(cache_key, data, timeout=300)
+    return data
+
+
+async def refresh_player_from_api(tag: str, war_attacks_used: int | None = None) -> dict:
+    """Refresh player data from CoC API and update database.
+    
+    This function is used by background refresh workers to update stale data.
+    It performs the full API fetch, database update, and membership processing.
+    """
     tag = tag.upper()
     cache_key = f"player:{tag}"
     if cached := cache.get(cache_key):
@@ -144,6 +187,11 @@ if TYPE_CHECKING:  # pragma: no cover - used for IDE type hints only
 
 
 async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
+    """Return player data from database only, never make API calls.
+    
+    Returns cached data if available, otherwise returns data from database.
+    Returns None if no data exists for the player.
+    """
     norm_tag = normalize_tag(tag)
     cache_key = f"snapshot:player:{norm_tag}"
     if (cached := cache.get(cache_key)) is not None:
@@ -170,16 +218,11 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
         )
 
     row = await safe_to_thread(_latest)
-    needs_refresh = row is None or (datetime.utcnow() - row.ts > STALE_AFTER)
-    if needs_refresh:
-        try:
-            await get_player(norm_tag)
-        except RuntimeError:
-            pass
-        row = await safe_to_thread(_latest)
-        if row is None:
-            return None
+    if row is None:
+        # No data exists for this player
+        return None
 
+    # Get war attacks used - check for recent war data if current snapshot has None
     war_used = row.war_attacks_used
     if war_used is None:
         older = await safe_to_thread(_latest_with_war)
@@ -211,6 +254,11 @@ async def get_player_snapshot(tag: str) -> "Optional[PlayerDict]":
             # Include player labels for badge icons (refs #117)
             data["labels"] = player_row.data.get("labels", [])
         data["deep_link"] = player_row.deep_link
+    
+    # Add staleness metadata for mobile apps
+    if row:
+        data["last_updated"] = row.ts.isoformat() + "Z"  
+        data["is_stale"] = (datetime.utcnow() - row.ts) > STALE_AFTER
 
     cache.set(cache_key, data, timeout=300)
     return data

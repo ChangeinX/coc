@@ -1,0 +1,1 @@
+# Refresh queue system for background CoC API updates
