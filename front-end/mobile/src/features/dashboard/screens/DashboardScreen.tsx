@@ -31,7 +31,7 @@ export default function DashboardScreen() {
   const theme = useTheme();
   const commonStyles = useThemedStyles();
   const { user } = useAuthStore();
-  const { success, selection } = useHaptics();
+  const { success, selection, isAvailable } = useHaptics();
   // Temporarily commented out to fix Apple sign-in: 
   // const { animatedStyle, enter } = useEntranceAnimation();
   
@@ -102,7 +102,7 @@ export default function DashboardScreen() {
   const handleRefresh = useCallback(async () => {
     if (clanTag) {
       try {
-        await success(); // Haptic feedback on refresh start
+        if (isAvailable()) await success(); // Haptic feedback on refresh start
         await refreshMutation.mutateAsync(clanTag);
       } catch (error) {
         Alert.alert('Error', 'Failed to refresh clan data');
@@ -111,7 +111,7 @@ export default function DashboardScreen() {
   }, [clanTag, refreshMutation, success]);
 
   const toggleSort = useCallback(async (field: SortField) => {
-    await selection(); // Haptic feedback on sort change
+    if (isAvailable()) await selection(); // Haptic feedback on sort change
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -121,7 +121,7 @@ export default function DashboardScreen() {
   }, [sortField, sortDirection, selection]);
 
   const handleTabChange = useCallback(async (newSection: ActiveSection) => {
-    await selection(); // Haptic feedback on tab change
+    if (isAvailable()) await selection(); // Haptic feedback on tab change
     setActiveSection(newSection);
   }, [selection]);
 

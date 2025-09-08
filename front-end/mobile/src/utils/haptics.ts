@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, Vibration } from 'react-native';
 
 // Type definitions for different haptic feedback types
 export type HapticFeedbackType = 
@@ -24,60 +24,28 @@ class HapticService {
     if (!this.isAvailable) return;
 
     try {
-      if (Platform.OS === 'ios') {
-        // iOS uses Vibration API for simple feedback
-        const { Vibration } = await import('react-native');
-        
-        switch (type) {
-          case 'light':
-          case 'selection':
-            Vibration.vibrate(10);
-            break;
-          case 'medium':
-            Vibration.vibrate(20);
-            break;
-          case 'heavy':
-            Vibration.vibrate(40);
-            break;
-          case 'success':
-            Vibration.vibrate([0, 10, 100, 10]);
-            break;
-          case 'warning':
-            Vibration.vibrate([0, 20, 50, 20]);
-            break;
-          case 'error':
-            Vibration.vibrate([0, 40, 100, 40, 100, 40]);
-            break;
-          default:
-            Vibration.vibrate(10);
-        }
-      } else if (Platform.OS === 'android') {
-        // Android uses Vibration API
-        const { Vibration } = await import('react-native');
-        
-        switch (type) {
-          case 'light':
-          case 'selection':
-            Vibration.vibrate(10);
-            break;
-          case 'medium':
-            Vibration.vibrate(20);
-            break;
-          case 'heavy':
-            Vibration.vibrate(40);
-            break;
-          case 'success':
-            Vibration.vibrate([0, 10, 100, 10]);
-            break;
-          case 'warning':
-            Vibration.vibrate([0, 20, 50, 20]);
-            break;
-          case 'error':
-            Vibration.vibrate([0, 40, 100, 40, 100, 40]);
-            break;
-          default:
-            Vibration.vibrate(10);
-        }
+      switch (type) {
+        case 'light':
+        case 'selection':
+          Vibration.vibrate(10);
+          break;
+        case 'medium':
+          Vibration.vibrate(20);
+          break;
+        case 'heavy':
+          Vibration.vibrate(40);
+          break;
+        case 'success':
+          Vibration.vibrate([0, 10, 100, 10]);
+          break;
+        case 'warning':
+          Vibration.vibrate([0, 20, 50, 20]);
+          break;
+        case 'error':
+          Vibration.vibrate([0, 40, 100, 40, 100, 40]);
+          break;
+        default:
+          Vibration.vibrate(10);
       }
     } catch (error) {
       console.warn('Haptic feedback error:', error);
