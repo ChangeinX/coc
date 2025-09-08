@@ -10,7 +10,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(
+    properties =
+        "jwt.signing-key=test-secret-key-for-jwt-signing-that-is-long-enough-for-hmac-sha256-requirements")
 @AutoConfigureMockMvc
 class HealthControllerTest {
 

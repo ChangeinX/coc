@@ -16,7 +16,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(
+    properties =
+        "jwt.signing-key=test-secret-key-for-jwt-signing-that-is-long-enough-for-hmac-sha256-requirements")
 @AutoConfigureMockMvc
 class ChatControllerTest {
 

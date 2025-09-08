@@ -1,9 +1,15 @@
 package com.clanboards.messages.config;
 
+import com.clanboards.messages.model.Session;
+import com.clanboards.messages.repository.SessionRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import javax.crypto.SecretKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.graphql.server.WebGraphQlInterceptor;
 import org.springframework.graphql.server.WebGraphQlRequest;
@@ -13,10 +19,14 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class AuthInterceptor implements WebGraphQlInterceptor {
-  private final byte[] key;
+  private final SessionRepository sessions;
+  private final SecretKey key;
+  private static final Logger logger = LoggerFactory.getLogger(AuthInterceptor.class);
 
-  public AuthInterceptor(@Value("${jwt.signing-key:change-me}") String key) {
-    this.key = key.getBytes(StandardCharsets.UTF_8);
+  public AuthInterceptor(
+      SessionRepository sessions, @Value("${jwt.signing-key:change-me}") String signingKey) {
+    this.sessions = sessions;
+    this.key = Keys.hmacShaKeyFor(signingKey.getBytes(StandardCharsets.UTF_8));
   }
 
   @Override
@@ -40,27 +50,27 @@ public class AuthInterceptor implements WebGraphQlInterceptor {
     if (token != null) {
       try {
         Claims claims =
-            Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(key))
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        String sub = claims.get("sub", String.class);
-        if (sub != null) {
-          String ip = request.getHeaders().getFirst("X-Forwarded-For");
-          String ua = request.getHeaders().getFirst("User-Agent");
-          request.configureExecutionInput(
-              (ei, builder) ->
-                  builder
-                      .graphQLContext(
-                          ctx -> {
-                            ctx.put("userId", sub);
-                            if (ip != null) ctx.put("ip", ip);
-                            if (ua != null) ctx.put("ua", ua);
-                          })
-                      .build());
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        Long sessionId = ((Number) claims.get("sid")).longValue();
+        if (sessionId != null) {
+          Session sess = sessions.findById(sessionId).orElse(null);
+          if (sess != null && sess.getExpiresAt().isAfter(Instant.now())) {
+            String ip = request.getHeaders().getFirst("X-Forwarded-For");
+            String ua = request.getHeaders().getFirst("User-Agent");
+            request.configureExecutionInput(
+                (ei, builder) ->
+                    builder
+                        .graphQLContext(
+                            ctx -> {
+                              ctx.put("userId", String.valueOf(sess.getUserId()));
+                              if (ip != null) ctx.put("ip", ip);
+                              if (ua != null) ctx.put("ua", ua);
+                            })
+                        .build());
+          }
         }
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        logger.warn("Invalid session token", e);
       }
     }
     return chain.next(request);
