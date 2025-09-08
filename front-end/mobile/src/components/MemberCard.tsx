@@ -28,12 +28,12 @@ export interface MemberCardProps {
 export function MemberCard({ member, onPress, showRisk = true, compact = false }: MemberCardProps) {
   const theme = useTheme();
   const commonStyles = useThemedStyles();
-  const { light } = useHaptics();
+  const { light, isAvailable } = useHaptics();
   const { animatedStyle, press } = useScaleAnimation();
 
   const handlePress = async () => {
     if (onPress) {
-      await light();
+      if (isAvailable()) await light();
       press().start();
       onPress(member);
     }

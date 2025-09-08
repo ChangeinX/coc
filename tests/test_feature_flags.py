@@ -37,20 +37,7 @@ def setup_app(monkeypatch):
     return app
 
 
-def test_update_and_get_features(monkeypatch):
-    app = setup_app(monkeypatch)
-    client: FlaskClient = app.test_client()
-    hdrs = {"Authorization": "Bearer t"}
-
-    resp = client.post(
-        "/api/v1/user/features",
-        json={"features": ["x", "z"], "all": False},
-        headers=hdrs,
-    )
-    assert resp.status_code == 200
-
-    resp = client.get("/api/v1/user/features", headers=hdrs)
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["all"] is False
-    assert sorted(data["features"]) == ["x", "z"]
+# NOTE: Feature flag endpoints migrated to Java user_service
+# def test_update_and_get_features(monkeypatch):
+#     Flask feature flag endpoints have been migrated to Java user_service
+#     These tests are no longer applicable to the Flask backend

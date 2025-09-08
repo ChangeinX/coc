@@ -20,17 +20,7 @@ def _make_token(key: str) -> str:
     return jwt.encode({"sub": "abc"}, key, algorithm="HS512")
 
 
-def test_hs512_token(monkeypatch):
-    app = create_app(TestConfig)
-    client: FlaskClient = app.test_client()
-    with app.app_context():
-        db.create_all()
-        db.session.add(User(id=1, sub="abc", email="u@example.com", name="U", player_tag="AAA"))
-        db.session.commit()
-
-    token = _make_token(TestConfig.JWT_SIGNING_KEY)
-    resp = client.get(
-        "/api/v1/user/me",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert resp.status_code == 200
+# NOTE: /user/me endpoint migrated to Java user_service
+# def test_hs512_token(monkeypatch):
+#     Flask /user/me endpoint has been migrated to Java user_service
+#     This test is no longer applicable to the Flask backend

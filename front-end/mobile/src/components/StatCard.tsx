@@ -26,12 +26,12 @@ export function StatCard({
 }: StatCardProps) {
   const theme = useTheme();
   const commonStyles = useThemedStyles();
-  const { light } = useHaptics();
+  const { light, isAvailable } = useHaptics();
   const { animatedStyle, press } = useScaleAnimation();
 
   const handlePress = async () => {
     if (onPress) {
-      await light();
+      if (isAvailable()) await light();
       press().start();
       onPress();
     }
