@@ -3,10 +3,11 @@ package com.clanboards.notifications;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.clanboards.notifications.model.Session;
+import com.clanboards.notifications.repository.SessionRepository;
 import com.clanboards.notifications.repository.UserRepository;
 import com.clanboards.notifications.service.NotificationService;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import java.nio.charset.StandardCharsets;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,8 @@ class NotificationControllerAuthTest {
 
   @MockBean private UserRepository userRepository;
 
+  @MockBean private SessionRepository sessionRepository;
+
   @MockBean private com.clanboards.notifications.service.SqsListener sqsListener;
 
   @MockBean private nl.martijndwars.webpush.PushService pushService;
@@ -56,8 +59,13 @@ class NotificationControllerAuthTest {
   private static final byte[] KEY =
       "0123456789abcdef0123456789abcdef".getBytes(StandardCharsets.UTF_8);
 
-  private static String token(String sub) {
-    return Jwts.builder().claim("sub", sub).signWith(SignatureAlgorithm.HS256, KEY).compact();
+  private static String token(String sub, Long sessionId) {
+    return Jwts.builder()
+        .setSubject(sub)
+        .claim("sid", sessionId)
+        .setExpiration(new java.util.Date(System.currentTimeMillis() + 3600000))
+        .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(KEY))
+        .compact();
   }
 
   @Test
@@ -71,9 +79,20 @@ class NotificationControllerAuthTest {
 
   @Test
   void validTokenSucceeds() throws Exception {
+    // Arrange - create valid session
+    Long sessionId = 1L;
+    Long userId = 42L;
+    Session session = new Session();
+    session.setId(sessionId);
+    session.setUserId(userId);
+    session.setExpiresAt(java.time.Instant.now().plusSeconds(3600));
+
+    org.mockito.Mockito.when(sessionRepository.findById(sessionId))
+        .thenReturn(java.util.Optional.of(session));
+
     mvc.perform(
             post("/api/v1/notifications/subscribe")
-                .header("Authorization", "Bearer " + token("1"))
+                .header("Authorization", "Bearer " + token("1", sessionId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"endpoint\":\"e\",\"p256dhKey\":\"k\",\"authKey\":\"a\"}"))
         .andExpect(status().isOk());
@@ -81,9 +100,20 @@ class NotificationControllerAuthTest {
 
   @Test
   void validCookieSucceeds() throws Exception {
+    // Arrange - create valid session
+    Long sessionId = 1L;
+    Long userId = 42L;
+    Session session = new Session();
+    session.setId(sessionId);
+    session.setUserId(userId);
+    session.setExpiresAt(java.time.Instant.now().plusSeconds(3600));
+
+    org.mockito.Mockito.when(sessionRepository.findById(sessionId))
+        .thenReturn(java.util.Optional.of(session));
+
     mvc.perform(
             post("/api/v1/notifications/subscribe")
-                .cookie(new jakarta.servlet.http.Cookie("sid", token("1")))
+                .cookie(new jakarta.servlet.http.Cookie("sid", token("1", sessionId)))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"endpoint\":\"e\",\"p256dhKey\":\"k\",\"authKey\":\"a\"}"))
         .andExpect(status().isOk());

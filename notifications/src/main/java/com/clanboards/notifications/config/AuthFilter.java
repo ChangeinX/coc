@@ -1,5 +1,7 @@
 package com.clanboards.notifications.config;
 
+import com.clanboards.notifications.model.Session;
+import com.clanboards.notifications.repository.SessionRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -12,16 +14,24 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.time.Instant;
+import javax.crypto.SecretKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class AuthFilter extends OncePerRequestFilter {
-  private final byte[] key;
+  private final SessionRepository sessions;
+  private final SecretKey key;
+  private static final Logger logger = LoggerFactory.getLogger(AuthFilter.class);
 
-  public AuthFilter(@Value("${jwt.signing-key:change-me}") String key) {
-    this.key = key.getBytes(StandardCharsets.UTF_8);
+  public AuthFilter(
+      SessionRepository sessions, @Value("${jwt.signing-key:change-me}") String signingKey) {
+    this.sessions = sessions;
+    this.key = Keys.hmacShaKeyFor(signingKey.getBytes(StandardCharsets.UTF_8));
   }
 
   @Override
@@ -44,25 +54,25 @@ public class AuthFilter extends OncePerRequestFilter {
     if (token != null) {
       try {
         Claims claims =
-            Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(key))
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        String sub = claims.get("sub", String.class);
-        if (sub != null) {
-          request.setAttribute("sub", sub);
-          req =
-              new HttpServletRequestWrapper(request) {
-                private final Principal principal = () -> sub;
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        Long sessionId = ((Number) claims.get("sid")).longValue();
+        if (sessionId != null) {
+          Session sess = sessions.findById(sessionId).orElse(null);
+          if (sess != null && sess.getExpiresAt().isAfter(Instant.now())) {
+            request.setAttribute("userId", sess.getUserId());
+            req =
+                new HttpServletRequestWrapper(request) {
+                  private final Principal principal = () -> String.valueOf(sess.getUserId());
 
-                @Override
-                public Principal getUserPrincipal() {
-                  return principal;
-                }
-              };
+                  @Override
+                  public Principal getUserPrincipal() {
+                    return principal;
+                  }
+                };
+          }
         }
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        logger.warn("Invalid session token", e);
       }
     }
     filterChain.doFilter(req, response);
