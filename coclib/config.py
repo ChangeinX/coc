@@ -1,4 +1,18 @@
 import os
+from urllib.parse import urlparse
+
+
+def _validated_url(env_val: str | None, default: str) -> str:
+    """Return env_val if it looks like a valid http(s) URL, else default."""
+    if not env_val:
+        return default
+    try:
+        p = urlparse(env_val)
+        if p.scheme in ("http", "https") and p.netloc:
+            return env_val
+    except Exception:
+        pass
+    return default
 
 
 class Config:
@@ -47,9 +61,8 @@ class Config:
     COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true").lower() == "true"
     
     # User service OIDC configuration
-    AUTH_URL = os.getenv("AUTH_URL", "http://localhost:8081")
-
-
+    # Default to internal service DNS in cluster; allow override via AUTH_URL when valid
+    AUTH_URL = _validated_url(os.getenv("AUTH_URL"), "http://user.clanboards.local:8020")
 
 
 class DevelopmentConfig(Config):
