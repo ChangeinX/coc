@@ -65,8 +65,6 @@ class Config:
     AUTH_URL = _validated_url(os.getenv("AUTH_URL"), "http://user.clanboards.local:8020")
 
 
-
-
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = False
