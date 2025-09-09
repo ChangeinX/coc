@@ -3,13 +3,13 @@ import { ExpoConfig } from 'expo/config';
 const ENV = process.env.APP_ENV || 'dev';
 
 const API_URLS: Record<string, string> = {
-  dev: process.env.API_URL_DEV || 'http://localhost:5000',
+  dev: process.env.API_URL_DEV || 'https://api.dev.clan-boards.com',
   staging: process.env.API_URL_STAGING || 'https://staging.api.clanboards.example',
   prod: process.env.API_URL_PROD || 'https://api.clanboards.example',
 };
 
 const AUTH_URLS: Record<string, string> = {
-  dev: process.env.AUTH_URL_DEV || 'http://localhost:8080',
+  dev: process.env.AUTH_URL_DEV || 'https://api.dev.clan-boards.com',
   staging: process.env.AUTH_URL_STAGING || 'https://staging.users.clanboards.example',
   prod: process.env.AUTH_URL_PROD || 'https://users.clanboards.example',
 };

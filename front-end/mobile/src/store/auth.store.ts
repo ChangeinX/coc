@@ -48,7 +48,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   loadUserProfile: async () => {
     try {
-      const user = await apiFetch<UserProfile>('/api/v1/user/me', { auth: true });
+      const user = await apiFetch<UserProfile>('/api/v1/users/me', { auth: true });
       set({ 
         user, 
         hasPlayerTag: !!user.player_tag 
@@ -61,7 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setUserPlayerTag: async (playerTag: string) => {
     try {
-      await apiFetch('/api/v1/user/player-tag', {
+      await apiFetch('/api/v1/users/player-tag', {
         method: 'POST',
         body: JSON.stringify({ player_tag: playerTag }),
         auth: true,

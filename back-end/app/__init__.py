@@ -36,7 +36,7 @@ def create_app(cfg_cls: type[Config] = Config) -> Flask:
 
     signing_key = app.config["JWT_SIGNING_KEY"]
     # Use service discovery DNS for production, localhost for development
-    auth_url = app.config.get("AUTH_URL", "http://user.clanboards.local:8020" if not app.config.get("DEBUG") else "http://localhost:8020")
+    auth_url = app.config.get("AUTH_URL", "http://user.webapp.local:8020" if not app.config.get("DEBUG") else "http://localhost:8020")
 
     def verify_token_with_user_service(token: str) -> dict:
         """Verify token with user service and return user info."""
