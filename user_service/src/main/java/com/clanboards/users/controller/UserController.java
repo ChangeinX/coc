@@ -1,6 +1,8 @@
 package com.clanboards.users.controller;
 
-import com.clanboards.users.exception.InvalidRequestException;
+import com.clanboards.users.exception.ResourceNotFoundException;
+import com.clanboards.users.exception.UnauthorizedException;
+import com.clanboards.users.exception.ValidationException;
 import com.clanboards.users.model.User;
 import com.clanboards.users.model.UserProfile;
 import com.clanboards.users.repository.UserRepository;
@@ -9,12 +11,15 @@ import com.clanboards.users.service.UserProfileService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {
+  private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
   private final UserRepository userRepository;
   private final UserProfileService userProfileService;
@@ -32,7 +37,8 @@ public class UserController {
   private Long getUserId(HttpServletRequest request) {
     Object userId = request.getAttribute("userId");
     if (userId == null) {
-      throw new InvalidRequestException("User not authenticated");
+      throw new UnauthorizedException(
+          "Authentication required", "AUTH_REQUIRED", "No valid session found");
     }
     return (Long) userId;
   }
@@ -40,11 +46,14 @@ public class UserController {
   @GetMapping("/me")
   public ResponseEntity<Map<String, Object>> getMe(HttpServletRequest request) {
     Long userId = getUserId(request);
+    logger.debug("Retrieving user profile for userId: {}", userId);
 
     User user = userRepository.findById(userId).orElse(null);
 
     if (user == null) {
-      return ResponseEntity.notFound().build();
+      logger.warn("User profile not found for authenticated userId: {}", userId);
+      throw new ResourceNotFoundException(
+          "User profile not found", "User", userId.toString(), request);
     }
 
     return ResponseEntity.ok(
@@ -61,73 +70,143 @@ public class UserController {
   public ResponseEntity<Map<String, String>> setPlayerTag(
       HttpServletRequest request, @RequestBody Map<String, String> payload) {
     Long userId = getUserId(request);
+    logger.debug("Setting player tag for userId: {}", userId);
 
     String playerTag = payload.get("player_tag");
     if (playerTag == null || playerTag.trim().isEmpty()) {
-      return ResponseEntity.badRequest().build();
+      throw new ValidationException(
+          "Player tag cannot be empty", "INVALID_PLAYER_TAG", "player_tag");
     }
 
-    String normalizedTag = userProfileService.setPlayerTag(userId, playerTag);
-    return ResponseEntity.ok(Map.of("player_tag", normalizedTag));
+    // Basic format validation for Clash of Clans player tags
+    String trimmedTag = playerTag.trim().toUpperCase();
+    if (!trimmedTag.startsWith("#") && !trimmedTag.matches("^[0-9A-Z]+$")) {
+      throw new ValidationException(
+          "Invalid player tag format. Must start with # or contain only numbers and letters",
+          "INVALID_PLAYER_TAG_FORMAT",
+          "player_tag");
+    }
+
+    try {
+      String normalizedTag = userProfileService.setPlayerTag(userId, playerTag);
+      logger.info("Player tag set successfully for userId: {} - tag: {}", userId, normalizedTag);
+      return ResponseEntity.ok(Map.of("player_tag", normalizedTag));
+    } catch (Exception e) {
+      logger.error("Failed to set player tag for userId: {} - tag: {}", userId, playerTag, e);
+      throw e;
+    }
   }
 
   @GetMapping("/profile")
   public ResponseEntity<Map<String, Object>> getProfile(HttpServletRequest request) {
     Long userId = getUserId(request);
+    logger.debug("Retrieving profile settings for userId: {}", userId);
 
-    UserProfile profile = userProfileService.getUserProfile(userId);
-    User user = userRepository.findById(userId).orElse(new User());
+    try {
+      UserProfile profile = userProfileService.getUserProfile(userId);
+      User user = userRepository.findById(userId).orElse(new User());
 
-    return ResponseEntity.ok(
-        Map.of(
-            "risk_weight_war", profile.getRiskWeightWar(),
-            "risk_weight_idle", profile.getRiskWeightIdle(),
-            "risk_weight_don_deficit", profile.getRiskWeightDonDeficit(),
-            "risk_weight_don_drop", profile.getRiskWeightDonDrop(),
-            "is_leader", profile.getIsLeader(),
-            "verified", user.getIsVerified() != null ? user.getIsVerified() : false));
+      return ResponseEntity.ok(
+          Map.of(
+              "risk_weight_war", profile.getRiskWeightWar(),
+              "risk_weight_idle", profile.getRiskWeightIdle(),
+              "risk_weight_don_deficit", profile.getRiskWeightDonDeficit(),
+              "risk_weight_don_drop", profile.getRiskWeightDonDrop(),
+              "is_leader", profile.getIsLeader(),
+              "verified", user.getIsVerified() != null ? user.getIsVerified() : false));
+    } catch (Exception e) {
+      logger.error("Failed to retrieve profile for userId: {}", userId, e);
+      throw e;
+    }
   }
 
   @PostMapping("/profile")
   public ResponseEntity<Map<String, String>> updateProfile(
       HttpServletRequest request, @RequestBody Map<String, Object> payload) {
     Long userId = getUserId(request);
+    logger.debug("Updating profile settings for userId: {}", userId);
 
     UserProfileService.ProfileUpdateRequest updateRequest =
         new UserProfileService.ProfileUpdateRequest();
 
-    if (payload.containsKey("risk_weight_war")) {
-      updateRequest.setRiskWeightWar(((Number) payload.get("risk_weight_war")).doubleValue());
-    }
-    if (payload.containsKey("risk_weight_idle")) {
-      updateRequest.setRiskWeightIdle(((Number) payload.get("risk_weight_idle")).doubleValue());
-    }
-    if (payload.containsKey("risk_weight_don_deficit")) {
-      updateRequest.setRiskWeightDonDeficit(
-          ((Number) payload.get("risk_weight_don_deficit")).doubleValue());
-    }
-    if (payload.containsKey("risk_weight_don_drop")) {
-      updateRequest.setRiskWeightDonDrop(
-          ((Number) payload.get("risk_weight_don_drop")).doubleValue());
-    }
-    if (payload.containsKey("is_leader")) {
-      updateRequest.setIsLeader((Boolean) payload.get("is_leader"));
-    }
+    try {
+      if (payload.containsKey("risk_weight_war")) {
+        Object value = payload.get("risk_weight_war");
+        if (value instanceof Number) {
+          updateRequest.setRiskWeightWar(((Number) value).doubleValue());
+        } else {
+          throw new ValidationException(
+              "risk_weight_war must be a number", "INVALID_RISK_WEIGHT", "risk_weight_war");
+        }
+      }
+      if (payload.containsKey("risk_weight_idle")) {
+        Object value = payload.get("risk_weight_idle");
+        if (value instanceof Number) {
+          updateRequest.setRiskWeightIdle(((Number) value).doubleValue());
+        } else {
+          throw new ValidationException(
+              "risk_weight_idle must be a number", "INVALID_RISK_WEIGHT", "risk_weight_idle");
+        }
+      }
+      if (payload.containsKey("risk_weight_don_deficit")) {
+        Object value = payload.get("risk_weight_don_deficit");
+        if (value instanceof Number) {
+          updateRequest.setRiskWeightDonDeficit(((Number) value).doubleValue());
+        } else {
+          throw new ValidationException(
+              "risk_weight_don_deficit must be a number",
+              "INVALID_RISK_WEIGHT",
+              "risk_weight_don_deficit");
+        }
+      }
+      if (payload.containsKey("risk_weight_don_drop")) {
+        Object value = payload.get("risk_weight_don_drop");
+        if (value instanceof Number) {
+          updateRequest.setRiskWeightDonDrop(((Number) value).doubleValue());
+        } else {
+          throw new ValidationException(
+              "risk_weight_don_drop must be a number",
+              "INVALID_RISK_WEIGHT",
+              "risk_weight_don_drop");
+        }
+      }
+      if (payload.containsKey("is_leader")) {
+        Object value = payload.get("is_leader");
+        if (value instanceof Boolean) {
+          updateRequest.setIsLeader((Boolean) value);
+        } else {
+          throw new ValidationException(
+              "is_leader must be a boolean", "INVALID_BOOLEAN", "is_leader");
+        }
+      }
 
-    userProfileService.updateProfile(userId, updateRequest);
-    return ResponseEntity.ok(Map.of("status", "ok"));
+      userProfileService.updateProfile(userId, updateRequest);
+      logger.info("Profile updated successfully for userId: {}", userId);
+      return ResponseEntity.ok(Map.of("status", "ok"));
+    } catch (ValidationException e) {
+      throw e; // Re-throw validation exceptions
+    } catch (Exception e) {
+      logger.error("Failed to update profile for userId: {}", userId, e);
+      throw e;
+    }
   }
 
   @GetMapping("/features")
   public ResponseEntity<Map<String, Object>> getFeatures(HttpServletRequest request) {
     Long userId = getUserId(request);
+    logger.debug("Retrieving feature flags for userId: {}", userId);
 
-    UserProfileService.FeatureFlagsResponse response = userProfileService.getFeatureFlags(userId);
+    try {
+      UserProfileService.FeatureFlagsResponse response = userProfileService.getFeatureFlags(userId);
 
-    return ResponseEntity.ok(
-        Map.of(
-            "all", response.isAll(),
-            "features", response.getFeatures()));
+      return ResponseEntity.ok(
+          Map.of(
+              "all", response.isAll(),
+              "features", response.getFeatures()));
+    } catch (Exception e) {
+      logger.error("Failed to retrieve feature flags for userId: {}", userId, e);
+      throw e;
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -135,65 +214,104 @@ public class UserController {
   public ResponseEntity<Map<String, String>> updateFeatures(
       HttpServletRequest request, @RequestBody Map<String, Object> payload) {
     Long userId = getUserId(request);
+    logger.debug("Updating feature flags for userId: {}", userId);
 
-    UserProfileService.FeatureUpdateRequest updateRequest =
-        new UserProfileService.FeatureUpdateRequest();
-    updateRequest.setAll((Boolean) payload.getOrDefault("all", false));
+    try {
+      UserProfileService.FeatureUpdateRequest updateRequest =
+          new UserProfileService.FeatureUpdateRequest();
 
-    if (payload.containsKey("features") && payload.get("features") instanceof List) {
-      updateRequest.setFeatures((List<String>) payload.get("features"));
+      Object allValue = payload.getOrDefault("all", false);
+      if (!(allValue instanceof Boolean)) {
+        throw new ValidationException("'all' must be a boolean value", "INVALID_BOOLEAN", "all");
+      }
+      updateRequest.setAll((Boolean) allValue);
+
+      if (payload.containsKey("features")) {
+        Object featuresValue = payload.get("features");
+        if (featuresValue instanceof List) {
+          updateRequest.setFeatures((List<String>) featuresValue);
+        } else {
+          throw new ValidationException(
+              "'features' must be an array of strings", "INVALID_ARRAY", "features");
+        }
+      }
+
+      userProfileService.updateFeatureFlags(userId, updateRequest);
+      logger.info("Feature flags updated successfully for userId: {}", userId);
+      return ResponseEntity.ok(Map.of("status", "ok"));
+    } catch (ValidationException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.error("Failed to update feature flags for userId: {}", userId, e);
+      throw e;
     }
-
-    userProfileService.updateFeatureFlags(userId, updateRequest);
-    return ResponseEntity.ok(Map.of("status", "ok"));
   }
 
   @GetMapping("/legal")
   public ResponseEntity<Map<String, Object>> getLegal(HttpServletRequest request) {
     Long userId = getUserId(request);
+    logger.debug("Retrieving legal status for userId: {}", userId);
 
-    LegalService.LegalStatusResponse response = legalService.getLegalStatus(userId);
+    try {
+      LegalService.LegalStatusResponse response = legalService.getLegalStatus(userId);
 
-    return ResponseEntity.ok(
-        Map.of(
-            "accepted", response.isAccepted(),
-            "version", response.getVersion()));
+      return ResponseEntity.ok(
+          Map.of(
+              "accepted", response.isAccepted(),
+              "version", response.getVersion()));
+    } catch (Exception e) {
+      logger.error("Failed to retrieve legal status for userId: {}", userId, e);
+      throw e;
+    }
   }
 
   @PostMapping("/legal")
   public ResponseEntity<Map<String, String>> acceptLegal(
       HttpServletRequest request, @RequestBody Map<String, String> payload) {
     Long userId = getUserId(request);
+    logger.debug("Accepting legal terms for userId: {}", userId);
 
     String version = payload.get("version");
-    legalService.acceptLegal(userId, version);
+    if (version == null || version.trim().isEmpty()) {
+      throw new ValidationException("Legal version is required", "MISSING_VERSION", "version");
+    }
 
-    return ResponseEntity.ok(Map.of("status", "ok"));
+    try {
+      legalService.acceptLegal(userId, version);
+      logger.info("Legal terms accepted for userId: {} - version: {}", userId, version);
+      return ResponseEntity.ok(Map.of("status", "ok"));
+    } catch (Exception e) {
+      logger.error("Failed to accept legal terms for userId: {} - version: {}", userId, version, e);
+      throw e;
+    }
   }
 
   @GetMapping("/disclaimer")
   public ResponseEntity<Map<String, Boolean>> getDisclaimer(HttpServletRequest request) {
     Long userId = getUserId(request);
+    logger.debug("Retrieving disclaimer status for userId: {}", userId);
 
-    boolean seen = legalService.getDisclaimerStatus(userId);
-
-    return ResponseEntity.ok(Map.of("seen", seen));
+    try {
+      boolean seen = legalService.getDisclaimerStatus(userId);
+      return ResponseEntity.ok(Map.of("seen", seen));
+    } catch (Exception e) {
+      logger.error("Failed to retrieve disclaimer status for userId: {}", userId, e);
+      throw e;
+    }
   }
 
   @PostMapping("/disclaimer")
   public ResponseEntity<Map<String, String>> acceptDisclaimer(HttpServletRequest request) {
     Long userId = getUserId(request);
+    logger.debug("Accepting disclaimer for userId: {}", userId);
 
-    legalService.acceptDisclaimer(userId);
-
-    return ResponseEntity.ok(Map.of("status", "ok"));
-  }
-
-  @ExceptionHandler(InvalidRequestException.class)
-  public ResponseEntity<Void> handleInvalidRequest(InvalidRequestException e) {
-    if ("User not authenticated".equals(e.getMessage())) {
-      return ResponseEntity.status(401).build();
+    try {
+      legalService.acceptDisclaimer(userId);
+      logger.info("Disclaimer accepted for userId: {}", userId);
+      return ResponseEntity.ok(Map.of("status", "ok"));
+    } catch (Exception e) {
+      logger.error("Failed to accept disclaimer for userId: {}", userId, e);
+      throw e;
     }
-    return ResponseEntity.badRequest().build();
   }
 }
