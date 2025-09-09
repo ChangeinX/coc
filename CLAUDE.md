@@ -13,6 +13,18 @@ This is a microservices-based Clash of Clans dashboard built as a monorepo:
 - **Notifications Service**: Spring Boot push notifications at `/notifications/`
 - **Recruiting Service**: Spring Boot clan recruitment at `/recruiting/`
 - **Shared Library**: `coclib` - SQLAlchemy models, utilities, config shared across services
+- **Mobile App**: React Native + Expo at `/front-end/mobile/` - Native iOS/Android app
+
+## Development Methodology
+
+**ALWAYS follow Test-Driven Development (TDD):**
+- Write tests BEFORE implementation (Red → Green → Refactor cycle)
+- All new features and bug fixes MUST include tests
+- Tests are mandatory for all services except when specifically noted below
+
+**TDD Exceptions:**
+- Mobile UI components in `/front-end/mobile/*` may write tests alongside implementation when TDD becomes impractical for visual/interactive elements
+- Still strongly encouraged to use TDD for business logic, hooks, and utilities in mobile
 
 ## Essential Development Commands
 
@@ -38,6 +50,14 @@ python run.py       # Flask dev server with auto-reload
 ```bash
 ./gradlew test spotlessCheck    # Test + code formatting check
 ./gradlew spotlessApply         # Auto-format code
+```
+
+**Mobile** (from `/front-end/mobile/`):
+```bash
+npm test                # Jest with React Native Testing Library
+npm run typecheck       # TypeScript checking
+npm run lint           # ESLint checking
+expo start             # Development server
 ```
 
 ## Critical Architecture Patterns
@@ -87,20 +107,37 @@ COC_API_TOKEN=               # Clash of Clans API token (required)
 
 ## Testing Strategy
 
-**Frontend (Vitest):**
+**TDD Workflow - Follow for ALL development:**
+1. **Red**: Write failing test first
+2. **Green**: Write minimal code to pass
+3. **Refactor**: Improve code while keeping tests passing
+
+**Frontend (Vitest) - TDD Required:**
+- Write test in `Component.test.jsx` BEFORE implementing `Component.jsx`
 - `npm test` - All tests with jsdom environment
 - React Testing Library for component testing
 - Tests co-located: `Component.jsx` + `Component.test.jsx`
 - Setup in `vitest.setup.js`, fake-indexeddb for IndexedDB mocking
 
-**Backend (pytest):**
+**Backend (pytest) - TDD Required:**
+- Write test file BEFORE implementing functionality
 - Test files in same directory as code
 - Database fixtures and API testing
 - Run via `nox -s tests` or direct pytest
+- All routes and services must have corresponding tests
 
-**Java Services (JUnit):**
+**Java Services (JUnit) - TDD Required:**
+- Write JUnit tests BEFORE business logic implementation
 - MockMvc for integration testing
 - Gradle test runner with comprehensive coverage
+- All controllers and services must have corresponding tests
+
+**Mobile (Jest/React Native Testing Library) - TDD Preferred:**
+- `npm test` from `/front-end/mobile/` directory
+- Write tests BEFORE or alongside implementation
+- Exception: Complex UI components may write tests after for visual elements
+- Still use TDD for all business logic, hooks, and utilities
+- Tests co-located with components
 
 ## Common Debugging Scenarios
 
@@ -141,7 +178,10 @@ Each service has detailed `AGENTS.md` files:
 - CloudFront CDN for static assets
 
 **Code Quality Gates:**
-- All PRs must pass `nox -s lint tests`
+- **MANDATORY**: All new code must include corresponding tests
+- **MANDATORY**: All PRs must pass `nox -s lint tests`
 - Frontend must pass `npm test` and `npm run build`
+- Mobile must pass `npm test` and `npm run typecheck` from `/front-end/mobile/`
 - Java services must pass `./gradlew test spotlessCheck`
 - Ruff formatting enforced for Python code
+- **PRs without tests will be rejected** (except for documentation-only changes)
