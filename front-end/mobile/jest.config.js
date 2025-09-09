@@ -18,6 +18,6 @@ module.exports = {
     '^.+\\.(js|ts|tsx)$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|react-native-mmkv|expo|expo-.*|@expo/.*|@tanstack/.*|@react-navigation/.*)/)',
+    'node_modules/(?!(react-native|@react-native|react-native-mmkv|expo|expo-.*|@expo/.*|@tanstack/.*|@react-navigation/.*|react-native-gesture-handler|react-native-reanimated|react-native-safe-area-context|react-native-screens|zustand)/)',
   ],
 };

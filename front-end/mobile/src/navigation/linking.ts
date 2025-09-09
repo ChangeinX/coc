@@ -12,7 +12,14 @@ export const linking: LinkingOptions<any> = {
       },
       App: {
         screens: {
-          Dashboard: 'dashboard',
+          Dashboard: {
+            path: 'dashboard',
+            screens: {
+              DashboardHome: '',
+              ClanView: 'clan/:clanTag',
+              MemberView: 'member/:playerTag',
+            },
+          },
           Messages: {
             screens: {
               MessagesHome: 'messages',
@@ -20,7 +27,7 @@ export const linking: LinkingOptions<any> = {
             },
           },
           Scout: 'scout',
-          Stats: 'stats',
+          Stats: 'stats', 
           Settings: 'settings',
         },
       },

@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a microservices-based Clash of Clans dashboard built as a monorepo:
 
-- **Front-end**: React 18 + Vite at `/front-end/app/` - HashRouter, IndexedDB offline storage
+- **Front-end**: migration in progress. OBSOLETE IN FAVOR OF MOBILE React 18 + Vite at `/front-end/app/` - HashRouter, IndexedDB offline storage 
+- **Mobile**: React Native at `/front-end/mobile/`
+- **Splash Page**: located at `/front-end/public-home`, not part of PWA to mobile migration
 - **Back-end**: Flask 3.1.1 + PostgreSQL at `/back-end/` - Main API with `/api/v1` prefix  
 - **Chat Service**: Spring Boot + GraphQL + WebSocket at `/messages-java/`
 - **User Service**: Spring Boot authentication at `/user_service/`

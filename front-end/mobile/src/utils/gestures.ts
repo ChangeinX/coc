@@ -1,9 +1,9 @@
-import { useCallback } from 'react';
-import { GestureResponderEvent, PanResponder, Dimensions } from 'react-native';
+import { useCallback, useRef } from 'react';
+import { PanResponder, Dimensions } from 'react-native';
 import { haptics } from './haptics';
 
 // Screen dimensions for gesture calculations
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: _SCREEN_WIDTH, height: _SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Gesture configuration types
 export interface SwipeGestureConfig {
@@ -44,7 +44,7 @@ export function useSwipeGesture(config: SwipeGestureConfig) {
       return Math.abs(gestureState.dx) > 10 || Math.abs(gestureState.dy) > 10;
     },
 
-    onPanResponderMove: (evt, gestureState) => {
+    onPanResponderMove: (_evt, _gestureState) => {
       // Optional: Add visual feedback during gesture
     },
 
@@ -83,7 +83,7 @@ export function useSwipeGesture(config: SwipeGestureConfig) {
 
 // Enhanced long press hook with haptic feedback
 export function useLongPress(config: LongPressConfig) {
-  const { onLongPress, duration = 500, hapticFeedback = true } = config;
+  const { onLongPress, duration: _duration = 500, hapticFeedback = true } = config;
 
   return useCallback(async () => {
     if (hapticFeedback) {
@@ -103,7 +103,7 @@ export function usePullToRefresh(config: PullToRefreshConfig) {
       return gestureState.dy > 0 && evt.nativeEvent.pageY < 100;
     },
 
-    onPanResponderMove: (evt, gestureState) => {
+    onPanResponderMove: (_evt, _gestureState) => {
       // Optional: Add visual feedback during pull
     },
 
@@ -120,17 +120,17 @@ export function usePullToRefresh(config: PullToRefreshConfig) {
 
 // Double tap gesture
 export function useDoubleTap(onDoubleTap: () => void, hapticFeedback = true) {
-  let lastTap = 0;
+  const lastTapRef = useRef(0);
   
   return useCallback(async () => {
     const now = Date.now();
     const DOUBLE_PRESS_DELAY = 300;
     
-    if (lastTap && (now - lastTap) < DOUBLE_PRESS_DELAY) {
+    if (lastTapRef.current && (now - lastTapRef.current) < DOUBLE_PRESS_DELAY) {
       if (hapticFeedback) await haptics.light();
       onDoubleTap();
     }
-    lastTap = now;
+    lastTapRef.current = now;
   }, [onDoubleTap, hapticFeedback]);
 }
 

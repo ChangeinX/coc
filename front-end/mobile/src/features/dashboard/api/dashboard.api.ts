@@ -126,6 +126,9 @@ export const dashboardApi = {
         last_seen: riskInfo?.last_seen || undefined,
         risk_breakdown: riskInfo?.risk_breakdown || [],
         loyalty: loyaltyData[playerTag] || 0,
+        // Ensure league information is included
+        league: m.league,
+        expLevel: m.expLevel,
       };
     });
 

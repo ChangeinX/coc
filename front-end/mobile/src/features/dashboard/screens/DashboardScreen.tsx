@@ -15,12 +15,23 @@ import {
   MemberCard, 
   LoadingSpinner, 
   RiskIndicator,
-  Member 
+  TownHallIcon,
+  RoleIcon,
+  DonationIndicator,
+  SwipeableSortBar,
+  FloatingActionButton,
+  MemberCardSkeleton,
+  StaggeredList,
+  Member,
+  SortOption,
+  FABAction
 } from '@components/index';
 import { useDashboardData, useRefreshDashboard } from '../hooks/useDashboard';
 import { usePlayerInfo } from '../hooks/usePlayerInfo';
 import { useAuthStore } from '@store/auth.store';
+import { useFavoritesStore } from '@store/favorites.store';
 import { useHaptics } from '@utils/index';
+import { useAppState } from '../../../hooks/useAppState';
 // Temporarily commented out to fix Apple sign-in: useEntranceAnimation
 
 type SortField = 'loyalty' | 'role' | 'th' | 'trophies' | 'donations' | 'last' | 'risk';
@@ -31,7 +42,8 @@ export default function DashboardScreen() {
   const theme = useTheme();
   const commonStyles = useThemedStyles();
   const { user } = useAuthStore();
-  const { success, selection, isAvailable } = useHaptics();
+  const { light, success, error: errorHaptic, selection, isAvailable } = useHaptics();
+  const { favoriteMembers } = useFavoritesStore();
   // Temporarily commented out to fix Apple sign-in: 
   // const { animatedStyle, enter } = useEntranceAnimation();
   
@@ -51,6 +63,19 @@ export default function DashboardScreen() {
       setClanTag(playerInfo.clanTag);
     }
   }, [playerInfo?.clanTag, clanTag]);
+
+  // Background sync - refresh data when app comes to foreground
+  useAppState({
+    onForeground: () => {
+      if (clanTag && dashboardData) {
+        // Only auto-refresh if data is older than 5 minutes
+        const lastUpdate = Date.now(); // You'd normally store this in the query cache
+        const fiveMinutes = 5 * 60 * 1000;
+        // For now, just refresh every time app comes to foreground
+        handleRefresh();
+      }
+    },
+  });
 
   // API hooks
   const {
@@ -102,13 +127,15 @@ export default function DashboardScreen() {
   const handleRefresh = useCallback(async () => {
     if (clanTag) {
       try {
-        if (isAvailable()) await success(); // Haptic feedback on refresh start
+        if (isAvailable()) await light(); // Light haptic on refresh start
         await refreshMutation.mutateAsync(clanTag);
+        if (isAvailable()) await success(); // Success haptic when complete
       } catch (error) {
+        if (isAvailable()) await errorHaptic(); // Error haptic on failure
         Alert.alert('Error', 'Failed to refresh clan data');
       }
     }
-  }, [clanTag, refreshMutation, success]);
+  }, [clanTag, refreshMutation, light, success, errorHaptic, isAvailable]);
 
   const toggleSort = useCallback(async (field: SortField) => {
     if (isAvailable()) await selection(); // Haptic feedback on sort change
@@ -118,12 +145,22 @@ export default function DashboardScreen() {
       setSortField(field);
       setSortDirection('desc');
     }
-  }, [sortField, sortDirection, selection]);
+  }, [sortField, sortDirection, selection, isAvailable]);
 
   const handleTabChange = useCallback(async (newSection: ActiveSection) => {
     if (isAvailable()) await selection(); // Haptic feedback on tab change
     setActiveSection(newSection);
-  }, [selection]);
+  }, [selection, isAvailable]);
+
+  // Sort options for swipeable sort bar
+  const sortOptions: SortOption[] = [
+    { key: 'loyalty', label: 'Loyalty' },
+    { key: 'risk', label: 'Risk' },
+    { key: 'trophies', label: 'Trophies' },
+    { key: 'th', label: 'TH' },
+    { key: 'donations', label: 'Donations' },
+    { key: 'role', label: 'Role' },
+  ];
 
   const renderMemberItem = ({ item: member }: { item: Member }) => (
     <MemberCard
@@ -144,6 +181,51 @@ export default function DashboardScreen() {
       />
     </View>
   );
+
+  // FAB actions
+  const fabActions: FABAction[] = [
+    {
+      id: 'refresh',
+      label: 'Refresh',
+      icon: '🔄',
+      onPress: handleRefresh,
+    },
+    {
+      id: 'favorites',
+      label: `Favorites (${favoriteMembers.length})`,
+      icon: '❤️',
+      onPress: () => {
+        // Filter members list to show only favorites
+        if (favoriteMembers.length > 0) {
+          Alert.alert(
+            'Favorites',
+            `You have ${favoriteMembers.length} favorite member${favoriteMembers.length === 1 ? '' : 's'}:\n\n${favoriteMembers.map(f => f.name).join('\n')}`,
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert('No Favorites', 'You haven\'t added any favorite members yet. Long press on a member card to add them to favorites.');
+        }
+      },
+    },
+    {
+      id: 'sort-loyalty',
+      label: 'Sort by Loyalty',
+      icon: '📅',
+      onPress: () => {
+        setSortField('loyalty');
+        setSortDirection('desc');
+      },
+    },
+    {
+      id: 'sort-risk',
+      label: 'Sort by Risk',
+      icon: '⚠️',
+      onPress: () => {
+        setSortField('risk');
+        setSortDirection('desc');
+      },
+    },
+  ];
 
   // Handle no clan case
   if (!playerInfo?.clanTag && playerInfo) {
@@ -237,13 +319,30 @@ export default function DashboardScreen() {
       <ScrollView 
         contentContainerStyle={{ padding: theme.spacing.base, gap: theme.spacing.lg }}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />
+          <RefreshControl 
+            refreshing={isRefetching} 
+            onRefresh={handleRefresh}
+            tintColor={theme.colors.primary}
+            colors={[theme.colors.primary, theme.colors.success]}
+            progressBackgroundColor={theme.colors.surface}
+            title="Pull to refresh clan data"
+            titleColor={theme.colors.textSecondary}
+          />
         }
       >
 
         {/* Loading State */}
         {isLoading && !dashboardData && (
-          <LoadingSpinner message="Loading clan data..." />
+          <View style={{ gap: theme.spacing.lg }}>
+            <LoadingSpinner message="Loading clan data..." />
+            
+            {/* Skeleton for member cards */}
+            <View style={{ gap: theme.spacing.sm }}>
+              {[1, 2, 3].map((index) => (
+                <MemberCardSkeleton key={index} />
+              ))}
+            </View>
+          </View>
         )}
 
         {/* Dashboard Content */}
@@ -304,46 +403,59 @@ export default function DashboardScreen() {
                 </View>
 
                 {/* Stats Grid */}
-                <View style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  gap: theme.spacing.md,
-                }}>
-                  <View style={{ flex: 1, minWidth: '45%' }}>
-                    <StatCard
-                      iconUrl={dashboardData.clan.badgeUrls?.small}
-                      label="Members"
-                      value={dashboardData.members.length}
-                      size="sm"
-                    />
-                  </View>
-                  <View style={{ flex: 1, minWidth: '45%' }}>
-                    <StatCard
-                      icon="⭐"
-                      label="Level"
-                      value={dashboardData.clan.clanLevel}
-                      size="sm"
-                    />
-                  </View>
-                  <View style={{ flex: 1, minWidth: '45%' }}>
-                    <StatCard
-                      icon="🛡️"
-                      label="War Wins"
-                      value={dashboardData.clan.warWins || 0}
-                      size="sm"
-                      variant="success"
-                    />
-                  </View>
-                  <View style={{ flex: 1, minWidth: '45%' }}>
-                    <StatCard
-                      icon="💔"
-                      label="War Losses"
-                      value={dashboardData.clan.warLosses || 0}
-                      size="sm"
-                      variant="error"
-                    />
-                  </View>
-                </View>
+                <StaggeredList
+                  data={[
+                    {
+                      id: 'members',
+                      iconUrl: dashboardData.clan.badgeUrls?.small,
+                      label: 'Members',
+                      value: dashboardData.members.length,
+                      variant: 'default' as const,
+                    },
+                    {
+                      id: 'level',
+                      icon: '⭐',
+                      label: 'Level',
+                      value: dashboardData.clan.clanLevel,
+                      variant: 'default' as const,
+                    },
+                    {
+                      id: 'warWins',
+                      icon: '🛡️',
+                      label: 'War Wins',
+                      value: dashboardData.clan.warWins || 0,
+                      variant: 'success' as const,
+                    },
+                    {
+                      id: 'warLosses',
+                      icon: '💔',
+                      label: 'War Losses',
+                      value: dashboardData.clan.warLosses || 0,
+                      variant: 'error' as const,
+                    },
+                  ]}
+                  renderItem={({ item, index }) => (
+                    <View style={{ 
+                      flex: 1, 
+                      minWidth: '45%',
+                      ...(index % 2 === 1 ? { marginLeft: theme.spacing.md } : {}),
+                    }}>
+                      <StatCard
+                        {...item}
+                        size="sm"
+                      />
+                    </View>
+                  )}
+                  keyExtractor={(item) => item.id}
+                  scrollEnabled={false}
+                  animationType="scaleIn"
+                  staggerDelay={100}
+                  contentContainerStyle={{ 
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    gap: theme.spacing.md,
+                  }}
+                />
               </View>
             )}
 
@@ -370,49 +482,13 @@ export default function DashboardScreen() {
                   </View>
                 )}
 
-                {/* Sort Controls */}
-                <View style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  gap: theme.spacing.sm,
-                  marginBottom: theme.spacing.base,
-                }}>
-                  {([
-                    { key: 'loyalty', label: 'Loyalty' },
-                    { key: 'risk', label: 'Risk' },
-                    { key: 'trophies', label: 'Trophies' },
-                    { key: 'th', label: 'TH' },
-                  ] as const).map((sort) => (
-                    <TouchableOpacity
-                      key={sort.key}
-                      style={{
-                        paddingHorizontal: theme.spacing.md,
-                        paddingVertical: theme.spacing.sm,
-                        borderRadius: theme.borderRadius.base,
-                        borderWidth: 1,
-                        borderColor: sortField === sort.key 
-                          ? theme.colors.primary 
-                          : theme.colors.border,
-                        backgroundColor: sortField === sort.key 
-                          ? theme.colors.primaryMuted 
-                          : theme.colors.surface,
-                      }}
-                      onPress={() => toggleSort(sort.key)}
-                    >
-                      <Text style={{
-                        fontSize: theme.typography.fontSize.sm,
-                        color: sortField === sort.key 
-                          ? theme.colors.primary 
-                          : theme.colors.textSecondary,
-                        fontWeight: sortField === sort.key 
-                          ? theme.typography.fontWeight.medium 
-                          : theme.typography.fontWeight.normal,
-                      }}>
-                        {sort.label} {sortField === sort.key ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                {/* Enhanced Sort Controls */}
+                <SwipeableSortBar
+                  options={sortOptions}
+                  activeSort={sortField}
+                  sortDirection={sortDirection}
+                  onSortChange={(key) => toggleSort(key as SortField)}
+                />
 
                 {/* Members List */}
                 <Text style={{
@@ -422,11 +498,13 @@ export default function DashboardScreen() {
                   All Members ({sortedMembers.length})
                 </Text>
 
-                <FlatList
+                <StaggeredList
                   data={sortedMembers}
                   renderItem={renderMemberItem}
                   keyExtractor={(item) => item.tag}
                   scrollEnabled={false}
+                  animationType="slideUp"
+                  staggerDelay={50}
                   contentContainerStyle={{ gap: theme.spacing.sm }}
                 />
               </View>
@@ -458,6 +536,11 @@ export default function DashboardScreen() {
           </>
         )}
       </ScrollView>
+      
+      {/* Floating Action Button */}
+      {dashboardData && (
+        <FloatingActionButton actions={fabActions} />
+      )}
     </View>
   );
 }

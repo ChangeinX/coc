@@ -13,7 +13,7 @@ export function RiskIndicator({
   score, 
   size = 'md', 
   showLabel = true,
-  animated = true 
+  animated: _animated = true 
 }: RiskIndicatorProps) {
   const theme = useTheme();
 
@@ -81,8 +81,8 @@ export function RiskIndicator({
   const color = getRiskColor(score);
   const radius = (config.diameter - config.strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDasharray = circumference;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
+  const _strokeDasharray = circumference;
+  const _strokeDashoffset = circumference - (score / 100) * circumference;
 
   return (
     <View style={{ 

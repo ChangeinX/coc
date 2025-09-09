@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { useDashboardData, useRefreshDashboard } from '../useDashboard';
+import { useDashboardData, useRefreshDashboard, dashboardKeys } from '../useDashboard';
 import { dashboardApi } from '../../api/dashboard.api';
 
 // Mock the API
@@ -38,6 +38,8 @@ describe('useDashboard hooks', () => {
         tag: '#123ABC',
         name: 'Test Clan',
         clanLevel: 10,
+        clanPoints: 45000,
+        requiredTrophies: 2800,
         warWins: 50,
         warLosses: 20,
         warWinStreak: 5,
@@ -81,7 +83,7 @@ describe('useDashboard hooks', () => {
         { wrapper: createWrapper() }
       );
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.isPending).toBe(false);
       expect(mockedDashboardApi.getDashboardData).not.toHaveBeenCalled();
     });
 
@@ -91,7 +93,7 @@ describe('useDashboard hooks', () => {
         { wrapper: createWrapper() }
       );
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.isPending).toBe(false);
       expect(mockedDashboardApi.getDashboardData).not.toHaveBeenCalled();
     });
 
@@ -138,8 +140,8 @@ describe('useDashboard hooks', () => {
       const refetchQueriesSpy = jest.spyOn(queryClient, 'refetchQueries');
 
       // Mock implementation to resolve immediately
-      invalidateQueriesSpy.mockResolvedValue();
-      refetchQueriesSpy.mockResolvedValue([]);
+      invalidateQueriesSpy.mockResolvedValue(undefined);
+      refetchQueriesSpy.mockResolvedValue(undefined as any);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <QueryClientProvider client={queryClient}>
@@ -166,7 +168,6 @@ describe('useDashboard hooks', () => {
 
   describe('query key generators', () => {
     it('generates correct query keys', () => {
-      const { dashboardKeys } = require('../useDashboard');
 
       expect(dashboardKeys.all).toEqual(['dashboard']);
       expect(dashboardKeys.clan('#123ABC')).toEqual(['dashboard', 'clan', '#123ABC']);
