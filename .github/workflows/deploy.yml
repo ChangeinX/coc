@@ -21,6 +21,7 @@ env:
   APP_DISTRIBUTION_ID: ${{ secrets.APP_DISTRIBUTION_ID }}
   PUBLIC_HOME_DISTRIBUTION_ID: ${{ secrets.PUBLIC_HOME_DISTRIBUTION_ID }}
   AWS_LAMBDA_ARTIFACTS_BUCKET: ${{ secrets.AWS_LAMBDA_ARTIFACTS_BUCKET }}
+  LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
   APP_SERVICE: ${{ secrets.APP_SERVICE }}
   WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
   MESSAGES_SERVICE: ${{ secrets.MESSAGES_SERVICE }}
@@ -179,8 +180,42 @@ jobs:
           aws s3 cp coc-refresh-worker-lambda.zip s3://$AWS_LAMBDA_ARTIFACTS_BUCKET/$ARTIFACT_NAME
           echo "Lambda artifact uploaded: s3://$AWS_LAMBDA_ARTIFACTS_BUCKET/$ARTIFACT_NAME"
 
+      - name: Deploy Lambda function
+        run: |
+          ARTIFACT_NAME="refresh-worker-${{ github.sha }}.zip"
+          echo "🚀 Deploying Lambda function..."
+          
+          # Update Lambda function code
+          UPDATE_RESULT=$(aws lambda update-function-code \
+            --function-name $LAMBDA_FUNCTION_NAME \
+            --s3-bucket $AWS_LAMBDA_ARTIFACTS_BUCKET \
+            --s3-key $ARTIFACT_NAME \
+            --region $AWS_REGION \
+            --output json)
+          
+          if [[ $? -eq 0 ]]; then
+            VERSION=$(echo "$UPDATE_RESULT" | jq -r '.Version')
+            LAST_MODIFIED=$(echo "$UPDATE_RESULT" | jq -r '.LastModified')
+            
+            echo "✅ Lambda function updated successfully"
+            echo "📋 Function: $LAMBDA_FUNCTION_NAME"
+            echo "📋 Version: $VERSION"
+            echo "📋 Last Modified: $LAST_MODIFIED"
+            
+            # Wait for function to be ready
+            echo "⏳ Waiting for function to be ready..."
+            aws lambda wait function-updated \
+              --function-name $LAMBDA_FUNCTION_NAME \
+              --region $AWS_REGION
+            
+            echo "✅ Lambda deployment complete"
+          else
+            echo "❌ Error: Failed to update Lambda function"
+            exit 1
+          fi
+
       - name: Upload artifact for OpenTofu deployment
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: refresh-worker-lambda-${{ github.sha }}
           path: lambdas/refresh-worker/coc-refresh-worker-lambda.zip
