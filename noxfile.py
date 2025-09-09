@@ -22,7 +22,8 @@ def lint(session: nox.Session) -> None:
 def tests(session: nox.Session) -> None:
     session.install("pytest", "pytest-asyncio")
     session.install("-r", "back-end/requirements.txt")
-    session.run("pytest", "-q")
+    # Run pytest excluding Lambda tests (they have special requirements)
+    session.run("pytest", "-q", "--ignore=lambdas")
     session.chdir("messages-java")
     session.run("./gradlew", "--no-daemon", "test", external=True)
     session.chdir("..")
@@ -45,3 +46,10 @@ def tests(session: nox.Session) -> None:
     session.run("npm", "--prefix", "front-end/app", "install", external=True)
     session.run("npm", "--prefix", "front-end/app", "run", "test", external=True)
     session.run("npm", "--prefix", "front-end/app", "run", "build", external=True)
+    # Run Lambda tests with their specific requirements
+    session.chdir("lambdas/refresh-worker")
+    session.install("-r", "requirements-test.txt")
+    # Set PYTHONPATH to include coclib for Lambda tests
+    session.env["PYTHONPATH"] = "../../"
+    session.run("pytest", "test_lambda_function.py", "-v", external=False)
+    session.chdir("../..")

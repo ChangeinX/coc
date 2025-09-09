@@ -13,6 +13,11 @@ import sys
 import time
 from typing import Optional
 
+try:
+    import boto3
+except ImportError:
+    boto3 = None
+
 # Add coclib to path for Lambda environment
 sys.path.append('/opt/python')
 sys.path.append('.')
@@ -36,6 +41,7 @@ def lambda_handler(event, context):
         # Import here to handle potential import errors gracefully
         from coclib.queue.queue_factory import create_refresh_queue
         from coclib.db_session import lambda_db_setup, lambda_db_cleanup
+        from coclib.config import Config
         
         processed_count = 0
         errors = []
@@ -50,9 +56,8 @@ def lambda_handler(event, context):
             # Process requests with rate limiting
             start_time = time.time()
             max_runtime = min(context.get_remaining_time_in_millis() / 1000 - 5, 300)  # Leave 5s buffer, max 5 min
-            # Use coclib rate limiting configuration to stay consistent with services
-            from coclib.config import Config
-            requests_per_second = min(Config.COC_REQS_PER_SEC, 30)  # Respect configured rate limit, max 30/sec for safety
+            # Use coclib rate limiting configuration to stay consistent with services  
+            requests_per_second = min(getattr(Config, 'COC_REQS_PER_SEC', 10), 30)  # Respect configured rate limit, max 30/sec for safety
             
             logger.info(f"Starting refresh worker, max runtime: {max_runtime}s")
             
@@ -65,7 +70,7 @@ def lambda_handler(event, context):
                 
                 try:
                     # Process the refresh request
-                    result = asyncio.run(process_refresh_request(request))
+                    result = asyncio.run(process_refresh_request(request, queue))
                     processed_count += 1
                     
                     logger.info(f"Processed {request.type.value} refresh for {request.tag}: {result}")
@@ -81,6 +86,13 @@ def lambda_handler(event, context):
                     # Handle retry logic with exponential backoff
                     handle_failed_request(request, str(e), queue)
                     continue
+            
+            # Publish CloudWatch metrics if available
+            if boto3 and processed_count > 0:
+                try:
+                    publish_cloudwatch_metrics(processed_count, len(errors), queue)
+                except Exception as e:
+                    logger.warning(f"Failed to publish CloudWatch metrics: {str(e)}")
                     
         finally:
             # Clean up database connections
@@ -157,12 +169,13 @@ def handle_failed_request(request, error_message: str, queue) -> None:
         # Could implement notification to ops team here
 
 
-async def process_refresh_request(request) -> str:
+async def process_refresh_request(request, queue=None) -> str:
     """
     Process a single refresh request by calling the appropriate service function.
     
     Args:
         request: RefreshRequest object from queue
+        queue: Queue instance for scheduling follow-up requests (optional)
         
     Returns:
         str: Success message with refresh details
@@ -185,6 +198,11 @@ async def process_refresh_request(request) -> str:
     elif request.type == RefreshType.WAR:
         data = await refresh_war_from_api(request.tag)
         war_state = data.get('state', 'unknown')
+        
+        # Queue follow-up refreshes if war is active and queue is available
+        if queue and should_prioritize_war_data(data):
+            queue_follow_up_refresh(request.tag, data, queue)
+        
         return f"Refreshed war data for clan {request.tag} (state: {war_state})"
     
     else:
@@ -207,6 +225,7 @@ def health_check_handler(event, context):
             lambda_db_setup()
             
             # Test database connection
+            from coclib.db_session import get_db_session
             with get_db_session() as session:
                 session.execute("SELECT 1")
                 
@@ -238,3 +257,131 @@ def health_check_handler(event, context):
                 'timestamp': time.time()
             })
         }
+
+
+def publish_cloudwatch_metrics(processed_count: int, error_count: int, queue) -> None:
+    """
+    Publish custom metrics to CloudWatch for monitoring.
+    
+    Args:
+        processed_count: Number of requests processed in this run
+        error_count: Number of errors encountered
+        queue: Queue instance for getting current stats
+    """
+    if not boto3:
+        logger.warning("boto3 not available, skipping CloudWatch metrics")
+        return
+        
+    try:
+        cloudwatch = boto3.client('cloudwatch')
+        
+        # Get current queue size
+        queue_stats = queue.get_queue_stats()
+        queue_size = sum(queue_stats.values())
+        
+        # Prepare metrics data
+        metrics = [
+            {
+                'MetricName': 'ProcessedRequests',
+                'Value': processed_count,
+                'Unit': 'Count',
+                'Dimensions': [
+                    {
+                        'Name': 'Environment',
+                        'Value': os.environ.get('ENVIRONMENT', 'unknown')
+                    }
+                ]
+            },
+            {
+                'MetricName': 'ProcessingErrors',
+                'Value': error_count,
+                'Unit': 'Count',
+                'Dimensions': [
+                    {
+                        'Name': 'Environment', 
+                        'Value': os.environ.get('ENVIRONMENT', 'unknown')
+                    }
+                ]
+            },
+            {
+                'MetricName': 'QueueSize',
+                'Value': queue_size,
+                'Unit': 'Count',
+                'Dimensions': [
+                    {
+                        'Name': 'Environment',
+                        'Value': os.environ.get('ENVIRONMENT', 'unknown')
+                    }
+                ]
+            }
+        ]
+        
+        # Add priority-specific queue metrics
+        for priority, count in queue_stats.items():
+            metrics.append({
+                'MetricName': f'QueueSize_{priority.title()}Priority',
+                'Value': count,
+                'Unit': 'Count',
+                'Dimensions': [
+                    {
+                        'Name': 'Environment',
+                        'Value': os.environ.get('ENVIRONMENT', 'unknown')
+                    }
+                ]
+            })
+        
+        # Publish metrics
+        cloudwatch.put_metric_data(
+            Namespace='CoC/RefreshWorker',
+            MetricData=metrics
+        )
+        
+        logger.info(f"Published CloudWatch metrics: {processed_count} processed, {error_count} errors, {queue_size} queued")
+        
+    except Exception as e:
+        logger.error(f"Failed to publish CloudWatch metrics: {str(e)}")
+
+
+def should_prioritize_war_data(war_data: dict) -> bool:
+    """
+    Determine if war data should get critical priority based on war state.
+    
+    Args:
+        war_data: War data from CoC API
+        
+    Returns:
+        bool: True if war data should get critical priority
+    """
+    war_state = war_data.get('state', '').lower()
+    return war_state in ['preparation', 'inwar', 'warended']
+
+
+def queue_follow_up_refresh(clan_tag: str, war_data: dict, queue) -> None:
+    """
+    Queue follow-up refreshes based on war state (context-aware priority).
+    
+    Args:
+        clan_tag: Clan tag that was refreshed
+        war_data: War data that was just refreshed
+        queue: Queue instance for scheduling follow-ups
+    """
+    try:
+        from coclib.queue.refresh_queue import RefreshRequest, RefreshType, RefreshPriority
+        from datetime import datetime, timedelta
+        import uuid
+        
+        if should_prioritize_war_data(war_data):
+            # During active war, queue clan refresh with critical priority to get member updates
+            follow_up_request = RefreshRequest(
+                id=f"war-followup-{uuid.uuid4()}",
+                type=RefreshType.CLAN,
+                tag=clan_tag,
+                priority=RefreshPriority.CRITICAL,
+                requested_at=datetime.utcnow() + timedelta(minutes=2)  # Queue for 2 minutes later
+            )
+            
+            queue.queue_refresh(follow_up_request)
+            logger.info(f"Queued critical clan refresh follow-up for {clan_tag} due to active war")
+            
+    except Exception as e:
+        logger.error(f"Failed to queue follow-up refresh for {clan_tag}: {str(e)}")
