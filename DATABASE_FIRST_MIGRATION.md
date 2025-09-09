@@ -59,7 +59,6 @@ nox -s lint tests
 ```bash
 # Update production environment variables
 SNAPSHOT_MAX_AGE=600  # 10 minutes staleness threshold
-COC_API_TOKEN=<production_token>  # Ensure API key is available for background refresh
 
 # Optional: Disable automatic refresh queueing in production initially
 DISABLE_AUTO_REFRESH_QUEUE=true  # Can enable later
