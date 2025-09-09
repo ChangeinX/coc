@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, ScrollView, Dimensions } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { useThemedStyles, useTheme } from '@theme/index';
 import { useHaptics } from '@utils/index';
@@ -28,6 +28,7 @@ export function SwipeableSortBar({
   
   const translateX = useRef(new Animated.Value(0)).current;
   const lastOffset = useRef(0);
+  const screenWidth = Dimensions.get('window').width;
 
   const handleGestureEvent = Animated.event(
     [{ nativeEvent: { translationX: translateX } }],
@@ -65,6 +66,12 @@ export function SwipeableSortBar({
     }
   };
 
+  // Calculate if all options fit on one line
+  const estimatedOptionWidth = 100; // Roughly 80 minWidth + padding + gap
+  const totalOptionsWidth = options.length * estimatedOptionWidth;
+  const availableWidth = screenWidth - (theme.spacing.base * 4); // Account for container padding
+  const shouldUseScrollView = totalOptionsWidth > availableWidth;
+
   return (
     <View style={{
       backgroundColor: theme.colors.surface,
@@ -81,55 +88,108 @@ export function SwipeableSortBar({
         Swipe to change sort • Tap to reverse
       </Text>
       
-      <PanGestureHandler
-        onGestureEvent={handleGestureEvent}
-        onHandlerStateChange={handleGestureStateChange}
-        activeOffsetX={[-10, 10]}
-      >
-        <Animated.View style={{
-          transform: [{ translateX }],
-        }}>
-          <View style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
+      {shouldUseScrollView ? (
+        // Use ScrollView for many options
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: theme.spacing.sm,
             gap: theme.spacing.sm,
-            justifyContent: 'center',
+          }}
+          style={{ flexGrow: 0 }}
+        >
+          {options.map((option) => (
+            <TouchableOpacity
+              key={option.key}
+              style={{
+                paddingHorizontal: theme.spacing.md,
+                paddingVertical: theme.spacing.sm,
+                borderRadius: theme.borderRadius.base,
+                borderWidth: 1,
+                borderColor: activeSort === option.key 
+                  ? theme.colors.primary 
+                  : theme.colors.border,
+                backgroundColor: activeSort === option.key 
+                  ? theme.colors.primaryMuted 
+                  : theme.colors.surface,
+                minWidth: 80,
+                alignItems: 'center',
+              }}
+              onPress={() => onSortChange(option.key)}
+            >
+              <Text style={{
+                fontSize: theme.typography.fontSize.sm,
+                color: activeSort === option.key 
+                  ? theme.colors.primary 
+                  : theme.colors.textSecondary,
+                fontWeight: activeSort === option.key 
+                  ? theme.typography.fontWeight.medium 
+                  : theme.typography.fontWeight.normal,
+              }}>
+                {option.label} {activeSort === option.key ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      ) : (
+        // Use gesture handler for fewer options
+        <PanGestureHandler
+          onGestureEvent={handleGestureEvent}
+          onHandlerStateChange={handleGestureStateChange}
+          activeOffsetX={[-10, 10]}
+        >
+          <Animated.View style={{
+            transform: [{ translateX }],
           }}>
-            {options.map((option) => (
-              <TouchableOpacity
-                key={option.key}
-                style={{
-                  paddingHorizontal: theme.spacing.md,
-                  paddingVertical: theme.spacing.sm,
-                  borderRadius: theme.borderRadius.base,
-                  borderWidth: 1,
-                  borderColor: activeSort === option.key 
-                    ? theme.colors.primary 
-                    : theme.colors.border,
-                  backgroundColor: activeSort === option.key 
-                    ? theme.colors.primaryMuted 
-                    : theme.colors.surface,
-                  minWidth: 80,
-                  alignItems: 'center',
-                }}
-                onPress={() => onSortChange(option.key)}
-              >
-                <Text style={{
-                  fontSize: theme.typography.fontSize.sm,
-                  color: activeSort === option.key 
-                    ? theme.colors.primary 
-                    : theme.colors.textSecondary,
-                  fontWeight: activeSort === option.key 
-                    ? theme.typography.fontWeight.medium 
-                    : theme.typography.fontWeight.normal,
-                }}>
-                  {option.label} {activeSort === option.key ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Animated.View>
-      </PanGestureHandler>
+            <View style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: theme.spacing.sm,
+              justifyContent: 'center',
+              maxHeight: 100, // Prevent excessive height
+            }}>
+              {options.map((option) => (
+                <TouchableOpacity
+                  key={option.key}
+                  style={{
+                    paddingHorizontal: theme.spacing.md,
+                    paddingVertical: theme.spacing.sm,
+                    borderRadius: theme.borderRadius.base,
+                    borderWidth: 1,
+                    borderColor: activeSort === option.key 
+                      ? theme.colors.primary 
+                      : theme.colors.border,
+                    backgroundColor: activeSort === option.key 
+                      ? theme.colors.primaryMuted 
+                      : theme.colors.surface,
+                    minWidth: 80,
+                    maxWidth: availableWidth / 3, // Prevent options from being too wide
+                    alignItems: 'center',
+                  }}
+                  onPress={() => onSortChange(option.key)}
+                >
+                  <Text 
+                    style={{
+                      fontSize: theme.typography.fontSize.sm,
+                      color: activeSort === option.key 
+                        ? theme.colors.primary 
+                        : theme.colors.textSecondary,
+                      fontWeight: activeSort === option.key 
+                        ? theme.typography.fontWeight.medium 
+                        : theme.typography.fontWeight.normal,
+                    }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  >
+                    {option.label} {activeSort === option.key ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Animated.View>
+        </PanGestureHandler>
+      )}
     </View>
   );
 }
