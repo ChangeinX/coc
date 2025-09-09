@@ -1,0 +1,241 @@
+"""
+AWS Lambda function for processing CoC data refresh requests from Redis queue.
+
+This worker processes refresh requests from the Redis queue and calls the appropriate
+CoC API refresh functions to keep the database up-to-date with fresh data.
+"""
+
+import asyncio
+import json
+import logging
+import os
+import sys
+import time
+from typing import Optional
+
+# Add coclib to path for Lambda environment
+sys.path.append('/opt/python')
+sys.path.append('.')
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+
+def lambda_handler(event, context):
+    """
+    Main Lambda handler that processes refresh requests from Redis queue.
+    
+    Args:
+        event: Lambda event (can be CloudWatch Events trigger or manual invoke)
+        context: Lambda context object
+        
+    Returns:
+        dict: Response with processed request count and any errors
+    """
+    try:
+        # Import here to handle potential import errors gracefully
+        from coclib.queue.queue_factory import create_refresh_queue
+        from coclib.services import clan_service, player_service, war_service
+        from coclib.db_session import lambda_db_setup, lambda_db_cleanup
+        
+        # Initialize database for Lambda (no Flask dependency)
+        lambda_db_setup()
+        
+        processed_count = 0
+        errors = []
+        
+        try:
+            # Create Redis queue connection
+            queue = create_refresh_queue()
+            
+            # Process requests with rate limiting
+            start_time = time.time()
+            max_runtime = min(context.get_remaining_time_in_millis() / 1000 - 5, 300)  # Leave 5s buffer, max 5 min
+            # Use coclib rate limiting configuration to stay consistent with services
+            from coclib.config import Config
+            requests_per_second = min(Config.COC_REQS_PER_SEC, 30)  # Respect configured rate limit, max 30/sec for safety
+            
+            logger.info(f"Starting refresh worker, max runtime: {max_runtime}s")
+            
+            while time.time() - start_time < max_runtime:
+                # Get next request from queue
+                request = queue.get_next_request()
+                if not request:
+                    logger.info("No more requests in queue")
+                    break
+                
+                try:
+                    # Process the refresh request
+                    result = asyncio.run(process_refresh_request(request))
+                    processed_count += 1
+                    
+                    logger.info(f"Processed {request.type.value} refresh for {request.tag}: {result}")
+                    
+                    # Rate limiting - ensure we don't exceed API limits
+                    time.sleep(1.0 / requests_per_second)
+                    
+                except Exception as e:
+                    error_msg = f"Failed to process {request.type.value} refresh for {request.tag}: {str(e)}"
+                    logger.error(error_msg, exc_info=True)
+                    errors.append(error_msg)
+                    
+                    # Handle retry logic with exponential backoff
+                    handle_failed_request(request, str(e), queue)
+                    continue
+                    
+        finally:
+            # Clean up database connections
+            lambda_db_cleanup()
+
+        response = {
+            'statusCode': 200,
+            'body': json.dumps({
+                'processed_requests': processed_count,
+                'errors': errors,
+                'runtime_seconds': round(time.time() - start_time, 2)
+            })
+        }
+        
+        logger.info(f"Completed processing: {processed_count} requests, {len(errors)} errors")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Lambda handler failed: {str(e)}", exc_info=True)
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'error': str(e),
+                'processed_requests': 0
+            })
+        }
+
+
+def handle_failed_request(request, error_message: str, queue) -> None:
+    """
+    Handle failed refresh request with exponential backoff retry logic.
+    
+    Args:
+        request: The failed RefreshRequest object
+        error_message: Error message from the failure
+        queue: Queue instance for retry scheduling
+    """
+    from coclib.queue.refresh_queue import RefreshRequest, RefreshPriority
+    from datetime import datetime, timedelta
+    
+    # Increment retry count
+    request.retry_count = getattr(request, 'retry_count', 0) + 1
+    max_retries = 3
+    
+    # Check if we should retry
+    if request.retry_count <= max_retries:
+        # Exponential backoff: 2^retry_count minutes
+        delay_minutes = 2 ** request.retry_count
+        retry_time = datetime.utcnow() + timedelta(minutes=delay_minutes)
+        
+        # Lower priority for retries to avoid blocking fresh requests
+        retry_priority = RefreshPriority.LOW
+        
+        # Create retry request
+        retry_request = RefreshRequest(
+            id=f"{request.id}-retry-{request.retry_count}",
+            type=request.type,
+            tag=request.tag,
+            priority=retry_priority,
+            requested_at=retry_time,
+            retry_count=request.retry_count
+        )
+        
+        try:
+            queue.queue_refresh(retry_request)
+            logger.info(f"Scheduled retry {request.retry_count}/{max_retries} for {request.tag} in {delay_minutes} minutes")
+        except Exception as e:
+            logger.error(f"Failed to schedule retry for {request.tag}: {str(e)}")
+    else:
+        # Max retries exceeded - log as permanent failure
+        logger.error(f"Permanent failure for {request.type.value} refresh {request.tag} after {max_retries} retries: {error_message}")
+        
+        # TODO: Send to dead letter queue or alerting system
+        # Could implement notification to ops team here
+
+
+async def process_refresh_request(request) -> str:
+    """
+    Process a single refresh request by calling the appropriate service function.
+    
+    Args:
+        request: RefreshRequest object from queue
+        
+    Returns:
+        str: Success message with refresh details
+        
+    Raises:
+        Exception: If refresh fails
+    """
+    from coclib.services import clan_service, player_service, war_service
+    from coclib.queue.refresh_queue import RefreshType
+    from coclib.lambda_compat import lambda_db_context
+    
+    # Use compatibility layer for Flask-SQLAlchemy services
+    with lambda_db_context():
+        if request.type == RefreshType.CLAN:
+            data = await clan_service.refresh_clan_from_api(request.tag)
+            return f"Refreshed clan {data.get('name', request.tag)} with {data.get('members', 0)} members"
+        
+        elif request.type == RefreshType.PLAYER:
+            data = await player_service.refresh_player_from_api(request.tag)
+            return f"Refreshed player {data.get('name', request.tag)} (level {data.get('expLevel', '?')})"
+        
+        elif request.type == RefreshType.WAR:
+            data = await war_service.refresh_war_from_api(request.tag)
+            war_state = data.get('state', 'unknown')
+            return f"Refreshed war data for clan {request.tag} (state: {war_state})"
+        
+        else:
+            raise ValueError(f"Unknown refresh type: {request.type}")
+
+
+def health_check_handler(event, context):
+    """
+    Simple health check endpoint for monitoring.
+    
+    Returns:
+        dict: Health status response
+    """
+    try:
+        from coclib.queue.queue_factory import create_refresh_queue
+        from coclib.db_session import lambda_db_setup, lambda_db_cleanup, get_db_session
+        
+        # Test database connection
+        lambda_db_setup()
+        try:
+            with get_db_session() as session:
+                from sqlalchemy import text
+                session.execute(text("SELECT 1"))
+                
+            # Test Redis connection
+            queue = create_refresh_queue()
+            queue_stats = queue.get_queue_stats()
+            queue_size = sum(queue_stats.values())  # Sum all priority levels
+            
+            return {
+                'statusCode': 200,
+                'body': json.dumps({
+                    'status': 'healthy',
+                    'queue_size': queue_size,
+                    'database': 'connected',
+                    'timestamp': time.time()
+                })
+            }
+        finally:
+            lambda_db_cleanup()
+            
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}", exc_info=True)
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'status': 'unhealthy',
+                'error': str(e),
+                'timestamp': time.time()
+            })
+        }

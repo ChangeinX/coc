@@ -100,7 +100,8 @@ VITE_API_URL=http://localhost:8000  # Backend URL for dev
 COOKIE_SECURE=false          # Disable secure flag for localhost
 SESSION_MAX_AGE=2592000      # Session lifetime in seconds
 DATABASE_URL=                # PostgreSQL connection string
-COC_API_TOKEN=               # Clash of Clans API token (required)
+COC_EMAIL=                   # Clash of Clans developer portal email (required)
+COC_PASSWORD=                # Clash of Clans developer portal password (required)
 ```
 
 **Vite Proxy Configuration:**

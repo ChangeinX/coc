@@ -104,7 +104,7 @@ DISABLE_AUTO_REFRESH_QUEUE=true  # Can enable later
 
 #### 1. Lambda Worker Implementation
 ```python
-# Create refresh-worker/ directory
+# Create lambdas/refresh-worker/ directory
 # - lambda_function.py: Process refresh requests
 # - requirements.txt: Dependencies (coclib, boto3)
 # - deploy.yml: CloudFormation/Terraform
@@ -225,7 +225,7 @@ if war_state in ["preparation", "inWar"]:
 
 ### API Rate Limiting
 - **Monitor usage**: Track background refresh API consumption
-- **Multiple keys**: Consider multiple CoC API keys for higher throughput
+- **Multiple keys**: coclib already supports multiple CoC API keys for higher throughput
 - **Graceful degradation**: Handle API rate limit errors gracefully
 
 ### Mobile App Compatibility

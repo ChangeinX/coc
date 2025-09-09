@@ -20,6 +20,7 @@ env:
   PUBLIC_HOME_BUCKET: ${{ secrets.PUBLIC_HOME_BUCKET }}
   APP_DISTRIBUTION_ID: ${{ secrets.APP_DISTRIBUTION_ID }}
   PUBLIC_HOME_DISTRIBUTION_ID: ${{ secrets.PUBLIC_HOME_DISTRIBUTION_ID }}
+  AWS_LAMBDA_ARTIFACTS_BUCKET: ${{ secrets.AWS_LAMBDA_ARTIFACTS_BUCKET }}
   APP_SERVICE: ${{ secrets.APP_SERVICE }}
   WORKER_SERVICE: ${{ secrets.WORKER_SERVICE }}
   MESSAGES_SERVICE: ${{ secrets.MESSAGES_SERVICE }}
@@ -43,6 +44,7 @@ jobs:
       user_any_changed: ${{ steps.changes.outputs.user_any_changed }}
       notifications_any_changed: ${{ steps.changes.outputs.notifications_any_changed }}
       recruiting_any_changed: ${{ steps.changes.outputs.recruiting_any_changed }}
+      lambda_refresh_worker_any_changed: ${{ steps.changes.outputs.lambda_refresh_worker_any_changed }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -69,6 +71,9 @@ jobs:
               - notifications/**
             recruiting:
               - recruiting/**
+            lambda_refresh_worker:
+              - lambdas/refresh-worker/**
+              - coclib/**
 
   app:
     needs: detect
@@ -139,6 +144,47 @@ jobs:
       - name: Invalidate public home CloudFront cache
         run: |
           aws cloudfront create-invalidation --distribution-id $PUBLIC_HOME_DISTRIBUTION_ID --paths "/*"
+
+  lambda-refresh-worker:
+    needs: detect
+    if: needs.detect.outputs.lambda_refresh_worker_any_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build Lambda deployment package
+        run: |
+          cd lambdas/refresh-worker
+          chmod +x package-lambda.sh
+          ./package-lambda.sh
+
+      - name: Upload Lambda artifact to S3
+        run: |
+          ARTIFACT_NAME="refresh-worker-${{ github.sha }}.zip"
+          cd lambdas/refresh-worker
+          aws s3 cp coc-refresh-worker-lambda.zip s3://$AWS_LAMBDA_ARTIFACTS_BUCKET/$ARTIFACT_NAME
+          echo "Lambda artifact uploaded: s3://$AWS_LAMBDA_ARTIFACTS_BUCKET/$ARTIFACT_NAME"
+
+      - name: Upload artifact for OpenTofu deployment
+        uses: actions/upload-artifact@v3
+        with:
+          name: refresh-worker-lambda-${{ github.sha }}
+          path: lambdas/refresh-worker/coc-refresh-worker-lambda.zip
+          retention-days: 30
 
   build-push:
     needs: detect
