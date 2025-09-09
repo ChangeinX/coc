@@ -1,5 +1,6 @@
 package com.clanboards.users.config;
 
+import com.clanboards.users.repository.SessionRepository;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.security.KeyFactory;
@@ -15,6 +16,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 @Configuration
 public class KeyConfig {
@@ -63,6 +65,13 @@ public class KeyConfig {
       kp = generateRsaKeyPair();
     }
     return new KeyHolder(kp, props.getKid());
+  }
+
+  @Bean
+  @Order(1)
+  public BearerTokenFilter bearerTokenFilter(
+      KeyHolder keyHolder, OidcProperties oidcProperties, SessionRepository sessionRepository) {
+    return new BearerTokenFilter(keyHolder, oidcProperties, sessionRepository);
   }
 
   public static class KeyHolder {

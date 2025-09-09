@@ -15,10 +15,8 @@ import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component
 @Order(1) // Execute before SessionFilter (which doesn't have explicit order)
 public class BearerTokenFilter extends OncePerRequestFilter {
   private static final Logger logger = LoggerFactory.getLogger(BearerTokenFilter.class);
