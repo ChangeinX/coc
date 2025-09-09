@@ -35,16 +35,15 @@ def lambda_handler(event, context):
     try:
         # Import here to handle potential import errors gracefully
         from coclib.queue.queue_factory import create_refresh_queue
-        from coclib.services import clan_service, player_service, war_service
         from coclib.db_session import lambda_db_setup, lambda_db_cleanup
-        
-        # Initialize database for Lambda (no Flask dependency)
-        lambda_db_setup()
         
         processed_count = 0
         errors = []
         
         try:
+            # Setup database connections for Lambda environment
+            lambda_db_setup()
+            
             # Create Redis queue connection
             queue = create_refresh_queue()
             
@@ -171,27 +170,25 @@ async def process_refresh_request(request) -> str:
     Raises:
         Exception: If refresh fails
     """
-    from coclib.services import clan_service, player_service, war_service
+    from coclib.lambda_services import refresh_clan_from_api, refresh_player_from_api, refresh_war_from_api
     from coclib.queue.refresh_queue import RefreshType
-    from coclib.lambda_compat import lambda_db_context
     
-    # Use compatibility layer for Flask-SQLAlchemy services
-    with lambda_db_context():
-        if request.type == RefreshType.CLAN:
-            data = await clan_service.refresh_clan_from_api(request.tag)
-            return f"Refreshed clan {data.get('name', request.tag)} with {data.get('members', 0)} members"
-        
-        elif request.type == RefreshType.PLAYER:
-            data = await player_service.refresh_player_from_api(request.tag)
-            return f"Refreshed player {data.get('name', request.tag)} (level {data.get('expLevel', '?')})"
-        
-        elif request.type == RefreshType.WAR:
-            data = await war_service.refresh_war_from_api(request.tag)
-            war_state = data.get('state', 'unknown')
-            return f"Refreshed war data for clan {request.tag} (state: {war_state})"
-        
-        else:
-            raise ValueError(f"Unknown refresh type: {request.type}")
+    # Use direct SQL operations - no SQLAlchemy compatibility layer needed
+    if request.type == RefreshType.CLAN:
+        data = await refresh_clan_from_api(request.tag)
+        return f"Refreshed clan {data.get('name', request.tag)} with {data.get('members', 0)} members"
+    
+    elif request.type == RefreshType.PLAYER:
+        data = await refresh_player_from_api(request.tag)
+        return f"Refreshed player {data.get('name', request.tag)} (level {data.get('expLevel', '?')})"
+    
+    elif request.type == RefreshType.WAR:
+        data = await refresh_war_from_api(request.tag)
+        war_state = data.get('state', 'unknown')
+        return f"Refreshed war data for clan {request.tag} (state: {war_state})"
+    
+    else:
+        raise ValueError(f"Unknown refresh type: {request.type}")
 
 
 def health_check_handler(event, context):
@@ -205,12 +202,13 @@ def health_check_handler(event, context):
         from coclib.queue.queue_factory import create_refresh_queue
         from coclib.db_session import lambda_db_setup, lambda_db_cleanup, get_db_session
         
-        # Test database connection
-        lambda_db_setup()
         try:
+            # Setup database connections
+            lambda_db_setup()
+            
+            # Test database connection
             with get_db_session() as session:
-                from sqlalchemy import text
-                session.execute(text("SELECT 1"))
+                session.execute("SELECT 1")
                 
             # Test Redis connection
             queue = create_refresh_queue()
@@ -227,6 +225,7 @@ def health_check_handler(event, context):
                 })
             }
         finally:
+            # Clean up database connections
             lambda_db_cleanup()
             
     except Exception as e:
