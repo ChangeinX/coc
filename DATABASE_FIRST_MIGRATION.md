@@ -30,6 +30,31 @@ This document outlines the successful migration from API-blocking to database-fi
 - **Priority levels**: Critical (5min), High (30min), Medium (2h), Low (8h)
 - **Smart staleness detection**: Automatic queueing of stale data requests
 
+## ✅ Phase 2.1: Redis Queue Implementation - COMPLETED
+
+### Redis-Backed Production Queue System
+- **Redis Queue Implementation**: `coclib/queue/redis_queue.py` - Production-ready Redis-backed queue
+- **Queue Persistence**: `coclib/queue/queue_persistence.py` - Backup, restore, and migration functionality  
+- **Queue Factory**: `coclib/queue/queue_factory.py` - Smart factory pattern for queue creation
+- **Environment Configuration**: Updated `coclib/config.py` with Redis settings
+- **TDD Test Coverage**: 11/11 Redis queue tests passing - comprehensive test suite
+
+### Key Features Implemented
+- **Priority-based queuing** using Redis sorted sets
+- **Request persistence** across Redis restarts
+- **Automatic failover** to in-memory queue if Redis unavailable
+- **Health monitoring** and connection management
+- **Backup and recovery** with validation and cleanup
+- **Configuration-driven** queue selection (Redis vs in-memory)
+
+### Environment Variables Added
+```bash
+REDIS_URL=redis://localhost:6379                    # Redis connection string
+QUEUE_BACKUP_DIR=/tmp/queue_backups                 # Backup storage location
+QUEUE_BACKUP_RETENTION_DAYS=7                       # Backup retention policy
+DISABLE_AUTO_REFRESH_QUEUE=false                    # Emergency disable flag
+```
+
 ## 🚀 Immediate Production Benefits
 
 ### Performance
@@ -79,7 +104,7 @@ DISABLE_AUTO_REFRESH_QUEUE=true  # Can enable later
 
 #### 1. Lambda Worker Implementation
 ```python
-# Create refresh-worker/ directory
+# Create lambdas/refresh-worker/ directory
 # - lambda_function.py: Process refresh requests
 # - requirements.txt: Dependencies (coclib, boto3)
 # - deploy.yml: CloudFormation/Terraform
@@ -200,7 +225,7 @@ if war_state in ["preparation", "inWar"]:
 
 ### API Rate Limiting
 - **Monitor usage**: Track background refresh API consumption
-- **Multiple keys**: Consider multiple CoC API keys for higher throughput
+- **Multiple keys**: coclib already supports multiple CoC API keys for higher throughput
 - **Graceful degradation**: Handle API rate limit errors gracefully
 
 ### Mobile App Compatibility

@@ -221,3 +221,7 @@ front-end/mobile/.bundle/
 # Android
 front-end/mobile/android/app/debug.keystore
 front-end/mobile/android/gradle/wrapper/gradle-wrapper.jar
+
+# Lambda deployment artifacts
+lambdas/**/*.zip
+lambdas/**/package/

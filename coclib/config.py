@@ -48,6 +48,14 @@ class Config:
     # How long a cached snapshot remains fresh (seconds)
     SNAPSHOT_MAX_AGE = int(os.getenv("SNAPSHOT_MAX_AGE", "600"))
 
+    # Redis Queue Configuration
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+    QUEUE_BACKUP_DIR = os.getenv("QUEUE_BACKUP_DIR", "/tmp/queue_backups")
+    QUEUE_BACKUP_RETENTION_DAYS = int(os.getenv("QUEUE_BACKUP_RETENTION_DAYS", "7"))
+    
+    # Auto-refresh queue settings
+    DISABLE_AUTO_REFRESH_QUEUE = os.getenv("DISABLE_AUTO_REFRESH_QUEUE", "false").lower() == "true"
+
     LEGAL_VERSION = os.getenv("LEGAL_VERSION", "20250729")
 
     PORT = 80

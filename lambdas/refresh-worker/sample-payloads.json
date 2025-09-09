@@ -1,0 +1,144 @@
+{
+  "cloudwatch_scheduled_event": {
+    "description": "CloudWatch Events scheduled trigger (every 2 minutes)",
+    "payload": {
+      "id": "cdc73f9d-aea9-11e3-9d5a-835b769c0d9c",
+      "detail-type": "Scheduled Event",
+      "source": "aws.events",
+      "account": "123456789012",
+      "time": "1970-01-01T00:00:00Z",
+      "region": "us-east-1",
+      "resources": [
+        "arn:aws:events:us-east-1:123456789012:rule/coc-refresh-worker-schedule"
+      ],
+      "detail": {}
+    },
+    "usage": "Automatic trigger every 2 minutes to process refresh queue"
+  },
+
+  "manual_trigger": {
+    "description": "Manual trigger for testing or one-off processing",
+    "payload": {
+      "source": "manual",
+      "detail": {
+        "trigger_type": "manual",
+        "requested_by": "devops-team",
+        "max_requests": 50,
+        "priority_filter": "HIGH"
+      }
+    },
+    "usage": "POST to API Gateway endpoint or direct Lambda invoke for manual processing"
+  },
+
+  "api_gateway_manual": {
+    "description": "API Gateway POST request payload for manual trigger",
+    "payload": {
+      "resource": "/refresh",
+      "path": "/refresh",
+      "httpMethod": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "x-api-key": "your-api-key-here"
+      },
+      "multiValueHeaders": {},
+      "queryStringParameters": null,
+      "multiValueQueryStringParameters": null,
+      "pathParameters": null,
+      "stageVariables": null,
+      "requestContext": {
+        "resourceId": "123456",
+        "resourcePath": "/refresh",
+        "httpMethod": "POST",
+        "extendedRequestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
+        "requestTime": "09/Apr/2015:12:34:56 +0000",
+        "path": "/Prod/refresh",
+        "accountId": "123456789012",
+        "protocol": "HTTP/1.1",
+        "stage": "Prod",
+        "domainPrefix": "1234567890",
+        "requestTimeEpoch": 1428582896000,
+        "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
+        "identity": {
+          "cognitoIdentityPoolId": null,
+          "accountId": null,
+          "cognitoIdentityId": null,
+          "caller": null,
+          "accessKey": null,
+          "sourceIp": "127.0.0.1",
+          "cognitoAuthenticationType": null,
+          "cognitoAuthenticationProvider": null,
+          "userArn": null,
+          "userAgent": "Custom User Agent String",
+          "user": null
+        },
+        "domainName": "1234567890.execute-api.us-east-1.amazonaws.com",
+        "apiId": "1234567890"
+      },
+      "body": "{\"force_process\": true, \"max_runtime\": 240}",
+      "isBase64Encoded": false
+    },
+    "usage": "Simulate API Gateway request to manual trigger endpoint"
+  },
+
+  "health_check": {
+    "description": "Health check request payload",
+    "payload": {
+      "resource": "/health",
+      "path": "/health", 
+      "httpMethod": "GET",
+      "headers": {},
+      "multiValueHeaders": {},
+      "queryStringParameters": null,
+      "multiValueQueryStringParameters": null,
+      "pathParameters": null,
+      "stageVariables": null,
+      "requestContext": {
+        "resourceId": "123456",
+        "resourcePath": "/health",
+        "httpMethod": "GET",
+        "extendedRequestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
+        "requestTime": "09/Apr/2015:12:34:56 +0000",
+        "path": "/Prod/health",
+        "accountId": "123456789012",
+        "protocol": "HTTP/1.1",
+        "stage": "Prod",
+        "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
+        "identity": {
+          "sourceIp": "127.0.0.1",
+          "userAgent": "Custom User Agent String"
+        }
+      },
+      "body": null,
+      "isBase64Encoded": false
+    },
+    "usage": "Test health check endpoint - use health_check_handler"
+  },
+
+  "testing_context": {
+    "description": "Lambda context object for testing (Python)",
+    "context_properties": {
+      "function_name": "coc-refresh-worker",
+      "function_version": "$LATEST",
+      "invoked_function_arn": "arn:aws:lambda:us-east-1:123456789012:function:coc-refresh-worker",
+      "memory_limit_in_mb": "512",
+      "remaining_time_in_millis": 300000,
+      "log_group_name": "/aws/lambda/coc-refresh-worker",
+      "log_stream_name": "2024/01/01/[$LATEST]abcd1234",
+      "aws_request_id": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef"
+    },
+    "usage": "Create mock context object with these properties for testing"
+  },
+
+  "test_commands": {
+    "description": "CLI commands for testing the Lambda function",
+    "aws_cli": {
+      "invoke_lambda": "aws lambda invoke --function-name coc-refresh-worker --payload file://sample-payloads.json response.json",
+      "test_health": "aws lambda invoke --function-name coc-refresh-worker-health --payload '{\"httpMethod\":\"GET\",\"path\":\"/health\"}' response.json",
+      "logs": "aws logs tail /aws/lambda/coc-refresh-worker --follow"
+    },
+    "local_testing": {
+      "python_script": "python3 -c \"import lambda_function; import json; from unittest.mock import Mock; context = Mock(); context.get_remaining_time_in_millis = lambda: 60000; result = lambda_function.lambda_handler({}, context); print(json.dumps(result, indent=2))\""
+    },
+    "usage": "Use these commands to test the deployed Lambda function"
+  }
+}

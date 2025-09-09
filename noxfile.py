@@ -20,7 +20,7 @@ def lint(session: nox.Session) -> None:
 
 @nox.session(python="3.11")
 def tests(session: nox.Session) -> None:
-    session.install("pytest")
+    session.install("pytest", "pytest-asyncio")
     session.install("-r", "back-end/requirements.txt")
     session.run("pytest", "-q")
     session.chdir("messages-java")
