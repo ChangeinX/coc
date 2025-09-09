@@ -5,7 +5,7 @@ from pathlib import Path
 def lint(session: nox.Session) -> None:
     session.install("ruff")
     session.run("ruff", "check", "back-end", "coclib", "db")
-    for project in ("messages-java", "user_service", "notifications", "recruiting"):
+    for project in ("messages-java", "user_service", "notifications", "recruiting", "clash-data"):
         # Ensure recruiting has a wrapper JAR (it's missing in the repo).
         if project == "recruiting":
             wrapper_jar = Path("recruiting/gradle/wrapper/gradle-wrapper.jar")
@@ -37,6 +37,9 @@ def tests(session: nox.Session) -> None:
     if not wrapper_jar.exists():
         session.run("./messages-java/gradlew", "-p", "recruiting", "wrapper", external=True)
     session.chdir("recruiting")
+    session.run("./gradlew", "--no-daemon", "test", external=True)
+    session.chdir("..")
+    session.chdir("clash-data")
     session.run("./gradlew", "--no-daemon", "test", external=True)
     session.chdir("..")
     session.run("npm", "--prefix", "front-end/app", "install", external=True)
