@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.clanboards.users.exception.InvalidRequestException;
+import com.clanboards.users.exception.ResourceNotFoundException;
+import com.clanboards.users.exception.UnauthorizedException;
+import com.clanboards.users.exception.ValidationException;
 import com.clanboards.users.model.User;
 import com.clanboards.users.model.UserProfile;
 import com.clanboards.users.repository.UserRepository;
@@ -64,9 +66,7 @@ class UserControllerTest {
   void getMeReturns404WhenUserNotFound() {
     when(userRepository.findById(123L)).thenReturn(Optional.empty());
 
-    ResponseEntity<Map<String, Object>> response = controller.getMe(request);
-
-    assertEquals(404, response.getStatusCode().value());
+    assertThrows(ResourceNotFoundException.class, () -> controller.getMe(request));
   }
 
   @Test
@@ -83,9 +83,8 @@ class UserControllerTest {
   @Test
   void setPlayerTagReturns400ForEmptyTag() {
     Map<String, String> payload = Map.of("player_tag", "");
-    ResponseEntity<Map<String, String>> response = controller.setPlayerTag(request, payload);
 
-    assertEquals(400, response.getStatusCode().value());
+    assertThrows(ValidationException.class, () -> controller.setPlayerTag(request, payload));
   }
 
   @Test
@@ -210,8 +209,8 @@ class UserControllerTest {
   void allEndpointsThrowWhenNoUserId() {
     when(request.getAttribute("userId")).thenReturn(null);
 
-    assertThrows(InvalidRequestException.class, () -> controller.getMe(request));
-    assertThrows(InvalidRequestException.class, () -> controller.getProfile(request));
-    assertThrows(InvalidRequestException.class, () -> controller.setPlayerTag(request, Map.of()));
+    assertThrows(UnauthorizedException.class, () -> controller.getMe(request));
+    assertThrows(UnauthorizedException.class, () -> controller.getProfile(request));
+    assertThrows(UnauthorizedException.class, () -> controller.setPlayerTag(request, Map.of()));
   }
 }

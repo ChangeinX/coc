@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { tokenStorage, TokenBundle } from '@services/storage/secureStorage';
-import { apiFetch } from '@services/apiClient';
+import { apiFetch, ApiError } from '@services/apiClient';
 
 type UserProfile = {
   id: string;
@@ -38,7 +38,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       try {
         await get().loadUserProfile();
       } catch (error) {
-        console.error('Failed to load user profile:', error);
+        if (error instanceof ApiError && error.isUnauthorized) {
+          // Tokens might be invalid, clear them
+          console.warn('Initial profile load failed - unauthorized, clearing session');
+          await tokenStorage.clear();
+          set({ tokens: null, user: null, isAuthenticated: false, hasPlayerTag: false });
+        } else {
+          console.error('Failed to load user profile:', error);
+        }
       }
     } else {
       await tokenStorage.clear();
@@ -54,7 +61,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         hasPlayerTag: !!user.player_tag 
       });
     } catch (error) {
-      console.error('Failed to load user profile:', error);
+      if (error instanceof ApiError) {
+        if (error.isUnauthorized) {
+          console.warn('User profile load failed - unauthorized, clearing session');
+          await get().setTokens(null);
+          return;
+        }
+        console.error(`Failed to load user profile [${error.errorCode}]: ${error.userMessage}`);
+      } else {
+        console.error('Failed to load user profile:', error);
+      }
       set({ user: null, hasPlayerTag: false });
     }
   },
@@ -76,8 +92,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       }
     } catch (error) {
-      console.error('Failed to set player tag:', error);
-      throw error;
+      if (error instanceof ApiError) {
+        if (error.isUnauthorized) {
+          console.warn('Player tag update failed - unauthorized, clearing session');
+          await get().setTokens(null);
+          throw new Error('Session expired. Please log in again.');
+        }
+        if (error.isValidationError) {
+          // Validation errors should be shown to user as-is
+          throw new Error(error.userMessage);
+        }
+        console.error(`Failed to set player tag [${error.errorCode}]: ${error.userMessage}`);
+        throw new Error(error.userMessage || 'Failed to update player tag');
+      } else {
+        console.error('Failed to set player tag:', error);
+        throw new Error('Failed to update player tag');
+      }
     }
   },
 
@@ -90,7 +120,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         try {
           await get().loadUserProfile();
         } catch (error) {
-          console.error('Failed to load user profile on init:', error);
+          if (error instanceof ApiError && error.isUnauthorized) {
+            // Session invalid during init, clear it
+            console.warn('Session invalid during initialization, clearing tokens');
+            await get().setTokens(null);
+          } else {
+            console.error('Failed to load user profile on init:', error);
+          }
         }
       } else {
         set({ isInitialized: true });

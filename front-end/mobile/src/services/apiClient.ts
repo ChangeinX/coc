@@ -8,6 +8,54 @@ export type RequestOptions = RequestInit & {
   signal?: AbortSignal;
 };
 
+export interface ApiErrorResponse {
+  error: string;
+  message: string;
+  details?: string;
+  field?: string;
+  path?: string;
+  timestamp?: string;
+}
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public errorResponse?: ApiErrorResponse
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+
+  get isUnauthorized(): boolean {
+    return this.status === 401;
+  }
+
+  get isForbidden(): boolean {
+    return this.status === 403;
+  }
+
+  get isValidationError(): boolean {
+    return this.status === 400;
+  }
+
+  get isNotFound(): boolean {
+    return this.status === 404;
+  }
+
+  get isServerError(): boolean {
+    return this.status >= 500;
+  }
+
+  get errorCode(): string | undefined {
+    return this.errorResponse?.error;
+  }
+
+  get userMessage(): string {
+    return this.errorResponse?.message || this.message;
+  }
+}
+
 async function withAuth(headers: Headers): Promise<Headers> {
   const tokens = await tokenStorage.get();
   if (tokens?.accessToken) headers.set('Authorization', `Bearer ${tokens.accessToken}`);
@@ -35,10 +83,29 @@ export async function apiFetch<T>(path: string, opts: RequestOptions = {}): Prom
     }
   }
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    const err = new Error(`HTTP ${res.status}: ${text || res.statusText}`) as Error & { status?: number };
-    err.status = res.status;
-    throw err;
+    let errorResponse: ApiErrorResponse | undefined;
+    let errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+    
+    try {
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await res.json();
+        if (errorData && typeof errorData === 'object') {
+          errorResponse = errorData as ApiErrorResponse;
+          errorMessage = errorResponse.message || errorMessage;
+        }
+      } else {
+        const text = await res.text().catch(() => '');
+        if (text) {
+          errorMessage = `HTTP ${res.status}: ${text}`;
+        }
+      }
+    } catch (parseError) {
+      // If we can't parse the error response, fall back to status text
+      console.warn('Failed to parse error response:', parseError);
+    }
+    
+    throw new ApiError(errorMessage, res.status, errorResponse);
   }
   if (res.status === 204) return undefined as unknown as T;
   return (await res.json()) as T;
