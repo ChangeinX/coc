@@ -29,6 +29,8 @@ env:
   NOTIFICATIONS_SERVICE: ${{ secrets.NOTIFICATIONS_SERVICE }}
   RECRUITING_REPOSITORY: ${{ secrets.RECRUITING_REPOSITORY }}
   RECRUITING_SERVICE: ${{ secrets.RECRUITING_SERVICE }}
+  CLASH_DATA_REPOSITORY: ${{ secrets.CLASH_DATA_REPOSITORY }}
+  CLASH_DATA_SERVICE: ${{ secrets.CLASH_DATA_SERVICE }}
   VITE_API_URL: ${{ secrets.VITE_API_URL }}
   VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
   VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
@@ -45,6 +47,7 @@ jobs:
       user_any_changed: ${{ steps.changes.outputs.user_any_changed }}
       notifications_any_changed: ${{ steps.changes.outputs.notifications_any_changed }}
       recruiting_any_changed: ${{ steps.changes.outputs.recruiting_any_changed }}
+      clash_data_any_changed: ${{ steps.changes.outputs.clash_data_any_changed }}
       lambda_refresh_worker_any_changed: ${{ steps.changes.outputs.lambda_refresh_worker_any_changed }}
     steps:
       - uses: actions/checkout@v3
@@ -72,6 +75,8 @@ jobs:
               - notifications/**
             recruiting:
               - recruiting/**
+            clash_data:
+              - clash-data/**
             lambda_refresh_worker:
               - lambdas/refresh-worker/**
               - coclib/**
@@ -223,11 +228,11 @@ jobs:
 
   build-push:
     needs: detect
-    if: needs.detect.outputs.worker_any_changed == 'true' || needs.detect.outputs.messages_any_changed == 'true' || needs.detect.outputs.user_any_changed == 'true' || needs.detect.outputs.notifications_any_changed == 'true' || needs.detect.outputs.recruiting_any_changed == 'true'
+    if: needs.detect.outputs.worker_any_changed == 'true' || needs.detect.outputs.messages_any_changed == 'true' || needs.detect.outputs.user_any_changed == 'true' || needs.detect.outputs.notifications_any_changed == 'true' || needs.detect.outputs.recruiting_any_changed == 'true' || needs.detect.outputs.clash_data_any_changed == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [worker, messages, user, notifications, recruiting]
+        service: [worker, messages, user, notifications, recruiting, clash-data]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -302,6 +307,13 @@ jobs:
               REPOSITORY=$RECRUITING_REPOSITORY
               SERVICE_NAME=$RECRUITING_SERVICE
               CHANGED=${{ needs.detect.outputs.recruiting_any_changed }}
+              ;;
+            clash-data)
+              DOCKERFILE=clash-data/Dockerfile
+              CONTEXT=clash-data
+              REPOSITORY=$CLASH_DATA_REPOSITORY
+              SERVICE_NAME=$CLASH_DATA_SERVICE
+              CHANGED=${{ needs.detect.outputs.clash_data_any_changed }}
               ;;
           esac
 

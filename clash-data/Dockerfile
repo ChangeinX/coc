@@ -12,5 +12,5 @@ FROM eclipse-temurin:21-jre-jammy
 WORKDIR /opt/app
 COPY --from=build /workspace/clash-data/build/libs/*.jar app.jar
 
-EXPOSE 8030
-ENTRYPOINT ["java","-jar","/opt/app/app.jar","--server.port=8030"]
+EXPOSE 8050
+ENTRYPOINT ["java","-jar","/opt/app/app.jar","--server.port=8050"]
