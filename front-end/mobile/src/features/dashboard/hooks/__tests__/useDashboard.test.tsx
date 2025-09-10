@@ -32,6 +32,12 @@ describe('useDashboard hooks', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    // Clear all timers and async operations
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
   describe('useDashboardData', () => {
     const mockDashboardData = {
       clan: {

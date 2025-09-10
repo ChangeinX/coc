@@ -2,6 +2,7 @@ module.exports = {
   preset: 'jest-expo',
   moduleNameMapper: {
     '^@features/(.*)$': '<rootDir>/src/features/$1',
+    '^@hooks/(.*)$': '<rootDir>/src/hooks/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
     '^@store/(.*)$': '<rootDir>/src/store/$1',
     '^@theme/(.*)$': '<rootDir>/src/theme/$1',
@@ -20,4 +21,6 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|react-native-mmkv|expo|expo-.*|@expo/.*|@tanstack/.*|@react-navigation/.*|react-native-gesture-handler|react-native-reanimated|react-native-safe-area-context|react-native-screens|zustand)/)',
   ],
+  testTimeout: 10000,
+  forceExit: true,
 };

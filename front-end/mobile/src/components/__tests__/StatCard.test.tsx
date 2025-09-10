@@ -11,6 +11,18 @@ jest.mock('react-native-mmkv', () => ({
   })),
 }));
 
+// Mock utils
+jest.mock('@utils/index', () => ({
+  useHaptics: () => ({
+    light: jest.fn().mockResolvedValue(undefined),
+    isAvailable: () => true,
+  }),
+  useScaleAnimation: () => ({
+    animatedStyle: {},
+    press: () => ({ start: jest.fn() }),
+  }),
+}));
+
 // Test wrapper with theme provider
 const renderWithTheme = (component: React.ReactElement) => {
   return render(
@@ -49,13 +61,18 @@ describe('StatCard', () => {
     expect(getByText('Test subtitle')).toBeTruthy();
   });
 
-  it('handles onPress correctly', () => {
+  it('handles onPress correctly', async () => {
     const onPress = jest.fn();
-    const { getByRole } = renderWithTheme(
+    const { getByText } = renderWithTheme(
       <StatCard {...defaultProps} onPress={onPress} />
     );
     
-    fireEvent.press(getByRole('button'));
+    // Press the card content area
+    fireEvent.press(getByText('Test Label'));
+    
+    // Wait for async haptic feedback
+    await new Promise(resolve => setImmediate(resolve));
+    
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 

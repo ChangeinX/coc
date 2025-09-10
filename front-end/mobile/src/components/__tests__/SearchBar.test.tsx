@@ -11,17 +11,6 @@ jest.mock('react-native-mmkv', () => ({
   })),
 }));
 
-// Mock Keyboard
-jest.mock('react-native', () => {
-  const RN = jest.requireActual('react-native');
-  return {
-    ...RN,
-    Keyboard: {
-      dismiss: jest.fn(),
-    },
-  };
-});
-
 // Test wrapper with theme provider
 const renderWithTheme = (component: React.ReactElement) => {
   return render(
@@ -61,7 +50,7 @@ describe('SearchBar', () => {
   it('calls onChangeText when text changes', () => {
     const onChangeText = jest.fn();
     const { getByPlaceholderText } = renderWithTheme(
-      <SearchBar {...defaultProps} onChangeText={onChangeText} />
+      <SearchBar {...defaultProps} value="" onChangeText={onChangeText} />
     );
     
     fireEvent.changeText(getByPlaceholderText('Search...'), 'new text');

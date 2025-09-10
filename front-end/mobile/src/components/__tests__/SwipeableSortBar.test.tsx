@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SwipeableSortBar, SwipeableSortBarProps, SortOption } from '../SwipeableSortBar';
 import { ThemeProvider } from '@theme/index';
 
@@ -25,16 +24,12 @@ const mockDimensions = {
   get: jest.fn(() => ({ width: 375, height: 667 })), // iPhone SE dimensions
 };
 
-jest.mock('react-native/Libraries/Utilities/Dimensions', () => mockDimensions);
-
 // Test wrapper with theme provider and gesture handler
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
-        {component}
-      </ThemeProvider>
-    </GestureHandlerRootView>
+    <ThemeProvider>
+      {component}
+    </ThemeProvider>
   );
 };
 
