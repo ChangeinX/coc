@@ -22,8 +22,8 @@ def lint(session: nox.Session) -> None:
 def tests(session: nox.Session) -> None:
     session.install("pytest", "pytest-asyncio")
     session.install("-r", "back-end/requirements.txt")
-    # Run pytest excluding Lambda tests (they have special requirements)
-    session.run("pytest", "-q", "--ignore=lambdas")
+    # Run pytest excluding Lambda tests and coc-py submodule (they have special requirements)
+    session.run("pytest", "-q", "--ignore=lambdas", "--ignore=coc-py")
     session.chdir("messages-java")
     session.run("./gradlew", "--no-daemon", "test", external=True)
     session.chdir("..")

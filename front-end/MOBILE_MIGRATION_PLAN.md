@@ -197,8 +197,10 @@ As the Python Flask backend is migrated to Java microservices, the following end
 - **NEW**: `/api/v1/notifications/invites/<player_id>` (POST)
 - **Note**: Requires `X-User-Id` header for authentication
 
-### User Profile (🚫 Skipped)
-- **NOTE**: `/verify` Not migrated (waiting internal java libraray creation)
+### User Profile (✅ Migrated)
+- **OLD**: `/api/v1/user/verify` (POST)
+- **NEW**: `/api/v1/users/verify` (POST)
+- **Note**: Migrated to clash-data service using coc-java library v0.1.0
 
 ## Notes
 - Start simple: Hello World + navigation shell, then port features incrementally.
