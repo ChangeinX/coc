@@ -13,7 +13,7 @@ export type PlayerInfo = {
 export function usePlayerInfo(playerTag: string | null | undefined, enabled: boolean = true) {
   return useQuery({
     queryKey: ['player', playerTag],
-    queryFn: () => apiFetch<PlayerInfo>(`/api/v1/player/${playerTag}`, { auth: true }),
+    queryFn: () => apiFetch<PlayerInfo>(`/api/v1/clan-data/players/${playerTag}`, { auth: true }),
     enabled: enabled && !!playerTag,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes

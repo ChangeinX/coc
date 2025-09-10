@@ -38,4 +38,6 @@ public interface PlayerSnapshotRepository extends JpaRepository<PlayerSnapshot, 
       )
       """)
   List<PlayerSnapshot> findLatestSnapshotsForClan(@Param("clanTag") String clanTag);
+
+  PlayerSnapshot findTopByPlayerTagOrderByTsDesc(String playerTag);
 }
