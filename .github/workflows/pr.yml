@@ -36,6 +36,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Publish coc-java to Maven Local
+        run: |
+          cd coc-py
+          ./gradlew :coc-java:publishToMavenLocal -Pversion=0.1.0 --no-daemon
+
       - name: Install nox
         run: pip install nox
 

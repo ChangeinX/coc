@@ -20,6 +20,12 @@ def lint(session: nox.Session) -> None:
 
 @nox.session(python="3.11")
 def tests(session: nox.Session) -> None:
+    # If coc-java is available via the coc-py submodule, publish it to mavenLocal
+    coc_java_build = Path("coc-py/coc-java/build.gradle")
+    if coc_java_build.exists():
+        session.chdir("coc-py")
+        session.run("./gradlew", ":coc-java:publishToMavenLocal", "-Pversion=0.1.0", "--no-daemon", external=True)
+        session.chdir("..")
     session.chdir("messages-java")
     session.run("./gradlew", "--no-daemon", "test", external=True)
     session.chdir("..")
