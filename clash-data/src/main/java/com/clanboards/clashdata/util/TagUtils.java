@@ -6,10 +6,8 @@ public class TagUtils {
     if (tag == null) {
       return null;
     }
-    String normalized = tag.trim().toUpperCase();
-    if (!normalized.startsWith("#")) {
-      normalized = "#" + normalized;
-    }
-    return normalized;
+    // Strip leading # and convert to uppercase to match Python's normalize_tag behavior
+    // Database stores tags without # symbol
+    return tag.trim().toUpperCase().replaceFirst("^#", "");
   }
 }

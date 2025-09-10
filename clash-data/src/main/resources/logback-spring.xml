@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+    
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Application logging -->
+    <logger name="com.clanboards.clashdata" level="INFO"/>
+    
+    <!-- Debug logging for development -->
+    <logger name="com.clanboards.clashdata.service" level="DEBUG"/>
+    <logger name="com.clanboards.clashdata.controller" level="DEBUG"/>
+    
+    <!-- SQL logging (optional, can be verbose) -->
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="org.hibernate.type.descriptor.sql" level="WARN"/>
+    
+    <!-- Spring framework -->
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.springframework.data" level="INFO"/>
+    
+    <!-- Redis -->
+    <logger name="org.springframework.data.redis" level="INFO"/>
+    
+    <!-- Jackson -->
+    <logger name="com.fasterxml.jackson" level="WARN"/>
+    
+    <!-- Reduce noise from common frameworks -->
+    <logger name="org.apache.catalina" level="WARN"/>
+    <logger name="org.apache.coyote" level="WARN"/>
+    <logger name="org.apache.tomcat" level="WARN"/>
+    
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

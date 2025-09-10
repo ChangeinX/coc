@@ -32,7 +32,7 @@ class ClanControllerTest {
         mapper.readTree(
             """
         {
-          "tag": "#ABC123",
+          "tag": "ABC123",
           "name": "Test Clan",
           "clanLevel": 20,
           "members": 45,
@@ -70,7 +70,7 @@ class ClanControllerTest {
         .perform(get("/api/v1/clan-data/clans/{tag}", clanTag))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.tag").value("#ABC123"))
+        .andExpect(jsonPath("$.tag").value("ABC123"))
         .andExpect(jsonPath("$.name").value("Test Clan"))
         .andExpect(jsonPath("$.clanLevel").value(20))
         .andExpect(jsonPath("$.members").value(45))
@@ -114,7 +114,7 @@ class ClanControllerTest {
         mapper.readTree(
             """
         {
-          "tag": "#ABC123",
+          "tag": "ABC123",
           "name": "Test Clan",
           "clanLevel": 20,
           "members": 45
@@ -128,7 +128,7 @@ class ClanControllerTest {
     mockMvc
         .perform(get("/api/v1/clan-data/clans/{tag}", unnormalizedTag))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.tag").value("#ABC123"))
+        .andExpect(jsonPath("$.tag").value("ABC123"))
         .andExpect(jsonPath("$.name").value("Test Clan"));
   }
 

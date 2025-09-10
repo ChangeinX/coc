@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SnapshotService {
 
+  private static final Logger log = LoggerFactory.getLogger(SnapshotService.class);
   private final ClanSnapshotRepository clanSnapshotRepository;
   private final ClanRepository clanRepository;
   private final PlayerSnapshotRepository playerSnapshotRepository;
@@ -63,7 +66,10 @@ public class SnapshotService {
 
   public JsonNode getClan(String tag) {
     String normalizedTag = TagUtils.normalizeTag(tag);
+    log.debug("Normalized tag '{}' to '{}'", tag, normalizedTag);
+
     String cacheKey = "snapshot:clan:" + normalizedTag;
+    log.debug("Checking cache with key: {}", cacheKey);
 
     // Check cache first
     String cachedData = redisTemplate.opsForValue().get(cacheKey);
@@ -73,18 +79,27 @@ public class SnapshotService {
         String tsString = cached.get("ts").asText();
         LocalDateTime cachedTs = LocalDateTime.parse(tsString.replace("Z", ""));
         if (ChronoUnit.SECONDS.between(cachedTs, LocalDateTime.now()) <= staleAfter) {
+          log.debug("Cache hit for clan tag: {}", normalizedTag);
           return cached;
         }
+        log.debug("Cache data stale for clan tag: {}", normalizedTag);
       } catch (Exception e) {
-        // Invalid cache data, continue to database
+        log.warn("Invalid cache data for clan tag: {}, error: {}", normalizedTag, e.getMessage());
       }
+    } else {
+      log.debug("Cache miss for clan tag: {}", normalizedTag);
     }
 
     // Get from database
+    log.debug("Querying database for clan tag: {}", normalizedTag);
     ClanSnapshot clanSnapshot = clanSnapshotRepository.findTopByClanTagOrderByTsDesc(normalizedTag);
     if (clanSnapshot == null) {
+      log.info("No clan snapshot found in database for tag: {}", normalizedTag);
       return null;
     }
+
+    log.info(
+        "Found clan snapshot for tag: {} with name: {}", normalizedTag, clanSnapshot.getName());
 
     // Build base clan data
     ObjectNode clanData = objectMapper.createObjectNode();
@@ -132,10 +147,15 @@ public class SnapshotService {
       redisTemplate
           .opsForValue()
           .set(cacheKey, objectMapper.writeValueAsString(clanData), cacheTtl, TimeUnit.SECONDS);
+      log.debug("Cached clan data for tag: {} with {} members", normalizedTag, memberList.size());
     } catch (Exception e) {
-      // Cache failure shouldn't break the response
+      log.warn("Failed to cache clan data for tag: {}, error: {}", normalizedTag, e.getMessage());
     }
 
+    log.info(
+        "Successfully processed clan data for tag: {} with {} members",
+        normalizedTag,
+        memberList.size());
     return clanData;
   }
 
