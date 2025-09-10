@@ -194,19 +194,19 @@ public class SnapshotService {
     playerData.put("tag", latestSnapshot.getPlayerTag());
     playerData.put("name", latestSnapshot.getName());
     playerData.put("role", latestSnapshot.getRole());
-    playerData.put("clan_tag", latestSnapshot.getClanTag());
-    playerData.put("town_hall_level", latestSnapshot.getTownHall());
+    playerData.put("clanTag", latestSnapshot.getClanTag());
+    playerData.put("townHallLevel", latestSnapshot.getTownHall());
     playerData.put("trophies", latestSnapshot.getTrophies());
     playerData.put("donations", latestSnapshot.getDonations());
-    playerData.put("donations_received", latestSnapshot.getDonationsReceived());
+    playerData.put("donationsReceived", latestSnapshot.getDonationsReceived());
 
     // Add staleness metadata
-    playerData.put("last_updated", latestSnapshot.getTs().format(ISO_FORMATTER));
+    playerData.put("lastUpdated", latestSnapshot.getTs().format(ISO_FORMATTER));
     long minutesSinceUpdate =
         java.time.temporal.ChronoUnit.MINUTES.between(
             latestSnapshot.getTs(), java.time.LocalDateTime.now());
     boolean isStale = minutesSinceUpdate > (staleAfter / 60);
-    playerData.put("is_stale", isStale);
+    playerData.put("isStale", isStale);
 
     // Add player metadata if available
     if (playerMetadata != null && playerMetadata.getData() != null) {

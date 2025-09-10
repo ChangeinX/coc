@@ -75,20 +75,20 @@ public class PlayerService {
       List<PlayerSnapshot> history = playerSnapshotService.getPlayerHistory(normalizedTag, 30);
       if (!history.isEmpty()) {
         int riskScore = riskService.calculateRiskScore(history, null, null);
-        mutablePlayerData.put("risk_score", riskScore);
+        mutablePlayerData.put("riskScore", riskScore);
 
         // For now, create empty risk breakdown array
         // TODO: Implement risk breakdown extraction from RiskService
         ArrayNode riskBreakdown = objectMapper.createArrayNode();
-        mutablePlayerData.set("risk_breakdown", riskBreakdown);
+        mutablePlayerData.set("riskBreakdown", riskBreakdown);
       } else {
-        mutablePlayerData.put("risk_score", 0);
-        mutablePlayerData.set("risk_breakdown", objectMapper.createArrayNode());
+        mutablePlayerData.put("riskScore", 0);
+        mutablePlayerData.set("riskBreakdown", objectMapper.createArrayNode());
       }
     } catch (Exception e) {
       log.warn("Failed to calculate risk data for player: {}", normalizedTag, e);
-      mutablePlayerData.put("risk_score", 0);
-      mutablePlayerData.set("risk_breakdown", objectMapper.createArrayNode());
+      mutablePlayerData.put("riskScore", 0);
+      mutablePlayerData.set("riskBreakdown", objectMapper.createArrayNode());
     }
 
     log.info("Successfully built player profile for tag: {}", normalizedTag);
