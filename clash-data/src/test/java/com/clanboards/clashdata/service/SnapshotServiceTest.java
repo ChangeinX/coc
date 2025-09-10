@@ -151,9 +151,8 @@ class SnapshotServiceTest {
     player2Snapshot.setDonationsReceived(1200);
     player2Snapshot.setWarAttacksUsed(3);
     player2Snapshot.setLastSeen(LocalDateTime.of(2025, 1, 1, 10, 30, 0));
-    JsonNode player2Data =
-        objectMapper.readTree(
-            "{\"league\":{\"iconUrls\":{\"tiny\":\"https://example.com/league2.png\"}}}");
+    // Player2 has no league data to test null leagueIcon behavior
+    JsonNode player2Data = objectMapper.readTree("{}");
     player2Snapshot.setData(player2Data);
     player2Snapshot.setTs(LocalDateTime.of(2025, 1, 1, 12, 0, 0));
 
@@ -206,6 +205,17 @@ class SnapshotServiceTest {
     assertThat(member1.get("leagueIcon").asText()).isEqualTo("https://example.com/league1.png");
     assertThat(member1.get("deep_link").asText())
         .isEqualTo("https://link.clashofclans.com/player?tag=#PLAYER1");
+
+    // Check second member to verify leagueIcon is null when league data is incomplete
+    JsonNode member2 = memberList.get(1);
+    assertThat(member2.get("tag").asText()).isEqualTo("#PLAYER2");
+    assertThat(member2.get("name").asText()).isEqualTo("Player Two");
+    assertThat(member2.get("role").asText()).isEqualTo("elder");
+    assertThat(member2.get("townHallLevel").asInt()).isEqualTo(15);
+    assertThat(member2.get("trophies").asInt()).isEqualTo(4000);
+    // Verify leagueIcon field is always present - should be null when league data is incomplete
+    assertThat(member2.has("leagueIcon")).isTrue();
+    assertThat(member2.get("leagueIcon").isNull()).isTrue();
 
     // Verify cache was set
     verify(valueOperations).set(eq(cacheKey), any(String.class), eq(60L), any());

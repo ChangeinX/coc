@@ -198,12 +198,18 @@ public class SnapshotService {
       LocalDateTime lastSeen = ps.getLastSeen() != null ? ps.getLastSeen() : ps.getTs();
       member.put("last_seen", lastSeen.format(ISO_FORMATTER));
 
-      // Add league icon from snapshot data
+      // Add league icon from snapshot data - always include field for consistency with Flask
+      String leagueIcon = null;
       if (ps.getData() != null && ps.getData().has("league")) {
         JsonNode league = ps.getData().get("league");
         if (league.has("iconUrls") && league.get("iconUrls").has("tiny")) {
-          member.put("leagueIcon", league.get("iconUrls").get("tiny").asText());
+          leagueIcon = league.get("iconUrls").get("tiny").asText();
         }
+      }
+      if (leagueIcon != null) {
+        member.put("leagueIcon", leagueIcon);
+      } else {
+        member.putNull("leagueIcon");
       }
 
       // Add labels from snapshot data
