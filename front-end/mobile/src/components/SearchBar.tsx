@@ -41,7 +41,16 @@ export function SearchBar({
   const [internalValue, setInternalValue] = useState('');
   
   const currentValue = value !== undefined ? value : internalValue;
-  const handleTextChange = value !== undefined ? onChangeText : setInternalValue;
+  const handleTextChange = (text: string) => {
+    if (value !== undefined && onChangeText) {
+      onChangeText(text);
+    } else {
+      setInternalValue(text);
+      if (onChangeText) {
+        onChangeText(text);
+      }
+    }
+  };
 
   const handleSubmit = () => {
     if (currentValue.trim() && onSubmit) {
@@ -51,9 +60,7 @@ export function SearchBar({
   };
 
   const handleClear = () => {
-    if (handleTextChange) {
-      handleTextChange('');
-    }
+    handleTextChange('');
     if (onClear) {
       onClear();
     }

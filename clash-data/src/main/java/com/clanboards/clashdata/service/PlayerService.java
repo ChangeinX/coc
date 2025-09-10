@@ -1,6 +1,7 @@
 package com.clanboards.clashdata.service;
 
 import com.clanboards.clashdata.entity.PlayerSnapshot;
+import com.clanboards.clashdata.entity.User;
 import com.clanboards.clashdata.repository.UserRepository;
 import com.clanboards.clashdata.util.TagUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -98,15 +99,23 @@ public class PlayerService {
   public JsonNode getPlayerProfileByUser(String userSub) {
     log.info("Fetching player profile for user: {}", userSub);
 
-    Optional<String> playerTagOpt = userRepository.findPlayerTagBySub(userSub);
-    if (playerTagOpt.isEmpty()) {
-      log.info("No player tag found for user: {}", userSub);
+    // Use the basic findBySub method instead of custom query to avoid potential issues
+    Optional<User> userOpt = userRepository.findBySub(userSub);
+
+    if (userOpt.isEmpty()) {
+      log.warn("No user found for sub: {}", userSub);
       return null;
     }
 
-    String playerTag = playerTagOpt.get();
-    log.info("Found player tag {} for user: {}", playerTag, userSub);
+    User user = userOpt.get();
+    String playerTag = user.getPlayerTag();
 
+    if (playerTag == null || playerTag.trim().isEmpty()) {
+      log.warn("User {} has no player tag", userSub);
+      return null;
+    }
+
+    log.info("Found player tag {} for user: {}", playerTag, userSub);
     return getPlayerProfile(playerTag);
   }
 }
