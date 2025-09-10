@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.clanboards.messages.model.Session;
 import com.clanboards.messages.repository.SessionRepository;
+import com.clanboards.messages.service.JwksService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +31,7 @@ import reactor.test.StepVerifier;
 class AuthInterceptorTest {
 
   @Mock private SessionRepository sessionRepository;
+  @Mock private JwksService jwksService;
   @Mock private WebGraphQlRequest request;
   @Mock private WebGraphQlResponse response;
   @Mock private WebGraphQlInterceptor.Chain chain;
@@ -39,14 +41,14 @@ class AuthInterceptorTest {
   private static final String TEST_KEY = "test-secret-key-for-jwt-signing-that-is-long-enough";
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws Exception {
     signingKey = Keys.hmacShaKeyFor(TEST_KEY.getBytes(StandardCharsets.UTF_8));
-    authInterceptor = new AuthInterceptor(sessionRepository, TEST_KEY);
+    authInterceptor = new AuthInterceptor(sessionRepository, TEST_KEY, jwksService);
     when(chain.next(any())).thenReturn(Mono.just(response));
   }
 
   @Test
-  void testValidJwtWithValidSession_SetsUserId() {
+  void testValidJwtWithValidSession_SetsUserId() throws Exception {
     // Arrange
     Long sessionId = 1L;
     Long userId = 42L;
@@ -68,6 +70,9 @@ class AuthInterceptorTest {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add("Authorization", "Bearer " + jwt);
 
+    // Mock JWKS service to fail (falls back to HMAC)
+    when(jwksService.parseAndValidateJwt(jwt))
+        .thenThrow(new RuntimeException("RSA parsing failed"));
     when(request.getHeaders()).thenReturn(HttpHeaders.readOnlyHttpHeaders(headers));
     when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
@@ -81,7 +86,7 @@ class AuthInterceptorTest {
   }
 
   @Test
-  void testValidJwtWithExpiredSession_DoesNotSetUserId() {
+  void testValidJwtWithExpiredSession_DoesNotSetUserId() throws Exception {
     // Arrange
     Long sessionId = 1L;
     Long userId = 42L;
@@ -103,6 +108,8 @@ class AuthInterceptorTest {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add("Authorization", "Bearer " + jwt);
 
+    when(jwksService.parseAndValidateJwt(jwt))
+        .thenThrow(new RuntimeException("RSA parsing failed"));
     when(request.getHeaders()).thenReturn(HttpHeaders.readOnlyHttpHeaders(headers));
     when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
@@ -116,7 +123,7 @@ class AuthInterceptorTest {
   }
 
   @Test
-  void testValidJwtWithNonExistentSession_DoesNotSetUserId() {
+  void testValidJwtWithNonExistentSession_DoesNotSetUserId() throws Exception {
     // Arrange
     Long sessionId = 1L;
     String sub = "test-user-sub";
@@ -132,6 +139,8 @@ class AuthInterceptorTest {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add("Authorization", "Bearer " + jwt);
 
+    when(jwksService.parseAndValidateJwt(jwt))
+        .thenThrow(new RuntimeException("RSA parsing failed"));
     when(request.getHeaders()).thenReturn(HttpHeaders.readOnlyHttpHeaders(headers));
     when(sessionRepository.findById(sessionId)).thenReturn(Optional.empty());
 
@@ -164,7 +173,7 @@ class AuthInterceptorTest {
   }
 
   @Test
-  void testCookieAuthentication_SetsUserId() {
+  void testCookieAuthentication_SetsUserId() throws Exception {
     // Arrange
     Long sessionId = 1L;
     Long userId = 42L;
@@ -186,6 +195,8 @@ class AuthInterceptorTest {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add("Cookie", "sid=" + jwt + "; other=value");
 
+    when(jwksService.parseAndValidateJwt(jwt))
+        .thenThrow(new RuntimeException("RSA parsing failed"));
     when(request.getHeaders()).thenReturn(HttpHeaders.readOnlyHttpHeaders(headers));
     when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
@@ -199,7 +210,7 @@ class AuthInterceptorTest {
   }
 
   @Test
-  void testBearerTokenTakesPrecedenceOverCookie() {
+  void testBearerTokenTakesPrecedenceOverCookie() throws Exception {
     // Arrange
     Long bearerSessionId = 1L;
     Long cookieSessionId = 2L;
@@ -231,6 +242,8 @@ class AuthInterceptorTest {
     headers.add("Authorization", "Bearer " + bearerJwt);
     headers.add("Cookie", "sid=" + cookieJwt);
 
+    when(jwksService.parseAndValidateJwt(bearerJwt))
+        .thenThrow(new RuntimeException("RSA parsing failed"));
     when(request.getHeaders()).thenReturn(HttpHeaders.readOnlyHttpHeaders(headers));
     when(sessionRepository.findById(bearerSessionId)).thenReturn(Optional.of(session));
 
@@ -260,7 +273,7 @@ class AuthInterceptorTest {
   }
 
   @Test
-  void testJwtWithoutSessionId_DoesNotSetUserId() {
+  void testJwtWithoutSessionId_DoesNotSetUserId() throws Exception {
     // Arrange
     String sub = "test-user-sub";
 
@@ -275,6 +288,8 @@ class AuthInterceptorTest {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add("Authorization", "Bearer " + jwt);
 
+    when(jwksService.parseAndValidateJwt(jwt))
+        .thenThrow(new RuntimeException("RSA parsing failed"));
     when(request.getHeaders()).thenReturn(HttpHeaders.readOnlyHttpHeaders(headers));
 
     // Act & Assert
