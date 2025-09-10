@@ -20,6 +20,7 @@ Redis Queue → Lambda Worker → CoC API → Database Update
 - **Rate Limiting**: Uses coclib config (max 30 req/sec for safety)
 - **Timeout Handling**: Stops processing when approaching Lambda timeout
 
+
 ### Key Features
 1. **Queue Processing**: Polls Redis queue for refresh requests
 2. **API Integration**: Calls `clan_service.refresh_clan_from_api()` functions
