@@ -65,13 +65,13 @@ class SnapshotServiceTest {
   void testGetClan_CacheHit() throws Exception {
     // Given
     String clanTag = "#ABC123";
-    String cacheKey = "snapshot:clan:#ABC123";
+    String cacheKey = "snapshot:clan:ABC123"; // Tag normalized without #
     // Use a recent timestamp that won't be considered stale
     String recentTimestamp =
         LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
     String cachedDataString =
         String.format(
-            "{\"tag\":\"#ABC123\",\"name\":\"Test Clan\",\"ts\":\"%s\",\"members\":45}",
+            "{\"tag\":\"ABC123\",\"name\":\"Test Clan\",\"ts\":\"%s\",\"members\":45}",
             recentTimestamp);
     when(valueOperations.get(cacheKey)).thenReturn(cachedDataString);
 
@@ -80,7 +80,7 @@ class SnapshotServiceTest {
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.get("tag").asText()).isEqualTo("#ABC123");
+    assertThat(result.get("tag").asText()).isEqualTo("ABC123"); // Database stores without #
     assertThat(result.get("name").asText()).isEqualTo("Test Clan");
     assertThat(result.get("members").asInt()).isEqualTo(45);
 
@@ -93,12 +93,12 @@ class SnapshotServiceTest {
   void testGetClan_CacheMiss_DatabaseHit() throws Exception {
     // Given
     String clanTag = "#ABC123";
-    String cacheKey = "snapshot:clan:#ABC123";
+    String cacheKey = "snapshot:clan:ABC123"; // Tag normalized without #
     when(valueOperations.get(cacheKey)).thenReturn(null);
 
     // Mock clan snapshot
     ClanSnapshot clanSnapshot = new ClanSnapshot();
-    clanSnapshot.setClanTag("#ABC123");
+    clanSnapshot.setClanTag("ABC123"); // Database stores without #
     clanSnapshot.setName("Test Clan");
     clanSnapshot.setMemberCount(45);
     clanSnapshot.setLevel(20);
@@ -108,20 +108,20 @@ class SnapshotServiceTest {
     JsonNode snapshotData = objectMapper.readTree("{\"warWinStreak\": 15}");
     clanSnapshot.setData(snapshotData);
 
-    when(clanSnapshotRepository.findTopByClanTagOrderByTsDesc("#ABC123")).thenReturn(clanSnapshot);
+    when(clanSnapshotRepository.findTopByClanTagOrderByTsDesc("ABC123")).thenReturn(clanSnapshot);
 
     // Mock clan metadata
     Clan clan = new Clan();
-    clan.setTag("#ABC123");
+    clan.setTag("ABC123"); // Database stores without #
     clan.setDeepLink("https://link.clashofclans.com/clan?tag=#ABC123");
     JsonNode clanData =
         objectMapper.readTree(
             "{\"description\":\"A great clan\",\"badgeUrls\":{\"large\":\"https://example.com/badge.png\"}}");
     clan.setData(clanData);
-    when(clanRepository.findById("#ABC123")).thenReturn(Optional.of(clan));
+    when(clanRepository.findById("ABC123")).thenReturn(Optional.of(clan));
 
     // Mock active members
-    when(loyaltyMembershipRepository.findActivePlayerTagsByClanTag("#ABC123"))
+    when(loyaltyMembershipRepository.findActivePlayerTagsByClanTag("ABC123"))
         .thenReturn(List.of("#PLAYER1", "#PLAYER2"));
 
     // Mock player snapshots
@@ -176,7 +176,7 @@ class SnapshotServiceTest {
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.get("tag").asText()).isEqualTo("#ABC123");
+    assertThat(result.get("tag").asText()).isEqualTo("ABC123"); // Database stores without #
     assertThat(result.get("name").asText()).isEqualTo("Test Clan");
     assertThat(result.get("members").asInt()).isEqualTo(2); // Should be count of memberList
     assertThat(result.get("clanLevel").asInt()).isEqualTo(20);
@@ -215,9 +215,9 @@ class SnapshotServiceTest {
   void testGetClan_NotFound() {
     // Given
     String clanTag = "#NOTFOUND";
-    String cacheKey = "snapshot:clan:#NOTFOUND";
+    String cacheKey = "snapshot:clan:NOTFOUND"; // Tag normalized without #
     when(valueOperations.get(cacheKey)).thenReturn(null);
-    when(clanSnapshotRepository.findTopByClanTagOrderByTsDesc("#NOTFOUND")).thenReturn(null);
+    when(clanSnapshotRepository.findTopByClanTagOrderByTsDesc("NOTFOUND")).thenReturn(null);
 
     // When
     JsonNode result = snapshotService.getClan(clanTag);
@@ -233,9 +233,9 @@ class SnapshotServiceTest {
   void testGetClan_TagNormalization() {
     // Given
     String unnormalizedTag = "abc123"; // no # prefix, lowercase
-    String cacheKey = "snapshot:clan:#ABC123";
+    String cacheKey = "snapshot:clan:ABC123"; // Tag normalized without #
     when(valueOperations.get(cacheKey)).thenReturn(null);
-    when(clanSnapshotRepository.findTopByClanTagOrderByTsDesc("#ABC123")).thenReturn(null);
+    when(clanSnapshotRepository.findTopByClanTagOrderByTsDesc("ABC123")).thenReturn(null);
 
     // When
     JsonNode result = snapshotService.getClan(unnormalizedTag);
@@ -244,6 +244,6 @@ class SnapshotServiceTest {
     assertThat(result).isNull();
 
     // Verify the tag was normalized before database query
-    verify(clanSnapshotRepository).findTopByClanTagOrderByTsDesc("#ABC123");
+    verify(clanSnapshotRepository).findTopByClanTagOrderByTsDesc("ABC123");
   }
 }
