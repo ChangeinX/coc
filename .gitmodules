@@ -1,0 +1,3 @@
+[submodule "coc-py"]
+	path = coc-py
+	url = https://github.com/ChangeinX/coc.py.git

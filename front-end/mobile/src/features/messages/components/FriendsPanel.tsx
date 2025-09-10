@@ -91,7 +91,7 @@ export default function FriendsPanel({ onSelectChat, userId }: FriendsPanelProps
       setError(errorMessage);
       console.error('Error loading friends:', err);
     }
-  }, []);
+  }, [generateDirectChatId, user?.sub]);
 
   useEffect(() => {
     const loadData = async () => {

@@ -54,16 +54,6 @@ export default function useMultiChat(chatIds: string[]): UseChatReturn {
     });
   }, []);
 
-  // Handle connection status changes
-  const handleConnectionChange = useCallback((connected: boolean) => {
-    setIsConnected(connected);
-    
-    if (connected && chatIds.length > 0) {
-      // Connection restored, flush outbox for all chats
-      flushOutbox();
-    }
-  }, [chatIds.length]);
-
   // Flush pending messages from outbox for all chats
   const flushOutbox = useCallback(async () => {
     if (!isConnected || chatIds.length === 0) return;
@@ -92,6 +82,16 @@ export default function useMultiChat(chatIds: string[]): UseChatReturn {
       }
     }
   }, [chatIds, isConnected]);
+
+  // Handle connection status changes
+  const handleConnectionChange = useCallback((connected: boolean) => {
+    setIsConnected(connected);
+    
+    if (connected && chatIds.length > 0) {
+      // Connection restored, flush outbox for all chats
+      flushOutbox();
+    }
+  }, [chatIds.length, flushOutbox]);
 
   // Load messages from all chats
   useEffect(() => {
