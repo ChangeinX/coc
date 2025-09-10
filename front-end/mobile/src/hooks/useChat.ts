@@ -49,16 +49,6 @@ export default function useChat(chatId: string | null): UseChatReturn {
     });
   }, [chatId]);
 
-  // Handle connection status changes
-  const handleConnectionChange = useCallback((connected: boolean) => {
-    setIsConnected(connected);
-    
-    if (connected && chatId) {
-      // Connection restored, flush outbox
-      flushOutbox();
-    }
-  }, [chatId]);
-
   // Flush pending messages from outbox
   const flushOutbox = useCallback(async () => {
     if (!chatId || !isConnected) return;
@@ -98,6 +88,16 @@ export default function useChat(chatId: string | null): UseChatReturn {
       }
     }
   }, [chatId, isConnected]);
+
+  // Handle connection status changes
+  const handleConnectionChange = useCallback((connected: boolean) => {
+    setIsConnected(connected);
+    
+    if (connected && chatId) {
+      // Connection restored, flush outbox
+      flushOutbox();
+    }
+  }, [chatId, flushOutbox]);
 
   // Load initial data and set up subscriptions
   useEffect(() => {
@@ -206,7 +206,7 @@ export default function useChat(chatId: string | null): UseChatReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [chatId, hasMore, isLoading, messages]);
+  }, [chatId, isLoading, messages]);
 
   // Send a message
   const sendMessage = useCallback(async (content: string, senderId?: string) => {

@@ -40,9 +40,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
-      app_any_changed: ${{ steps.changes.outputs.app_any_changed }}
       public_any_changed: ${{ steps.changes.outputs.public_any_changed }}
-      worker_any_changed: ${{ steps.changes.outputs.worker_any_changed }}
       messages_any_changed: ${{ steps.changes.outputs.messages_any_changed }}
       user_any_changed: ${{ steps.changes.outputs.user_any_changed }}
       notifications_any_changed: ${{ steps.changes.outputs.notifications_any_changed }}
@@ -61,12 +59,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           files_yaml: |
-            app:
-              - front-end/app/**
             public:
               - front-end/public-home/**
-            worker:
-              - back-end/**
             messages:
               - messages-java/**
             user:
@@ -81,47 +75,6 @@ jobs:
               - lambdas/refresh-worker/**
               - coclib/**
 
-  app:
-    needs: detect
-    if: needs.detect.outputs.app_any_changed == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-
-      - name: Restore node_modules cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            front-end/app/node_modules
-          key: ${{ runner.os }}-npm-${{ hashFiles('front-end/app/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-
-      - name: Prep App for S3
-        run: |
-          npm ci --prefix front-end/app
-          VITE_API_URL=$VITE_API_URL \
-          VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
-          VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY \
-          VITE_AWS_REGION=$AWS_REGION \
-          npm run --prefix front-end/app build
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Sync app to S3
-        run: aws s3 sync front-end/app/dist s3://$APP_BUCKET --delete
-
-      - name: Invalidate app CloudFront cache
-        run: |
-          aws cloudfront create-invalidation --distribution-id $APP_DISTRIBUTION_ID --paths "/*"
 
   public-home:
     needs: detect
@@ -228,11 +181,11 @@ jobs:
 
   build-push:
     needs: detect
-    if: needs.detect.outputs.worker_any_changed == 'true' || needs.detect.outputs.messages_any_changed == 'true' || needs.detect.outputs.user_any_changed == 'true' || needs.detect.outputs.notifications_any_changed == 'true' || needs.detect.outputs.recruiting_any_changed == 'true' || needs.detect.outputs.clash_data_any_changed == 'true'
+    if: needs.detect.outputs.messages_any_changed == 'true' || needs.detect.outputs.user_any_changed == 'true' || needs.detect.outputs.notifications_any_changed == 'true' || needs.detect.outputs.recruiting_any_changed == 'true' || needs.detect.outputs.clash_data_any_changed == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [worker, messages, user, notifications, recruiting, clash-data]
+        service: [messages, user, notifications, recruiting, clash-data]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -259,7 +212,6 @@ jobs:
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
       - name: Cache Gradle dependencies
-        if: matrix.service != 'worker'
         uses: actions/cache@v4
         with:
           path: |
@@ -274,13 +226,6 @@ jobs:
           SERVICE: ${{ matrix.service }}
         run: |
           case "$SERVICE" in
-            worker)
-              DOCKERFILE=back-end/Dockerfile
-              CONTEXT=.
-              REPOSITORY=$WORKER_REPOSITORY
-              SERVICE_NAME=$WORKER_SERVICE
-              CHANGED=${{ needs.detect.outputs.worker_any_changed }}
-              ;;
             messages)
               DOCKERFILE=messages-java/Dockerfile
               CONTEXT=messages-java

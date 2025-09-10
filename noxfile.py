@@ -4,7 +4,7 @@ from pathlib import Path
 @nox.session(python="3.11")
 def lint(session: nox.Session) -> None:
     session.install("ruff")
-    session.run("ruff", "check", "back-end", "coclib", "db")
+    session.run("ruff", "check", "coclib", "db")
     for project in ("messages-java", "user_service", "notifications", "recruiting", "clash-data"):
         # Ensure recruiting has a wrapper JAR (it's missing in the repo).
         if project == "recruiting":
@@ -20,10 +20,6 @@ def lint(session: nox.Session) -> None:
 
 @nox.session(python="3.11")
 def tests(session: nox.Session) -> None:
-    session.install("pytest", "pytest-asyncio")
-    session.install("-r", "back-end/requirements.txt")
-    # Run pytest excluding Lambda tests and coc-py submodule (they have special requirements)
-    session.run("pytest", "-q", "--ignore=lambdas", "--ignore=coc-py")
     session.chdir("messages-java")
     session.run("./gradlew", "--no-daemon", "test", external=True)
     session.chdir("..")
@@ -43,9 +39,11 @@ def tests(session: nox.Session) -> None:
     session.chdir("clash-data")
     session.run("./gradlew", "--no-daemon", "test", external=True)
     session.chdir("..")
-    session.run("npm", "--prefix", "front-end/app", "install", external=True)
-    session.run("npm", "--prefix", "front-end/app", "run", "test", external=True)
-    session.run("npm", "--prefix", "front-end/app", "run", "build", external=True)
+    # Run mobile tests
+    session.run("npm", "--prefix", "front-end/mobile", "install", external=True)
+    session.run("npm", "--prefix", "front-end/mobile", "run", "test", external=True)
+    session.run("npm", "--prefix", "front-end/mobile", "run", "typecheck", external=True)
+    session.run("npm", "--prefix", "front-end/mobile", "run", "lint", external=True)
     # Run Lambda tests with their specific requirements
     session.chdir("lambdas/refresh-worker")
     session.install("-r", "requirements-test.txt")
