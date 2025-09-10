@@ -76,7 +76,7 @@ public class PlayerService {
       if (!history.isEmpty()) {
         int riskScore = riskService.calculateRiskScore(history, null, null);
         mutablePlayerData.put("risk_score", riskScore);
-        
+
         // For now, create empty risk breakdown array
         // TODO: Implement risk breakdown extraction from RiskService
         ArrayNode riskBreakdown = objectMapper.createArrayNode();
@@ -97,16 +97,16 @@ public class PlayerService {
 
   public JsonNode getPlayerProfileByUser(String userSub) {
     log.info("Fetching player profile for user: {}", userSub);
-    
+
     Optional<String> playerTagOpt = userRepository.findPlayerTagBySub(userSub);
     if (playerTagOpt.isEmpty()) {
       log.info("No player tag found for user: {}", userSub);
       return null;
     }
-    
+
     String playerTag = playerTagOpt.get();
     log.info("Found player tag {} for user: {}", playerTag, userSub);
-    
+
     return getPlayerProfile(playerTag);
   }
 }

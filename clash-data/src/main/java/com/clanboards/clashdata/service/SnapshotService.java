@@ -159,6 +159,82 @@ public class SnapshotService {
     return clanData;
   }
 
+  public JsonNode getPlayer(String playerTag) {
+    String normalizedTag = TagUtils.normalizeTag(playerTag);
+    log.debug("Normalized player tag '{}' to '{}'", playerTag, normalizedTag);
+
+    String cacheKey = "snapshot:player:" + normalizedTag;
+    log.debug("Checking cache with key: {}", cacheKey);
+
+    // Check cache first
+    String cachedData = redisTemplate.opsForValue().get(cacheKey);
+    if (cachedData != null) {
+      try {
+        JsonNode cached = objectMapper.readTree(cachedData);
+        log.debug("Found cached player data for tag: {}", normalizedTag);
+        return cached;
+      } catch (Exception e) {
+        log.warn("Failed to parse cached player data for tag: {}", normalizedTag, e);
+      }
+    }
+
+    // Get latest player snapshot from database
+    PlayerSnapshot latestSnapshot =
+        playerSnapshotRepository.findTopByPlayerTagOrderByTsDesc(normalizedTag);
+    if (latestSnapshot == null) {
+      log.info("No player snapshot found for tag: {}", normalizedTag);
+      return null;
+    }
+
+    // Get player metadata
+    Player playerMetadata = playerRepository.findByTag(normalizedTag);
+
+    // Build player data JSON
+    ObjectNode playerData = objectMapper.createObjectNode();
+    playerData.put("tag", latestSnapshot.getPlayerTag());
+    playerData.put("name", latestSnapshot.getName());
+    playerData.put("role", latestSnapshot.getRole());
+    playerData.put("clan_tag", latestSnapshot.getClanTag());
+    playerData.put("town_hall_level", latestSnapshot.getTownHall());
+    playerData.put("trophies", latestSnapshot.getTrophies());
+    playerData.put("donations", latestSnapshot.getDonations());
+    playerData.put("donations_received", latestSnapshot.getDonationsReceived());
+
+    // Add staleness metadata
+    playerData.put("last_updated", latestSnapshot.getTs().format(ISO_FORMATTER));
+    long minutesSinceUpdate =
+        java.time.temporal.ChronoUnit.MINUTES.between(
+            latestSnapshot.getTs(), java.time.LocalDateTime.now());
+    boolean isStale = minutesSinceUpdate > (staleAfter / 60);
+    playerData.put("is_stale", isStale);
+
+    // Add player metadata if available
+    if (playerMetadata != null && playerMetadata.getData() != null) {
+      JsonNode metadata = playerMetadata.getData();
+      // Merge relevant metadata fields if needed
+      if (metadata.has("data")) {
+        playerData.set("data", metadata.get("data"));
+      }
+    }
+
+    // Cache the result
+    try {
+      redisTemplate
+          .opsForValue()
+          .set(
+              cacheKey,
+              objectMapper.writeValueAsString(playerData),
+              cacheTtl,
+              java.util.concurrent.TimeUnit.SECONDS);
+      log.debug("Cached player data for tag: {}", normalizedTag);
+    } catch (Exception e) {
+      log.warn("Failed to cache player data for tag: {}", normalizedTag, e);
+    }
+
+    log.info("Successfully retrieved player data for tag: {}", normalizedTag);
+    return playerData;
+  }
+
   private ArrayNode attachMembers(String clanTag) {
     ArrayNode memberList = objectMapper.createArrayNode();
 

@@ -174,6 +174,33 @@ Acceptance for Foundations: project boots on device/simulator, navigates between
   - Updated app name: Clan Boards; bundle IDs: `com.clanboards.app`; scheme: `clanboards`.
 - [ ] Configure signing, store metadata, beta tracks (TestFlight/Internal sharing)
 
+## Backend API Route Translations
+
+As the Python Flask backend is migrated to Java microservices, the following endpoints are being moved. Update mobile API calls to use the new endpoints as they become available.
+
+### Assets (✅ Already Migrated)
+- **OLD**: `/api/v1/assets/?url=<url>` 
+- **NEW**: `/api/v1/clan-data/assets/?url=<url>`
+
+### War Data (✅ Already Migrated)
+- **OLD**: `/api/v1/war/<clan_tag>/current`
+- **NEW**: `/api/v1/clan-data/wars/<clan_tag>/current`
+
+### Player Data (✅ Already Migrated)
+- **OLD**: `/api/v1/player/<tag>`
+- **NEW**: `/api/v1/clan-data/players/<tag>`
+- **OLD**: `/api/v1/player/by-user/<sub>`
+- **NEW**: `/api/v1/clan-data/players/by-user/<sub>` (Note: requires user service integration)
+
+### Invitations (✅ Already Migrated)
+- **OLD**: `/invite/<player_id>` (POST)
+- **NEW**: `/api/v1/notifications/invites/<player_id>` (POST)
+- **Note**: Requires `X-User-Id` header for authentication
+
+### User Profile (🚫 Skipped)
+- **NOTE**: `/verify` Not migrated (waiting internal java libraray creation)
+
 ## Notes
 - Start simple: Hello World + navigation shell, then port features incrementally.
 - Keep web app fully functional during migration; share logic via packages where feasible.
+- Test against both old and new endpoints during backend transition period

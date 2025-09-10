@@ -56,7 +56,7 @@ class InviteControllerTest {
     // Arrange
     Long fromUserId = 123L;
     Long toUserId = 456L;
-    
+
     doNothing().when(inviteService).sendInvite(fromUserId, toUserId);
 
     // Act & Assert
@@ -72,9 +72,7 @@ class InviteControllerTest {
   @Test
   void sendInvite_MissingUserIdHeader_ReturnsBadRequest() throws Exception {
     // Act & Assert
-    mockMvc
-        .perform(post("/api/v1/notifications/invites/456"))
-        .andExpect(status().isBadRequest());
+    mockMvc.perform(post("/api/v1/notifications/invites/456")).andExpect(status().isBadRequest());
 
     verifyNoInteractions(inviteService);
   }
@@ -83,9 +81,7 @@ class InviteControllerTest {
   void sendInvite_InvalidUserIdHeader_ReturnsBadRequest() throws Exception {
     // Act & Assert
     mockMvc
-        .perform(
-            post("/api/v1/notifications/invites/456")
-                .header("X-User-Id", "invalid"))
+        .perform(post("/api/v1/notifications/invites/456").header("X-User-Id", "invalid"))
         .andExpect(status().isBadRequest());
 
     verifyNoInteractions(inviteService);
@@ -96,9 +92,10 @@ class InviteControllerTest {
     // Arrange
     Long fromUserId = 123L;
     Long toUserId = 456L;
-    
+
     doThrow(new RuntimeException("Service error"))
-        .when(inviteService).sendInvite(fromUserId, toUserId);
+        .when(inviteService)
+        .sendInvite(fromUserId, toUserId);
 
     // Act & Assert
     mockMvc
