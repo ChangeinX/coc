@@ -3,6 +3,7 @@ package com.clanboards.clashdata.controller;
 import com.clanboards.clashdata.service.LoyaltyService;
 import com.clanboards.clashdata.service.RiskService;
 import com.clanboards.clashdata.service.SnapshotService;
+import com.clanboards.clashdata.service.UserContextService;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import java.util.Map;
@@ -23,13 +24,18 @@ public class ClanController {
   private final SnapshotService snapshotService;
   private final LoyaltyService loyaltyService;
   private final RiskService riskService;
+  private final UserContextService userContextService;
 
   @Autowired
   public ClanController(
-      SnapshotService snapshotService, LoyaltyService loyaltyService, RiskService riskService) {
+      SnapshotService snapshotService,
+      LoyaltyService loyaltyService,
+      RiskService riskService,
+      UserContextService userContextService) {
     this.snapshotService = snapshotService;
     this.loyaltyService = loyaltyService;
     this.riskService = riskService;
+    this.userContextService = userContextService;
   }
 
   @GetMapping("/{tag}")
@@ -67,9 +73,14 @@ public class ClanController {
   public ResponseEntity<List<Map<String, Object>>> getClanAtRisk(@PathVariable String tag) {
     log.info("Received request for clan at-risk members for tag: {}", tag);
 
-    // TODO: In future, extract user weights from authentication context
-    // For now, use default weights (no user profile integration)
-    Map<String, Double> weights = null;
+    // Extract user weights from authentication context if available
+    Map<String, Double> weights = userContextService.getUserWeights();
+
+    if (weights != null) {
+      log.debug("Using custom user weights for risk calculation: {}", weights);
+    } else {
+      log.debug("No user weights found, using default weights for risk calculation");
+    }
 
     List<Map<String, Object>> riskData = riskService.getClanAtRisk(tag, weights);
 
