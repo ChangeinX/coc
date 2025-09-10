@@ -23,6 +23,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.7.3'
     implementation platform('software.amazon.awssdk:bom:2.25.32')
@@ -30,6 +32,7 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'com.h2database:h2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

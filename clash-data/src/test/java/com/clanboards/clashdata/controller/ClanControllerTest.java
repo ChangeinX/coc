@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.clanboards.clashdata.service.LoyaltyService;
 import com.clanboards.clashdata.service.RiskService;
 import com.clanboards.clashdata.service.SnapshotService;
+import com.clanboards.clashdata.service.UserContextService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
@@ -22,7 +23,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(ClanController.class)
+@WebMvcTest(
+    value = ClanController.class,
+    excludeAutoConfiguration = {
+      org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
+    })
 class ClanControllerTest {
 
   @Autowired private MockMvc mockMvc;
@@ -30,6 +35,7 @@ class ClanControllerTest {
   @MockBean private SnapshotService snapshotService;
   @MockBean private LoyaltyService loyaltyService;
   @MockBean private RiskService riskService;
+  @MockBean private UserContextService userContextService;
 
   @Test
   void testGetClan_Success() throws Exception {
@@ -237,6 +243,7 @@ class ClanControllerTest {
     riskData.add(highRiskPlayer);
     riskData.add(lowRiskPlayer);
 
+    when(userContextService.getUserWeights()).thenReturn(null);
     when(riskService.getClanAtRisk("#ABC123", null)).thenReturn(riskData);
 
     // When & Then
@@ -264,6 +271,7 @@ class ClanControllerTest {
     String clanTag = "#EMPTY123";
     List<Map<String, Object>> emptyRiskData = new ArrayList<>();
 
+    when(userContextService.getUserWeights()).thenReturn(null);
     when(riskService.getClanAtRisk("#EMPTY123", null)).thenReturn(emptyRiskData);
 
     // When & Then
@@ -290,9 +298,15 @@ class ClanControllerTest {
 
     riskData.add(player);
 
-    // Note: Custom weights would come from user profile in real app, but we're using defaults for
-    // now
-    when(riskService.getClanAtRisk("#ABC123", null)).thenReturn(riskData);
+    // Mock custom user weights
+    Map<String, Double> customWeights = new HashMap<>();
+    customWeights.put("war", 0.50);
+    customWeights.put("idle", 0.30);
+    customWeights.put("don_deficit", 0.15);
+    customWeights.put("don_drop", 0.05);
+
+    when(userContextService.getUserWeights()).thenReturn(customWeights);
+    when(riskService.getClanAtRisk("#ABC123", customWeights)).thenReturn(riskData);
 
     // When & Then
     mockMvc
@@ -303,5 +317,35 @@ class ClanControllerTest {
         .andExpect(jsonPath("$.length()").value(1))
         .andExpect(jsonPath("$[0].player_tag").value("#PLAYER1"))
         .andExpect(jsonPath("$[0].risk_score").value(60));
+  }
+
+  @Test
+  void testGetClanAtRisk_NoUserWeights() throws Exception {
+    // Given
+    String clanTag = "#ABC123";
+    List<Map<String, Object>> riskData = new ArrayList<>();
+
+    Map<String, Object> player = new HashMap<>();
+    player.put("player_tag", "#PLAYER1");
+    player.put("name", "Test Player");
+    player.put("risk_score", 45);
+    player.put("last_seen", "2025-01-14T12:00:00Z");
+    player.put("risk_breakdown", new ArrayList<>());
+
+    riskData.add(player);
+
+    // Mock no user weights (unauthenticated or no profile)
+    when(userContextService.getUserWeights()).thenReturn(null);
+    when(riskService.getClanAtRisk("#ABC123", null)).thenReturn(riskData);
+
+    // When & Then
+    mockMvc
+        .perform(get("/api/v1/clan-data/clans/{tag}/members/at-risk", clanTag))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].player_tag").value("#PLAYER1"))
+        .andExpect(jsonPath("$[0].risk_score").value(45));
   }
 }
