@@ -6,9 +6,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.clanboards.clashdata.service.LoyaltyService;
+import com.clanboards.clashdata.service.RiskService;
 import com.clanboards.clashdata.service.SnapshotService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,6 +28,8 @@ class ClanControllerTest {
   @Autowired private MockMvc mockMvc;
 
   @MockBean private SnapshotService snapshotService;
+  @MockBean private LoyaltyService loyaltyService;
+  @MockBean private RiskService riskService;
 
   @Test
   void testGetClan_Success() throws Exception {
@@ -141,5 +149,159 @@ class ClanControllerTest {
     mockMvc
         .perform(get("/api/v1/clan-data/clans/{tag}", invalidTag))
         .andExpect(status().isNotFound()); // Spring will return 404 for empty path variable
+  }
+
+  @Test
+  void testGetClanLoyalty_Success() throws Exception {
+    // Given
+    String clanTag = "#ABC123";
+    Map<String, Integer> loyaltyData = new HashMap<>();
+    loyaltyData.put("#PLAYER1", 30);
+    loyaltyData.put("#PLAYER2", 15);
+    loyaltyData.put("#PLAYER3", 120);
+
+    when(loyaltyService.getClanLoyalty("#ABC123")).thenReturn(loyaltyData);
+
+    // When & Then
+    mockMvc
+        .perform(get("/api/v1/clan-data/clans/{tag}/members/loyalty", clanTag))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.#PLAYER1").value(30))
+        .andExpect(jsonPath("$.#PLAYER2").value(15))
+        .andExpect(jsonPath("$.#PLAYER3").value(120));
+  }
+
+  @Test
+  void testGetClanLoyalty_EmptyClan() throws Exception {
+    // Given
+    String clanTag = "#EMPTY123";
+    Map<String, Integer> emptyLoyaltyData = new HashMap<>();
+
+    when(loyaltyService.getClanLoyalty("#EMPTY123")).thenReturn(emptyLoyaltyData);
+
+    // When & Then
+    mockMvc
+        .perform(get("/api/v1/clan-data/clans/{tag}/members/loyalty", clanTag))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").isMap())
+        .andExpect(jsonPath("$").isEmpty());
+  }
+
+  @Test
+  void testGetClanLoyalty_TagNormalization() throws Exception {
+    // Given
+    String unnormalizedTag = "abc123"; // No # prefix, lowercase
+    Map<String, Integer> loyaltyData = new HashMap<>();
+    loyaltyData.put("#PLAYER1", 5);
+
+    // Service should receive the tag as-is, normalization happens in service
+    when(loyaltyService.getClanLoyalty("abc123")).thenReturn(loyaltyData);
+
+    // When & Then
+    mockMvc
+        .perform(get("/api/v1/clan-data/clans/{tag}/members/loyalty", unnormalizedTag))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.#PLAYER1").value(5));
+  }
+
+  @Test
+  void testGetClanAtRisk_Success() throws Exception {
+    // Given
+    String clanTag = "#ABC123";
+    List<Map<String, Object>> riskData = new ArrayList<>();
+
+    // High risk player
+    Map<String, Object> highRiskPlayer = new HashMap<>();
+    highRiskPlayer.put("player_tag", "#PLAYER1");
+    highRiskPlayer.put("name", "High Risk Player");
+    highRiskPlayer.put("risk_score", 75);
+    highRiskPlayer.put("last_seen", "2025-01-10T12:00:00Z");
+    List<Map<String, Object>> breakdown1 = new ArrayList<>();
+    Map<String, Object> breakdown1Item = new HashMap<>();
+    breakdown1Item.put("points", 35);
+    breakdown1Item.put("reason", "inactive for 4 days");
+    breakdown1.add(breakdown1Item);
+    highRiskPlayer.put("risk_breakdown", breakdown1);
+
+    // Low risk player
+    Map<String, Object> lowRiskPlayer = new HashMap<>();
+    lowRiskPlayer.put("player_tag", "#PLAYER2");
+    lowRiskPlayer.put("name", "Low Risk Player");
+    lowRiskPlayer.put("risk_score", 15);
+    lowRiskPlayer.put("last_seen", "2025-01-14T12:00:00Z");
+    lowRiskPlayer.put("risk_breakdown", new ArrayList<>());
+
+    riskData.add(highRiskPlayer);
+    riskData.add(lowRiskPlayer);
+
+    when(riskService.getClanAtRisk("#ABC123", null)).thenReturn(riskData);
+
+    // When & Then
+    mockMvc
+        .perform(get("/api/v1/clan-data/clans/{tag}/members/at-risk", clanTag))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].player_tag").value("#PLAYER1"))
+        .andExpect(jsonPath("$[0].name").value("High Risk Player"))
+        .andExpect(jsonPath("$[0].risk_score").value(75))
+        .andExpect(jsonPath("$[0].last_seen").value("2025-01-10T12:00:00Z"))
+        .andExpect(jsonPath("$[0].risk_breakdown").isArray())
+        .andExpect(jsonPath("$[0].risk_breakdown[0].points").value(35))
+        .andExpect(jsonPath("$[0].risk_breakdown[0].reason").value("inactive for 4 days"))
+        .andExpect(jsonPath("$[1].player_tag").value("#PLAYER2"))
+        .andExpect(jsonPath("$[1].name").value("Low Risk Player"))
+        .andExpect(jsonPath("$[1].risk_score").value(15));
+  }
+
+  @Test
+  void testGetClanAtRisk_EmptyClan() throws Exception {
+    // Given
+    String clanTag = "#EMPTY123";
+    List<Map<String, Object>> emptyRiskData = new ArrayList<>();
+
+    when(riskService.getClanAtRisk("#EMPTY123", null)).thenReturn(emptyRiskData);
+
+    // When & Then
+    mockMvc
+        .perform(get("/api/v1/clan-data/clans/{tag}/members/at-risk", clanTag))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  @Test
+  void testGetClanAtRisk_WithCustomWeights() throws Exception {
+    // Given
+    String clanTag = "#ABC123";
+    List<Map<String, Object>> riskData = new ArrayList<>();
+
+    Map<String, Object> player = new HashMap<>();
+    player.put("player_tag", "#PLAYER1");
+    player.put("name", "Test Player");
+    player.put("risk_score", 60);
+    player.put("last_seen", "2025-01-14T12:00:00Z");
+    player.put("risk_breakdown", new ArrayList<>());
+
+    riskData.add(player);
+
+    // Note: Custom weights would come from user profile in real app, but we're using defaults for
+    // now
+    when(riskService.getClanAtRisk("#ABC123", null)).thenReturn(riskData);
+
+    // When & Then
+    mockMvc
+        .perform(get("/api/v1/clan-data/clans/{tag}/members/at-risk", clanTag))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].player_tag").value("#PLAYER1"))
+        .andExpect(jsonPath("$[0].risk_score").value(60));
   }
 }

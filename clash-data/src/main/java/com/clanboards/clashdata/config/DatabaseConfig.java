@@ -1,6 +1,7 @@
 package com.clanboards.clashdata.config;
 
 import java.net.URI;
+import java.time.Clock;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -41,5 +42,10 @@ public class DatabaseConfig {
         .username(username)
         .password(password)
         .build();
+  }
+
+  @Bean
+  public Clock clock() {
+    return Clock.systemDefaultZone();
   }
 }

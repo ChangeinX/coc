@@ -13,4 +13,6 @@ public interface LoyaltyMembershipRepository extends JpaRepository<LoyaltyMember
   @Query(
       "SELECT lm.playerTag FROM LoyaltyMembership lm WHERE lm.clanTag = :clanTag AND lm.leftAt IS NULL")
   List<String> findActivePlayerTagsByClanTag(@Param("clanTag") String clanTag);
+
+  List<LoyaltyMembership> findByClanTagAndLeftAtIsNull(String clanTag);
 }
