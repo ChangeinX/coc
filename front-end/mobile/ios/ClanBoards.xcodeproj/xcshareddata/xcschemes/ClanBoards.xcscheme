@@ -60,23 +60,6 @@
             ReferencedContainer = "container:ClanBoards.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "APP_ENV"
-            value = "dev"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "AUTH_URL_DEV"
-            value = "https://api.dev.clan-boards.com"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "API_URL_DEV"
-            value = "https://api.dev.clan-boards.com"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

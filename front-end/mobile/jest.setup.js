@@ -33,6 +33,16 @@ jest.mock('expo-constants', () => ({
   },
 }));
 
+// Basic clipboard mock for tests using expo-clipboard
+jest.mock('expo-clipboard', () => ({
+  setStringAsync: jest.fn(async () => true),
+  setString: jest.fn(() => {}),
+  getStringAsync: jest.fn(async () => ''),
+  hasStringAsync: jest.fn(async () => false),
+  isPasteButtonAvailable: false,
+  ClipboardPasteButton: () => null,
+}));
+
 // Mock networking
 global.fetch = jest.fn();
 
