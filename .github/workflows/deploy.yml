@@ -129,7 +129,7 @@ jobs:
         run: |
           cd lambdas/refresh-worker
           chmod +x package-lambda.sh
-          ./package-lambda.sh
+          ./package-lambda.sh --skip-upload --skip-deploy
 
       - name: Upload Lambda artifact to S3
         run: |
