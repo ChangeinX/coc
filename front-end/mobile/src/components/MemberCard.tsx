@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, Animated, Alert, Linking, Clipboard, Share } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Animated, Alert, Linking, Share } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useThemedStyles, useTheme } from '@theme/index';
 import { useHaptics, useScaleAnimation, useLongPress, DeepLinks } from '@utils/index';
 import { useFavoritesStore } from '@store/favorites.store';
@@ -106,11 +107,11 @@ export function MemberCard({ member, onPress, showRisk = true, compact = false }
                 }
                 break;
               case 'Copy Player Tag':
-                await Clipboard.setString(member.tag);
+                await Clipboard.setStringAsync(member.tag);
                 Alert.alert('Copied', `Player tag ${member.tag} copied to clipboard`);
                 break;
               case 'Copy Player Name':
-                await Clipboard.setString(member.name);
+                await Clipboard.setStringAsync(member.name);
                 Alert.alert('Copied', `Player name "${member.name}" copied to clipboard`);
                 break;
               case 'Open in Clash of Clans':

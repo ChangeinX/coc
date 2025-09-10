@@ -83,7 +83,7 @@ describe('useDashboard hooks', () => {
         { wrapper: createWrapper() }
       );
 
-      expect(result.current.isPending).toBe(false);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(mockedDashboardApi.getDashboardData).not.toHaveBeenCalled();
     });
 
@@ -93,7 +93,7 @@ describe('useDashboard hooks', () => {
         { wrapper: createWrapper() }
       );
 
-      expect(result.current.isPending).toBe(false);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(mockedDashboardApi.getDashboardData).not.toHaveBeenCalled();
     });
 
