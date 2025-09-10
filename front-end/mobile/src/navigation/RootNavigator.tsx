@@ -16,6 +16,7 @@ import { LoadingSpinner } from '@components/index';
 import { View } from 'react-native';
 import { linking } from './linking';
 import { useAuthStore } from '@store/auth.store';
+import { useSessionManager } from '@features/auth/hooks/useSessionManager';
 
 const AuthStack = createNativeStackNavigator();
 const MessagesStack = createNativeStackNavigator();
@@ -45,6 +46,9 @@ function AppNavigator() {
 export function RootNavigator() {
   const { isDark, colors } = useTheme();
   const { isAuthenticated, hasPlayerTag, loadUserProfile, isInitialized, initializeAuth } = useAuthStore();
+  
+  // Initialize session monitoring
+  useSessionManager();
   
   // Initialize auth on mount
   React.useEffect(() => {

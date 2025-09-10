@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { tokenStorage, TokenBundle } from '@services/storage/secureStorage';
-import { apiFetch, ApiError } from '@services/apiClient';
+import { apiFetch, ApiError, setSessionExpiredCallback } from '@services/apiClient';
 
 type UserProfile = {
   id: string;
@@ -19,6 +19,8 @@ type AuthState = {
   loadUserProfile: () => Promise<void>;
   setUserPlayerTag: (playerTag: string) => Promise<void>;
   initializeAuth: () => Promise<void>;
+  handleSessionExpired: () => Promise<void>;
+  isTokenExpired: () => boolean;
   isAuthenticated: boolean;
   hasPlayerTag: boolean;
 };
@@ -34,6 +36,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (tokens) {
       await tokenStorage.set(tokens);
       set({ tokens, isAuthenticated: !!tokens?.accessToken });
+      
+      // Set up session expiry callback when tokens are set
+      setSessionExpiredCallback(() => {
+        get().handleSessionExpired();
+      });
+      
       // Load user profile after setting tokens
       try {
         await get().loadUserProfile();
@@ -115,7 +123,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const tokens = await tokenStorage.get();
       if (tokens) {
-        set({ tokens, isAuthenticated: true, isInitialized: true });
+        // If tokens don't have expiry, add a default (1 hour from now)
+        let migratedTokens = tokens;
+        if (!tokens.expiresAt) {
+          migratedTokens = {
+            ...tokens,
+            expiresAt: Date.now() + (60 * 60 * 1000), // 1 hour default
+          };
+          // Save the migrated tokens back to storage
+          await tokenStorage.set(migratedTokens);
+          console.log('Migrated tokens to include expiry time');
+        }
+        
+        set({ tokens: migratedTokens, isAuthenticated: true, isInitialized: true });
+        // Set up session expiry callback
+        setSessionExpiredCallback(() => {
+          get().handleSessionExpired();
+        });
         // Load user profile
         try {
           await get().loadUserProfile();
@@ -135,6 +159,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error('Failed to initialize auth:', error);
       set({ isInitialized: true });
     }
+  },
+
+  handleSessionExpired: async () => {
+    console.log('Session expired, clearing auth state');
+    await tokenStorage.clear();
+    set({ 
+      tokens: null, 
+      user: null, 
+      isAuthenticated: false, 
+      hasPlayerTag: false 
+    });
+  },
+
+  isTokenExpired: () => {
+    const tokens = get().tokens;
+    if (!tokens?.expiresAt) return false;
+    return Date.now() >= tokens.expiresAt;
   },
 }));
 

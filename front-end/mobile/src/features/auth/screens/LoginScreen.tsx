@@ -1,6 +1,5 @@
-import { View, Text, Alert } from 'react-native';
+import { View, Text, Alert, Platform } from 'react-native';
 import * as Apple from 'expo-apple-authentication';
-import { Platform } from 'react-native';
 import { AUTH_URL } from '@env';
 import { apiFetch } from '@services/apiClient';
 import { useAuthStore } from '@store/auth.store';
@@ -28,13 +27,20 @@ export default function LoginScreen() {
         throw new Error('No identity token from Apple');
       }
       const url = `${AUTH_URL}/api/v1/users/auth/apple/exchange`;
-      const res = await apiFetch<{ access_token: string; refresh_token?: string }>(url, {
+      const res = await apiFetch<{ access_token: string; refresh_token?: string; expires_in?: number }>(url, {
         method: 'POST',
         body: JSON.stringify({ id_token: credential.identityToken }),
       });
-      const bundle = res.refresh_token
-        ? { accessToken: res.access_token, refreshToken: res.refresh_token }
-        : { accessToken: res.access_token };
+      
+      // Calculate expiry time from expires_in (default to 1 hour if not provided)
+      const expiresInSeconds = res.expires_in || 3600; // 1 hour default
+      const expiresAt = Date.now() + (expiresInSeconds * 1000);
+      
+      const bundle = {
+        accessToken: res.access_token,
+        ...(res.refresh_token && { refreshToken: res.refresh_token }),
+        expiresAt
+      };
       await setTokens(bundle);
     } catch (e: any) {
       console.error('Apple sign-in failed', e);

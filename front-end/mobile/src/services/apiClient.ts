@@ -1,6 +1,19 @@
 import { API_URL, AUTH_URL } from '@env';
 import { tokenStorage } from '@services/storage/secureStorage';
 
+// Global callback for handling session expiry
+let onSessionExpiredCallback: (() => void) | null = null;
+
+export function setSessionExpiredCallback(callback: () => void) {
+  onSessionExpiredCallback = callback;
+}
+
+export function triggerSessionExpired() {
+  if (onSessionExpiredCallback) {
+    onSessionExpiredCallback();
+  }
+}
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export type RequestOptions = RequestInit & {
@@ -118,19 +131,41 @@ async function tryRefresh(): Promise<boolean> {
     try {
       const tokens = await tokenStorage.get();
       const rt = tokens?.refreshToken;
-      if (!rt) return false;
+      if (!rt) {
+        console.warn('No refresh token available for token refresh');
+        await tokenStorage.clear();
+        return false;
+      }
+      
       const body = new URLSearchParams({ grant_type: 'refresh_token', refresh_token: rt }).toString();
       const res = await fetch(`${AUTH_URL}/api/v1/users/oauth2/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body,
       });
-      if (!res.ok) return false;
+      
+      if (!res.ok) {
+        console.warn(`Token refresh failed with status ${res.status}`);
+        await tokenStorage.clear();
+        triggerSessionExpired();
+        return false;
+      }
+      
       const data = await res.json();
-      await tokenStorage.set({ accessToken: data.access_token, refreshToken: rt });
+      const expiresAt = Date.now() + (data.expires_in * 1000); // Convert seconds to milliseconds
+      
+      await tokenStorage.set({ 
+        accessToken: data.access_token, 
+        refreshToken: rt,
+        expiresAt 
+      });
+      
+      console.log('Token refresh successful');
       return true;
-    } catch {
+    } catch (error) {
+      console.error('Token refresh error:', error);
       await tokenStorage.clear();
+      triggerSessionExpired();
       return false;
     } finally {
       refreshPromise = null;
