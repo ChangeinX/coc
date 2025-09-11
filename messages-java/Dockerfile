@@ -1,12 +1,13 @@
 # syntax=docker/dockerfile:1.7
 FROM gradle:8.7-jdk21 AS build
-WORKDIR /workspace/messages-java
-COPY build.gradle settings.gradle ./
+WORKDIR /workspace
+COPY settings.gradle ./
+COPY java-auth-common ./java-auth-common
+COPY messages-java ./messages-java
 RUN --mount=type=cache,id=gradle-cache,target=/home/gradle/.gradle \
-    gradle --daemon --build-cache dependencies
-COPY src ./src
+    gradle --daemon --build-cache :java-auth-common:build :java-auth-common:publishToMavenLocal :messages-java:dependencies
 RUN --mount=type=cache,id=gradle-cache,target=/home/gradle/.gradle \
-    gradle --daemon --build-cache bootJar
+    gradle --daemon --build-cache :messages-java:bootJar
 
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /opt/app
