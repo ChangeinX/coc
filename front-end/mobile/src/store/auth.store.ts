@@ -16,6 +16,7 @@ type AuthState = {
   user: UserProfile | null;
   isInitialized: boolean;
   setTokens: (t: TokenBundle | null) => Promise<void>;
+  updateTokens: (t: TokenBundle) => void;
   loadUserProfile: () => Promise<void>;
   setUserPlayerTag: (playerTag: string) => Promise<void>;
   initializeAuth: () => Promise<void>;
@@ -59,6 +60,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await tokenStorage.clear();
       set({ tokens, user: null, isAuthenticated: false, hasPlayerTag: false });
     }
+  },
+
+  updateTokens: (tokens) => {
+    set({ tokens, isAuthenticated: !!tokens?.accessToken });
   },
 
   loadUserProfile: async () => {

@@ -147,4 +147,49 @@ describe('AuthStore', () => {
       expect(state.isInitialized).toBe(true);
     });
   });
+
+  describe('updateTokens', () => {
+    it('should update tokens and authentication state without calling storage', () => {
+      const initialTokens = { accessToken: 'old-token', expiresAt: Date.now() + 1000 };
+      const newTokens = { 
+        accessToken: 'new-token', 
+        refreshToken: 'refresh-token', 
+        expiresAt: Date.now() + 3600000 
+      };
+      
+      // Set initial state
+      useAuthStore.setState({
+        tokens: initialTokens,
+        isAuthenticated: true,
+      });
+      
+      const { updateTokens } = useAuthStore.getState();
+      
+      updateTokens(newTokens);
+      
+      // Should not call storage methods
+      expect(mockTokenStorage.set).not.toHaveBeenCalled();
+      expect(mockTokenStorage.clear).not.toHaveBeenCalled();
+      
+      const state = useAuthStore.getState();
+      expect(state.tokens).toEqual(newTokens);
+      expect(state.isAuthenticated).toBe(true);
+    });
+
+    it('should handle empty access token by setting isAuthenticated to false', () => {
+      const newTokens = { 
+        accessToken: '', 
+        refreshToken: 'refresh-token', 
+        expiresAt: Date.now() + 3600000 
+      };
+      
+      const { updateTokens } = useAuthStore.getState();
+      
+      updateTokens(newTokens);
+      
+      const state = useAuthStore.getState();
+      expect(state.tokens).toEqual(newTokens);
+      expect(state.isAuthenticated).toBe(false);
+    });
+  });
 });

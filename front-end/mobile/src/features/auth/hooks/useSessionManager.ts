@@ -9,7 +9,7 @@ const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
 
 export function useSessionManager() {
-  const { tokens, isAuthenticated, handleSessionExpired, isTokenExpired } = useAuthStore();
+  const { tokens, isAuthenticated, handleSessionExpired, isTokenExpired, updateTokens } = useAuthStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
 
@@ -41,11 +41,14 @@ export function useSessionManager() {
       const data = await response.json();
       const expiresAt = Date.now() + (data.expires_in * 1000);
       
-      await tokenStorage.set({
+      const newTokens = {
         accessToken: data.access_token,
         refreshToken: tokens.refreshToken,
         expiresAt
-      });
+      };
+      
+      await tokenStorage.set(newTokens);
+      updateTokens(newTokens);
 
       console.log('Proactive token refresh successful');
     } catch (error) {
@@ -54,7 +57,7 @@ export function useSessionManager() {
     } finally {
       isRefreshingRef.current = false;
     }
-  }, [tokens, handleSessionExpired]);
+  }, [tokens, handleSessionExpired, updateTokens]);
 
   const checkTokenExpiry = useCallback(async () => {
     if (!isAuthenticated || !tokens?.expiresAt) return;
