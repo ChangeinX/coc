@@ -417,3 +417,36 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
    - Check filter URL patterns don't overlap with health endpoints
 
 This integration provides a robust, scalable authentication system that can be easily replicated across all Java services in the microservices architecture.
+
+## Spring Security Configuration Fix
+
+### Problem
+When using `java-auth-common`, Spring Security can intercept health endpoints before custom OIDC filters, causing 401 errors.
+
+### Solution  
+Create explicit `SecurityConfig.java` to allow health endpoints:
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+  private final OidcAuthenticationFilter oidcAuthenticationFilter;
+
+  public SecurityConfig(OidcAuthenticationFilter oidcAuthenticationFilter) {
+    this.oidcAuthenticationFilter = oidcAuthenticationFilter;
+  }
+
+  @Bean
+  @Order(1)
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.authorizeHttpRequests(authz ->
+            authz.requestMatchers("/api/v1/health", "/actuator/health").permitAll()
+                 .anyRequest().authenticated())
+        .addFilterBefore(oidcAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .csrf(csrf -> csrf.disable())
+        .httpBasic(httpBasic -> httpBasic.disable())
+        .formLogin(formLogin -> formLogin.disable());
+    return http.build();
+  }
+}
+```
