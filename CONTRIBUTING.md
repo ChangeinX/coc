@@ -12,11 +12,12 @@ This repo is mobile‑first with Java microservices. Use the Makefile for common
 ## Quick Start
 - List commands: `make help`
 - Install git hooks: `make hooks`
-- Lint all stacks: `make lint`
-- Run tests (Java + mobile + Lambda via nox): `make test`
+- Lint all stacks: `make lint` (or `make check` to include wrapper alignment)
+- Run tests (Java + mobile + Lambda via nox): `make test` (or `make verify` for lint+tests)
 - Lambda tests only:
   - With nox: `make lambda-test`
   - Without nox: `make lambda-test-standalone`
+ - CI-like suite: `make ci` (java + mobile + web + lambdas)
 
 ## Java/Gradle Notes
 - Always use the module Gradle Wrapper (`./gradlew`) — do not use the global `gradle` CLI.
@@ -26,6 +27,7 @@ This repo is mobile‑first with Java microservices. Use the Makefile for common
 ## Mobile & Web
 - Mobile setup: `make mobile-setup` (then `make mobile-lint`, `make mobile-typecheck`, `make mobile-test`)
 - Web (optional; PWA obsolete): `make web-setup`, `make web-test`, `make web-build`
+  - Note: Web uses Vitest; Jest’s `--ci` flag is not supported. The Makefile uses `CI=1` without `--ci` for web tests.
 
 ## Python
 - Lint: `make lint-python` (runs ruff on `coclib`, `db`, `lambdas/refresh-worker`)

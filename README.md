@@ -48,7 +48,10 @@ Details and integration guidance:
 ### Makefile shortcuts
 - List commands: `make help`
 - Lint everything: `make lint`
+- Quick check (lint + wrapper alignment): `make check`
 - Run tests (Java + mobile + lambdas via nox): `make test`
+- Full verify (check + tests): `make verify`
+- CI-like suite: `make ci` (java, mobile, web, lambdas)
 - Lambda tests only: `make lambda-test` (nox) or `make lambda-test-standalone`
 
 Common tasks:
@@ -80,6 +83,8 @@ Notes:
 
 ### Gradle consistency
 - All Java modules use the Gradle Wrapper and are pinned to the same distribution (8.14.3). Avoid the global `gradle` CLI to prevent wrapper changes or version drift. Dockerfiles have been updated to use the wrapper.
+
+Note on web tests: The web app uses Vitest and does not support Jest’s `--ci` flag. The Makefile sets `CI=1` but does not pass `--ci` to web tests.
 
 ## Auth Migration Status
 - Mobile auth migration plan (`front-end/MOBILE_AUTH_MIGRATION.md`) is essentially complete. Remaining work is for services to adopt the DB‑backed JWKS validation as specified in `AUTHENTICATION_INTEGRATION.md`.
