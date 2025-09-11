@@ -27,6 +27,17 @@ Each directory may contain its own `AGENTS.md` with project‑specific notes. Ch
 
 ## Testing and checks
 
+**TDD Workflow - Follow for ALL development:**
+1. **Red**: Write failing test first
+2. **Green**: Write minimal code to pass
+3. **Refactor**: Improve code while keeping tests passing
+
+**Java Services (JUnit) - TDD Required:**
+- Write JUnit tests BEFORE business logic implementation
+- MockMvc for integration testing
+- Gradle test runner with comprehensive coverage
+- All controllers and services must have corresponding tests
+
 Validate changes using:
 
 ```bash
@@ -65,6 +76,15 @@ Any lint errors or build failures should fail the PR.
   - `python -m venv .venv && source .venv/bin/activate` (Python 3.11)
   - `pip install -r requirements-test.txt`
   - `PYTHONPATH=../../ pytest -v test_lambda_function.py`
+
+**Code Quality Gates:**
+- **MANDATORY**: All new code must include corresponding tests
+- **MANDATORY**: All PRs must pass `nox -s lint tests`
+- Frontend must pass `npm test` and `npm run build`
+- Mobile must pass `npm test` and `npm run typecheck` from `/front-end/mobile/`
+- Java services must pass `./gradlew test spotlessCheck`
+- Ruff formatting enforced for Python code
+- **PRs without tests will be rejected** (except for documentation-only changes)
 
 ## CI notes
 

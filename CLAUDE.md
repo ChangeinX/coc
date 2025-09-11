@@ -1,133 +1,36 @@
-# CLAUDE.md
+# Codex Guidelines
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This monorepo hosts several Java microservices and front-end clients for the Clan Boards dashboard. The current, actively developed stack is mobile‑first. The legacy Flask API has been archived.
 
-## Project Overview
+Key directories:
 
-This is a microservices-based Clash of Clans dashboard built as a monorepo:
+- `front-end/mobile/` – React Native app (Expo). Primary client going forward.
+- `front-end/app/` – Vite React web dashboard. PWA features are obsolete; kept to reference during migration.
+- `front-end/public-home/` – Minimal Next.js public site (legal/policy pages).
+- `messages-java/` – Chat service (Spring Boot, REST/WebSocket/GraphQL).
+- `user_service/` – User/friends + auth issuer (Spring Boot, OIDC provider).
+- `notifications/` – Notifications service (Spring Boot).
+- `recruiting/` – Recruiting service (Spring Boot).
+- `clash-data/` – Clash data APIs (Spring Boot; players, wars, assets).
+- `java-auth-common/` – Shared Java authentication library published to `mavenLocal` in CI.
+- `coclib/` – Shared Python modules for migrations and tooling.
+- `db/` – Minimal Flask app used only to run Alembic migrations; holds `messages.graphql` schema.
+- `migrations/` – Alembic migration scripts.
+- `lambdas/` – Serverless functions, including `refresh-worker` (Python 3.11) and `dynamodb-to-sqs.js`.
+- `archived/back-end/` – Archived Flask API; do not modify.
 
-- **Front-end**: migration in progress. OBSOLETE IN FAVOR OF MOBILE React 18 + Vite at `/front-end/app/` - HashRouter, IndexedDB offline storage 
-- **Mobile**: React Native at `/front-end/mobile/`
-- **Splash Page**: located at `/front-end/public-home`, not part of PWA to mobile migration
-- **Back-end**: Flask 3.1.1 + PostgreSQL at `/back-end/` - Main API with `/api/v1` prefix  
-- **Chat Service**: Spring Boot + GraphQL + WebSocket at `/messages-java/`
-- **User Service**: Spring Boot authentication at `/user_service/`
-- **Notifications Service**: Spring Boot push notifications at `/notifications/`
-- **Recruiting Service**: Spring Boot clan recruitment at `/recruiting/`
-- **Shared Library**: `coclib` - SQLAlchemy models, utilities, config shared across services
-- **Mobile App**: React Native + Expo at `/front-end/mobile/` - Native iOS/Android app
+Each directory may contain its own `AGENTS.md` with project‑specific notes. Check those files when working in a subfolder.
 
-## Development Methodology
+## Crawling the codebase
+- Shared models and utilities reside in `coclib`.
+- Database migrations are stored in the `migrations` directory at the repo root.
 
-**ALWAYS follow Test-Driven Development (TDD):**
-- Write tests BEFORE implementation (Red → Green → Refactor cycle)
-- All new features and bug fixes MUST include tests
-- Tests are mandatory for all services except when specifically noted below
-
-**TDD Exceptions:**
-- Mobile UI components in `/front-end/mobile/*` may write tests alongside implementation when TDD becomes impractical for visual/interactive elements
-- Still strongly encouraged to use TDD for business logic, hooks, and utilities in mobile
-
-## Essential Development Commands
-
-**Root Level Testing & Linting:**
-```bash
-nox -s lint tests    # Runs all tests, linting across entire monorepo
-ruff back-end coclib db  # Manual Python linting
-```
-
-**Front-end** (from `/front-end/app/`):
-```bash
-npm run dev          # Vite dev server on :5173 with API proxy  
-npm test            # Vitest with jsdom + React Testing Library
-npm run build       # Production build with commit hash injection
-```
-
-**Backend** (from `/back-end/`):
-```bash
-python run.py       # Flask dev server with auto-reload
-```
-
-**Java Services** (from service directories):
-```bash
-./gradlew test spotlessCheck    # Test + code formatting check
-./gradlew spotlessApply         # Auto-format code
-```
-
-**Mobile** (from `/front-end/mobile/`):
-```bash
-npm test                # Jest with React Native Testing Library
-npm run typecheck       # TypeScript checking
-npm run lint           # ESLint checking
-expo start             # Development server
-```
-
-## Critical Architecture Patterns
-
-**API Route Organization:**
-- Backend: `/back-end/app/api/[domain]_routes.py` (clan_routes.py, player_routes.py, etc.)
-- All routes use `/api/v1` prefix, async/await pattern
-- Business logic in `/back-end/app/services/`
-
-**Database Models (coclib/models.py):**
-- `ClanSnapshot`/`Clan` - Historical vs current clan data with JSON fields
-- `PlayerSnapshot`/`Player` - Historical vs current player data  
-- `WarSnapshot` - War tracking with full JSON blobs
-- `LoyaltyMembership` - Clan membership history
-- Shared across all services via coclib import
-
-**Frontend Structure:**
-- `/src/pages/` - Top-level routes (Dashboard.jsx, Scout.jsx, ChatPage.jsx, etc.)
-- `/src/components/` - Reusable components
-- `/src/hooks/` - Custom hooks (useAuth, useChat, usePlayerInfo, etc.)
-- `/src/lib/` - Utilities (api.js for fetch helpers, db.js for IndexedDB, auth.js)
-
-**Service Communication:**
-- Frontend ↔ Backend: REST API with JWT cookie auth, CORS enabled
-- Services ↔ Services: HTTP calls between microservices
-- Chat: STOMP WebSocket protocol over `/websocket` endpoint
-- Auth: Google Identity Services → JWT httpOnly cookies → User service validation
-
-## Environment Configuration
-
-**Required for Development:**
-```bash
-VITE_GOOGLE_CLIENT_ID=       # Google OAuth client ID (frontend)
-GOOGLE_CLIENT_ID=            # Google OAuth client ID (backend)
-JWT_SIGNING_KEY=             # HMAC key for JWT tokens
-REDIS_URL=                   # Redis connection string
-VITE_API_URL=http://localhost:8000  # Backend URL for dev
-COOKIE_SECURE=false          # Disable secure flag for localhost
-SESSION_MAX_AGE=2592000      # Session lifetime in seconds
-DATABASE_URL=                # PostgreSQL connection string
-COC_EMAIL=                   # Clash of Clans developer portal email (required)
-COC_PASSWORD=                # Clash of Clans developer portal password (required)
-```
-
-**Vite Proxy Configuration:**
-- Dev server proxies `/api` requests to `VITE_API_URL`
-- Production uses relative paths (same host deployment)
-
-## Testing Strategy
+## Testing and checks
 
 **TDD Workflow - Follow for ALL development:**
 1. **Red**: Write failing test first
 2. **Green**: Write minimal code to pass
 3. **Refactor**: Improve code while keeping tests passing
-
-**Frontend (Vitest) - TDD Required:**
-- Write test in `Component.test.jsx` BEFORE implementing `Component.jsx`
-- `npm test` - All tests with jsdom environment
-- React Testing Library for component testing
-- Tests co-located: `Component.jsx` + `Component.test.jsx`
-- Setup in `vitest.setup.js`, fake-indexeddb for IndexedDB mocking
-
-**Backend (pytest) - TDD Required:**
-- Write test file BEFORE implementing functionality
-- Test files in same directory as code
-- Database fixtures and API testing
-- Run via `nox -s tests` or direct pytest
-- All routes and services must have corresponding tests
 
 **Java Services (JUnit) - TDD Required:**
 - Write JUnit tests BEFORE business logic implementation
@@ -135,50 +38,44 @@ COC_PASSWORD=                # Clash of Clans developer portal password (require
 - Gradle test runner with comprehensive coverage
 - All controllers and services must have corresponding tests
 
-**Mobile (Jest/React Native Testing Library) - TDD Preferred:**
-- `npm test` from `/front-end/mobile/` directory
-- Write tests BEFORE or alongside implementation
-- Exception: Complex UI components may write tests after for visual elements
-- Still use TDD for all business logic, hooks, and utilities
-- Tests co-located with components
+Validate changes using:
 
-## Common Debugging Scenarios
+```bash
+# Lint and run tests with Nox (convenience wrapper; requires Python 3.11 and nox installed)
+nox -s lint tests
 
-**API Issues:**
-- Check `back-end/app/api/[domain]_routes.py` for route definitions
-- Business logic in `back-end/app/services/`
-- Models in `coclib/models.py` - all data stored as JSON fields in most tables
+# Lint Python sources manually if needed
+ruff coclib db lambdas/refresh-worker
 
-**Auth Problems:**
-- JWT cookies managed by User Service
-- Google OAuth flow in frontend `lib/auth.js`
-- 401 responses trigger `unauthorized` event in frontend
+# Mobile app checks (Node 20+)
+cd front-end/mobile
+npm ci
+npm run lint
+npm run typecheck
+npm test
 
-**Database Issues:**
-- Migrations in `/migrations/` directory (Alembic)
-- Models defined in `coclib/models.py` and shared across services
-- Use `flask db` commands from `/db/` directory
+# Web app (optional; PWA is obsolete)
+cd ../app
+npm ci
+npm test
+npm run build
+```
 
-**Frontend Issues:**
-- Check browser console for API call failures
-- IndexedDB cache in `lib/db.js` for offline functionality
-- Routing via HashRouter in `src/main.jsx`
+Any lint errors or build failures should fail the PR.
 
-## Service-Specific Guidelines
+### Makefile shortcuts
+- `make help` lists available commands
+- `make lint` runs Python, Java (spotless), and mobile lint/typecheck
+- `make test` runs Java tests, mobile tests, and Lambda tests (via nox)
+- `make lambda-test-standalone` runs Lambda tests without nox
 
-Each service has detailed `AGENTS.md` files:
-- `/back-end/AGENTS.md` - Flask API patterns
-- `/front-end/app/AGENTS.md` - React component organization  
-- `/coclib/AGENTS.md` - Shared library guidelines
-- `[service]/AGENTS.md` - Spring Boot service specifics
-
-## Deployment & CI/CD
-
-**Build Process:**
-- Selective building based on changed files
-- Multi-platform Docker builds (ARM64)
-- AWS ECS deployment with ECR registry
-- CloudFront CDN for static assets
+### Lambda tests
+- With nox: `nox -s tests` (executes refresh-worker tests as part of the suite)
+- Without nox (manual):
+  - `cd lambdas/refresh-worker`
+  - `python -m venv .venv && source .venv/bin/activate` (Python 3.11)
+  - `pip install -r requirements-test.txt`
+  - `PYTHONPATH=../../ pytest -v test_lambda_function.py`
 
 **Code Quality Gates:**
 - **MANDATORY**: All new code must include corresponding tests
@@ -188,3 +85,41 @@ Each service has detailed `AGENTS.md` files:
 - Java services must pass `./gradlew test spotlessCheck`
 - Ruff formatting enforced for Python code
 - **PRs without tests will be rejected** (except for documentation-only changes)
+
+## CI notes
+
+- PR CI runs jobs in parallel per stack (Python lint, Lambdas tests, front-end web/mobile, and a Java matrix including `java-auth-common`).
+- Java modules run `spotlessCheck` and `test` with Gradle caching enabled. `coc-py/:coc-java` is published to `mavenLocal` in each Java job before builds.
+- The old monolithic `nox` CI driver is retained for local dev convenience; CI no longer calls `nox` directly.
+- Path filters skip unaffected jobs to reduce build time.
+
+## Git hooks
+
+- Install the fast pre-commit hook with:
+  - `bash tools/setup-git-hooks.sh`
+- Behavior:
+  - Runs only relevant checks for staged files in parallel
+  - Python: `ruff` on changed files under `coclib`, `db`, `lambdas/refresh-worker`
+  - Java: `spotlessCheck` for changed modules (tests opt-in)
+  - Mobile: `lint` and `typecheck` (tests opt-in)
+- Opt-ins via env vars on commit:
+  - `PRECOMMIT_FULL=1` use legacy `nox -s lint tests`
+  - `PRECOMMIT_JAVA_TESTS=1` also run Gradle tests
+  - `PRECOMMIT_MOBILE_TESTS=1` run mobile tests
+  - `PRECOMMIT_APP_TESTS=1` run web app tests
+
+## Development notes
+
+- Keep shared logic in `coclib` rather than duplicating it in other projects.
+- Dockerfiles expect Python 3.11 and Node 20+.
+- Follow Ruff's default style rules for Python code.
+- This is a living document. Update it if anything is incorrect or needs updating.
+
+### Local Gradle notes
+- Ensure JDK 21 is active. If your environment restricts `~/.gradle`, set `export GRADLE_USER_HOME=$(pwd)/.gradle` before running wrapper commands.
+- Avoid the global `gradle` CLI to prevent wrapper/version drift; use the module `./gradlew` consistently.
+- All modules are aligned to Gradle $(8.14.3) via their wrapper properties; use `make gradle-align` to re-pin distribution URLs if needed.
+
+## Lambdas
+- `lambdas/refresh-worker/` (Python 3.11) handles background refresh queue; see `DEPLOYMENT.md` and `package-lambda.sh` for packaging and Infra‑as‑Code hooks. Tests are exercised by `nox -s tests` and can be run with `pytest` locally.
+- `lambdas/dynamodb-to-sqs.js` forwards DynamoDB stream events to SQS.
