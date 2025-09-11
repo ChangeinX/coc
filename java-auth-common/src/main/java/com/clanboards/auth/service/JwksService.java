@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwksService {
   private static final Logger logger = LoggerFactory.getLogger(JwksService.class);
+  // no-op: trigger pre-commit java tests path when enabled
 
   private final OidcProperties oidcProperties;
   private final HttpClient httpClient;
