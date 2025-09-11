@@ -84,7 +84,7 @@ describe('ChatMessage', () => {
 
     const messageElement = getByText('Hello world!');
     // Parent is the pressable bubble wrapper
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     fireEvent.press((messageElement.parent) as any);
 
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -181,7 +181,7 @@ describe('ChatMessage', () => {
     );
 
     const messageElement = getByText('Hello world!');
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     fireEvent((messageElement.parent) as any, 'onLongPress');
 
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -207,7 +207,7 @@ describe('ChatMessage', () => {
     );
 
     const messageElement = getByText('Hello world!');
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     fireEvent((messageElement.parent) as any, 'onLongPress');
 
     expect(mockLongPress).toHaveBeenCalled();
