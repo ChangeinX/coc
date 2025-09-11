@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/ChangeinX/coc/actions/workflows/pr.yml/badge.svg?branch=main)](https://github.com/ChangeinX/coc/actions/workflows/pr.yml)
 
+
 This monorepo contains a Flask API and a React dashboard. 
 
 ## Google Sign-In setup
