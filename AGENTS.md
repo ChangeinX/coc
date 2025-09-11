@@ -30,6 +30,9 @@ Each directory may contain its own `AGENTS.md` with project‑specific notes. Ch
 Validate changes using:
 
 ```bash
+# One-time bootstrap for local development (Python 3.11, nox/ruff via pipx, npm ci, hooks)
+make setup
+
 # Lint and run tests with Nox (convenience wrapper; requires Python 3.11 and nox installed)
 nox -s lint tests
 
@@ -62,7 +65,7 @@ Any lint errors or build failures should fail the PR.
 - With nox: `nox -s tests` (executes refresh-worker tests as part of the suite)
 - Without nox (manual):
   - `cd lambdas/refresh-worker`
-  - `python -m venv .venv && source .venv/bin/activate` (Python 3.11)
+  - `python3.11 -m venv .venv && source .venv/bin/activate` (ensure 3.11)
   - `pip install -r requirements-test.txt`
   - `PYTHONPATH=../../ pytest -v test_lambda_function.py`
 

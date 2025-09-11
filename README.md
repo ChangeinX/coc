@@ -40,6 +40,14 @@ Details and integration guidance:
 - Requirements: Java 21, Node 20+, Python 3.11.
 - Preferred local workflow uses fast pre‑commit checks and targeted stacks.
 
+### Quick Start
+- Bootstrap everything: `make setup`
+  - Installs pre‑commit hook (supports git worktrees)
+  - Ensures Python 3.11 is available (via uv/brew/pyenv)
+  - Installs `nox` and `ruff` via pipx when available
+  - Runs `npm ci` for mobile and web (if present)
+  - Exposes a local shim at `.tools/bin/python3.11` used by Make targets
+
 ### Prerequisites
 - Install nox: `pipx install nox` (or `pip install nox` in a 3.11 venv)
 - Optionally install ruff: `pipx install ruff` (or use `nox -s lint`)
