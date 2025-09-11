@@ -88,7 +88,7 @@ class WebSocketService {
           this.notifyConnectionHandlers(false);
         },
         onStompError: (frame) => {
-          console.error('STOMP error:', frame.headers['message'], frame.body);
+          console.error('STOMP error:', frame.headers.message, frame.body);
           this.handleReconnect();
         },
         onWebSocketError: (event) => {

@@ -7,20 +7,30 @@ import {
   PlayerRecruitFeed, 
   DiscoveryBar, 
   ClanPostForm,
+  PlayerPostForm,
 } from '../components';
 import { useRecruitFeed, usePlayerRecruitFeed } from '../hooks';
-import { createPlayerRecruitPost } from '../api/recruitingApi';
+import { createPlayerRecruitPost, createRecruitPost } from '../api/recruitingApi';
+import { useAuthStore } from '@store/auth.store';
+import { usePlayerInfo } from '@features/dashboard/hooks/usePlayerInfo';
 
 type TabType = 'find' | 'need';
+type FormType = 'clan' | 'player' | null;
 
 export default function ScoutScreen() {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('find');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState<FormType>(null);
+  
+  const { user } = useAuthStore();
+  const playerInfo = usePlayerInfo(user?.player_tag);
   
   const recruitFeed = useRecruitFeed({ searchQuery: activeTab === 'find' ? searchQuery : '' });
   const playerFeed = usePlayerRecruitFeed({ searchQuery: activeTab === 'need' ? searchQuery : '' });
+  
+  // Check if user can create clan posts (leader or co-leader)
+  const canCreateClanPost = playerInfo.data?.role === 'leader' || playerInfo.data?.role === 'coLeader';
 
   const handlePostPress = (post: any) => {
     console.log('Pressed post:', post);
@@ -51,24 +61,54 @@ export default function ScoutScreen() {
     );
   };
 
-  const handleCreatePost = async (data: { description: string }) => {
+  const handleCreatePlayerPost = async (data: { description: string }) => {
     try {
       await playerFeed.createPost(data);
-      setShowCreateForm(false);
+      setShowCreateForm(null);
       Alert.alert('Success', 'Your recruit post has been created!');
     } catch (error) {
       Alert.alert('Error', 'Failed to create post. Please try again.');
     }
   };
 
-  const fabActions: FABAction[] = [
-    {
-      id: 'create-post',
-      label: 'Create Player Post',
-      icon: '✏️',
-      onPress: () => setShowCreateForm(true),
-    },
-  ];
+  const handleCreateClanPost = async (data: { clanTag: string; callToAction: string }) => {
+    try {
+      await createRecruitPost(data.clanTag, data.callToAction);
+      setShowCreateForm(null);
+      Alert.alert('Success', 'Your clan post has been created!');
+      // Refresh the recruit feed to show the new post
+      recruitFeed.refetch();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create clan post. Please try again.');
+    }
+  };
+
+  // Generate FAB actions based on current tab and user permissions
+  const getFABActions = (): FABAction[] => {
+    const actions: FABAction[] = [];
+    
+    if (activeTab === 'find' && canCreateClanPost) {
+      actions.push({
+        id: 'create-clan-post',
+        label: 'Create Clan Post',
+        icon: '🏰',
+        onPress: () => setShowCreateForm('clan'),
+      });
+    }
+    
+    if (activeTab === 'need') {
+      actions.push({
+        id: 'create-player-post',
+        label: 'Create Player Post',
+        icon: '✏️',
+        onPress: () => setShowCreateForm('player'),
+      });
+    }
+    
+    return actions;
+  };
+
+  const fabActions = getFABActions();
 
   const styles = StyleSheet.create({
     container: {
@@ -102,14 +142,25 @@ export default function ScoutScreen() {
     },
   });
 
-  if (showCreateForm) {
+  if (showCreateForm === 'clan') {
     return (
       <View style={styles.container}>
         <ClanPostForm
-          onSubmit={async ({ callToAction }) => {
-            await handleCreatePost({ description: callToAction });
-          }}
-          onCancel={() => setShowCreateForm(false)}
+          onSubmit={handleCreateClanPost}
+          onCancel={() => setShowCreateForm(null)}
+          isLoading={false} // TODO: Add loading state for clan post creation
+          {...(playerInfo.data?.clanTag && { clanTag: playerInfo.data.clanTag })}
+        />
+      </View>
+    );
+  }
+
+  if (showCreateForm === 'player') {
+    return (
+      <View style={styles.container}>
+        <PlayerPostForm
+          onSubmit={handleCreatePlayerPost}
+          onCancel={() => setShowCreateForm(null)}
           isLoading={playerFeed.isCreating}
         />
       </View>
@@ -147,17 +198,20 @@ export default function ScoutScreen() {
 
       {/* Content */}
       {activeTab === 'find' ? (
-        <RecruitFeed
-          posts={recruitFeed.posts}
-          onPostPress={handlePostPress}
-          onJoinPress={handleJoinPress}
-          onLoadMore={recruitFeed.fetchNextPage}
-          onRefresh={recruitFeed.refetch}
-          isLoading={recruitFeed.isLoading}
-          isLoadingMore={recruitFeed.isFetchingNextPage}
-          isRefreshing={recruitFeed.isRefetching}
-          hasMore={recruitFeed.hasNextPage}
-        />
+        <>
+          <RecruitFeed
+            posts={recruitFeed.posts}
+            onPostPress={handlePostPress}
+            onJoinPress={handleJoinPress}
+            onLoadMore={recruitFeed.fetchNextPage}
+            onRefresh={recruitFeed.refetch}
+            isLoading={recruitFeed.isLoading}
+            isLoadingMore={recruitFeed.isFetchingNextPage}
+            isRefreshing={recruitFeed.isRefetching}
+            hasMore={recruitFeed.hasNextPage}
+          />
+          {fabActions.length > 0 && <FloatingActionButton actions={fabActions} />}
+        </>
       ) : (
         <>
           <PlayerRecruitFeed
@@ -171,7 +225,7 @@ export default function ScoutScreen() {
             isRefreshing={playerFeed.isRefetching}
             hasMore={playerFeed.hasNextPage}
           />
-          <FloatingActionButton actions={fabActions} />
+          {fabActions.length > 0 && <FloatingActionButton actions={fabActions} />}
         </>
       )}
     </View>

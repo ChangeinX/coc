@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, StyleSheet, Dimensions } from 'react-native';
 import { useTheme } from '@theme/index';
 import { useHaptics, useScaleAnimation } from '@utils/index';
 
@@ -30,6 +30,37 @@ export function FloatingActionButton({
   const actionAnimations = useRef(
     actions.map(() => new Animated.Value(0))
   ).current;
+
+  // Get screen dimensions for responsive positioning
+  const screenWidth = Dimensions.get('window').width;
+  
+  // Calculate responsive values
+  const getResponsiveValues = () => {
+    if (screenWidth < 350) {
+      // Very narrow screens (iPhone SE)
+      return {
+        rightMargin: 16,
+        actionMaxWidth: Math.floor(screenWidth * 0.7),
+        rightPosition: 0,
+      };
+    } else if (screenWidth < 380) {
+      // Standard narrow screens
+      return {
+        rightMargin: 20,
+        actionMaxWidth: Math.floor(screenWidth * 0.75),
+        rightPosition: 0,
+      };
+    } else {
+      // Wide screens
+      return {
+        rightMargin: 24,
+        actionMaxWidth: Math.floor(screenWidth * 0.8),
+        rightPosition: 0,
+      };
+    }
+  };
+
+  const { rightMargin, actionMaxWidth } = getResponsiveValues();
 
   const toggleExpanded = async () => {
     if (isAvailable()) await light();
@@ -80,8 +111,20 @@ export function FloatingActionButton({
     outputRange: ['0deg', '45deg'],
   });
 
+  const containerStyle = {
+    ...styles.container,
+    bottom: theme.spacing['2xl'] + 60,
+    right: rightMargin,
+  };
+
+  const actionButtonStyle = {
+    ...styles.actionButton,
+    maxWidth: actionMaxWidth,
+    right: 0, // Align to the right edge of container
+  };
+
   return (
-    <View style={[styles.container, { bottom: theme.spacing['2xl'] + 60 }]}>
+    <View style={containerStyle} testID="fab-container">
       {/* Action buttons */}
       {actions.map((action, index) => {
         const translateY = actionAnimations[index].interpolate({
@@ -97,8 +140,9 @@ export function FloatingActionButton({
         return (
           <Animated.View
             key={action.id}
+            testID={`action-button-${action.id}`}
             style={[
-              styles.actionButton,
+              actionButtonStyle,
               {
                 transform: [{ translateY }, { scale }],
                 backgroundColor: theme.colors.surface,
@@ -110,6 +154,7 @@ export function FloatingActionButton({
             <TouchableOpacity
               onPress={() => handleActionPress(action)}
               style={styles.actionTouchable}
+              testID={`action-touchable-${action.id}`}
             >
               <Text style={styles.actionIcon}>{action.icon}</Text>
               <Text style={[
@@ -126,6 +171,7 @@ export function FloatingActionButton({
       {/* Main FAB */}
       <Animated.View style={[animatedStyle]}>
         <TouchableOpacity
+          testID="floating-action-button"
           onPress={toggleExpanded}
           style={[
             styles.mainButton,
@@ -155,8 +201,7 @@ export function FloatingActionButton({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    right: 20,
-    alignItems: 'center',
+    alignItems: 'flex-end', // Align items to the right
   },
   mainButton: {
     width: 56,
@@ -193,5 +238,6 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontWeight: '500',
     flex: 1,
+    flexShrink: 1, // Allow text to shrink if needed
   },
 });

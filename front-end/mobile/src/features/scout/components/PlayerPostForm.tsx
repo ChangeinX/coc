@@ -3,42 +3,28 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 
 import { useTheme } from '@theme/index';
 import { useHaptics } from '@utils/index';
 
-interface ClanPostFormProps {
-  onSubmit: (data: { clanTag: string; callToAction: string }) => Promise<void>;
+interface PlayerPostFormProps {
+  onSubmit: (data: { description: string }) => Promise<void>;
   onCancel: () => void;
   isLoading: boolean;
-  clanTag?: string; // Optional pre-populated clan tag
 }
 
 interface ValidationErrors {
-  clanTag?: string;
-  callToAction?: string;
+  description?: string;
 }
 
-export function ClanPostForm({ onSubmit, onCancel, isLoading, clanTag: prePopulatedClanTag }: ClanPostFormProps) {
+export default function PlayerPostForm({ onSubmit, onCancel, isLoading }: PlayerPostFormProps) {
   const theme = useTheme();
   const { light } = useHaptics();
   
-  const [clanTag, setClanTag] = useState(prePopulatedClanTag || '');
-  const [callToAction, setCallToAction] = useState('');
+  const [description, setDescription] = useState('');
   const [errors, setErrors] = useState<ValidationErrors>({});
-  
-  const isAutoPopulated = !!prePopulatedClanTag;
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
 
-    // Only validate clan tag if it's not auto-populated
-    if (!isAutoPopulated) {
-      if (!clanTag.trim()) {
-        newErrors.clanTag = 'Clan tag is required';
-      } else if (!clanTag.startsWith('#')) {
-        newErrors.clanTag = 'Clan tag must start with #';
-      }
-    }
-
-    if (!callToAction.trim()) {
-      newErrors.callToAction = 'Description is required';
+    if (!description.trim()) {
+      newErrors.description = 'Please tell clans why they should recruit you';
     }
 
     setErrors(newErrors);
@@ -53,28 +39,18 @@ export function ClanPostForm({ onSubmit, onCancel, isLoading, clanTag: prePopula
 
     try {
       await onSubmit({
-        clanTag: clanTag.trim(),
-        callToAction: callToAction.trim(),
+        description: description.trim(),
       });
     } catch (error) {
       // Error handling is done by parent component
     }
   };
 
-  const handleClanTagChange = (text: string) => {
-    setClanTag(text);
+  const handleDescriptionChange = (text: string) => {
+    setDescription(text);
     // Clear error when user starts typing
-    if (errors.clanTag) {
-      const { clanTag, ...otherErrors } = errors;
-      setErrors(otherErrors);
-    }
-  };
-
-  const handleCallToActionChange = (text: string) => {
-    setCallToAction(text);
-    // Clear error when user starts typing
-    if (errors.callToAction) {
-      const { callToAction, ...otherErrors } = errors;
+    if (errors.description) {
+      const { description, ...otherErrors } = errors;
       setErrors(otherErrors);
     }
   };
@@ -125,7 +101,7 @@ export function ClanPostForm({ onSubmit, onCancel, isLoading, clanTag: prePopula
       borderColor: theme.colors.error,
     },
     textArea: {
-      minHeight: 100,
+      minHeight: 120,
       textAlignVertical: 'top',
     },
     errorText: {
@@ -180,52 +156,29 @@ export function ClanPostForm({ onSubmit, onCancel, isLoading, clanTag: prePopula
     <View style={styles.container}>
       <ScrollView style={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
-          <Text style={styles.title}>Create Clan Post</Text>
+          <Text style={styles.title}>Create Player Post</Text>
 
           <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Clan Tag</Text>
-            <TextInput
-              style={[
-                styles.textInput,
-                errors.clanTag && styles.textInputError,
-              ]}
-              value={clanTag}
-              onChangeText={handleClanTagChange}
-              placeholder="Enter clan tag (e.g., #ABC123)"
-              placeholderTextColor={theme.colors.textSecondary}
-              autoCapitalize="characters"
-              returnKeyType="next"
-              editable={!isLoading && !isAutoPopulated}
-            />
-            {errors.clanTag && (
-              <Text style={styles.errorText}>{errors.clanTag}</Text>
-            )}
-            <Text style={styles.hint}>
-              {isAutoPopulated ? 'Using your current clan' : 'Include the # symbol at the beginning'}
-            </Text>
-          </View>
-
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={styles.label}>Message to Clans</Text>
             <TextInput
               style={[
                 styles.textInput,
                 styles.textArea,
-                errors.callToAction && styles.textInputError,
+                errors.description && styles.textInputError,
               ]}
-              value={callToAction}
-              onChangeText={handleCallToActionChange}
-              placeholder="Tell players about your clan..."
+              value={description}
+              onChangeText={handleDescriptionChange}
+              placeholder="Tell clans why they should recruit you..."
               placeholderTextColor={theme.colors.textSecondary}
               multiline
               returnKeyType="default"
               editable={!isLoading}
             />
-            {errors.callToAction && (
-              <Text style={styles.errorText}>{errors.callToAction}</Text>
+            {errors.description && (
+              <Text style={styles.errorText}>{errors.description}</Text>
             )}
             <Text style={styles.hint}>
-              Clan details, level, and member count will be automatically included
+              Your player profile, league, and stats will be automatically included
             </Text>
           </View>
         </View>

@@ -193,4 +193,65 @@ describe('ClanPostForm', () => {
     
     expect(callToActionInput.props.value).toBe(longText);
   });
+
+  describe('Auto-population functionality', () => {
+    const propsWithClanTag = {
+      ...defaultProps,
+      clanTag: '#CLAN123',
+    };
+
+    it('should render with pre-filled and read-only clan tag when provided', () => {
+      render(<ClanPostForm {...propsWithClanTag} />);
+      
+      const clanTagInput = screen.getByDisplayValue('#CLAN123');
+      expect(clanTagInput.props.editable).toBe(false);
+    });
+
+    it('should show helper text when clan tag is auto-populated', () => {
+      render(<ClanPostForm {...propsWithClanTag} />);
+      
+      expect(screen.getByText('Using your current clan')).toBeTruthy();
+    });
+
+    it('should submit with pre-populated clan tag', async () => {
+      const onSubmit = jest.fn().mockResolvedValue(undefined);
+      
+      render(<ClanPostForm {...propsWithClanTag} onSubmit={onSubmit} />);
+      
+      const callToActionInput = screen.getByPlaceholderText('Tell players about your clan...');
+      const submitButton = screen.getByText('Create Post');
+      
+      fireEvent.changeText(callToActionInput, 'Join our active war clan!');
+      fireEvent.press(submitButton);
+      
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith({
+          clanTag: '#CLAN123',
+          callToAction: 'Join our active war clan!',
+        });
+      });
+    });
+
+    it('should only validate call to action when clan tag is pre-filled', async () => {
+      const onSubmit = jest.fn();
+      render(<ClanPostForm {...propsWithClanTag} onSubmit={onSubmit} />);
+      
+      const submitButton = screen.getByText('Create Post');
+      fireEvent.press(submitButton);
+      
+      // Should not show clan tag error since it's pre-filled
+      expect(screen.queryByText('Clan tag is required')).toBeFalsy();
+      expect(screen.queryByText('Clan tag must start with #')).toBeFalsy();
+      
+      // Should still show call to action error
+      expect(screen.getByText('Description is required')).toBeTruthy();
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('should show helper text about backend auto-population', () => {
+      render(<ClanPostForm {...defaultProps} />);
+      
+      expect(screen.getByText('Clan details, level, and member count will be automatically included')).toBeTruthy();
+    });
+  });
 });
