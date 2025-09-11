@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Alert, ScrollView, TextInput, Switch, Modal } from 'react-native';
 import { useTheme } from '@theme/index';
-import { AUTH_URL, API_URL, ENV } from '@env';
+import { AUTH_URL, API_URL, ENV, MESSAGES_URL } from '@env';
 import { useAuthStore } from '@store/auth.store';
 import { tokenStorage } from '@services/storage/secureStorage';
 import * as Clipboard from 'expo-clipboard';
@@ -9,6 +9,7 @@ import { userApi, UserProfile, UserFeatures } from '../api/user.api';
 import RiskPrioritySelect, { RiskWeights } from '../components/RiskPrioritySelect';
 import VerifiedBadge from '../components/VerifiedBadge';
 import ChatBadge from '../components/ChatBadge';
+import { apiFetch } from '@services/apiClient';
 
 const TokenExpiryCountdown = () => {
   const { colors } = useTheme();
@@ -80,6 +81,7 @@ export default function SettingsScreen() {
   const [apiToken, setApiToken] = useState('');
   const [chatEnabled, setChatEnabled] = useState(false);
   const [showRiskInfo, setShowRiskInfo] = useState(false);
+  const [debugLoading, setDebugLoading] = useState(false);
 
   const isDevEnv =
     ENV === 'dev' || /localhost|dev/i.test(API_URL) || /localhost|dev/i.test(AUTH_URL);
@@ -172,6 +174,84 @@ export default function SettingsScreen() {
       Alert.alert('Error', 'Failed to verify account. Please check your API token.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Debug functions for messages service
+  const testMessagesConfig = async () => {
+    setDebugLoading(true);
+    try {
+      const config = await fetch(`${MESSAGES_URL}/api/v1/chat/debug/config`);
+      const configData = await config.json();
+      
+      Alert.alert(
+        'Messages Service Config',
+        `Issuer: ${configData.issuer}\nAudience: ${configData.audience}\nJWKS: ${configData.jwksUrl}`,
+        [{ text: 'Copy', onPress: () => Clipboard.setStringAsync(JSON.stringify(configData, null, 2)) }]
+      );
+    } catch (error) {
+      Alert.alert('Error', `Failed to fetch config: ${error}`);
+    } finally {
+      setDebugLoading(false);
+    }
+  };
+
+  const testTokenValidation = async () => {
+    setDebugLoading(true);
+    try {
+      const tokens = await tokenStorage.get();
+      if (!tokens?.accessToken) {
+        Alert.alert('Error', 'No access token available');
+        return;
+      }
+
+      const response = await fetch(`${MESSAGES_URL}/api/v1/chat/debug/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tokens.accessToken }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.valid) {
+        Alert.alert(
+          'Token Valid ✅',
+          `User ID: ${result.extractedUserId}\nIssuer: ${result.claims.issuer}\nAudience: ${result.claims.audience}`,
+          [{ text: 'Copy Details', onPress: () => Clipboard.setStringAsync(JSON.stringify(result, null, 2)) }]
+        );
+      } else {
+        Alert.alert(
+          'Token Invalid ❌',
+          `Error: ${result.error}`,
+          [{ text: 'Copy Details', onPress: () => Clipboard.setStringAsync(JSON.stringify(result, null, 2)) }]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', `Validation failed: ${error}`);
+    } finally {
+      setDebugLoading(false);
+    }
+  };
+
+  const testRequestInfo = async () => {
+    setDebugLoading(true);
+    try {
+      const response = await apiFetch<{
+        method: string;
+        hasBearerToken: boolean;
+        hasSidCookie: boolean;
+        [key: string]: any;
+      }>(`${MESSAGES_URL}/api/v1/chat/debug/request-info`, { auth: true });
+      
+      Alert.alert(
+        'Request Info',
+        `Method: ${response.method}\nAuth Token: ${response.hasBearerToken ? 'Yes' : 'No'}\nCookie: ${response.hasSidCookie ? 'Yes' : 'No'}`,
+        [{ text: 'Copy Details', onPress: () => Clipboard.setStringAsync(JSON.stringify(response, null, 2)) }]
+      );
+    } catch (error) {
+      Alert.alert('Error', `Request failed: ${error}`);
+    } finally {
+      setDebugLoading(false);
     }
   };
 
@@ -352,26 +432,62 @@ export default function SettingsScreen() {
           <View style={{ marginBottom: 12 }}>
             <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>API: {API_URL}</Text>
             <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>Auth: {AUTH_URL}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>Messages: {MESSAGES_URL}</Text>
             <TokenExpiryCountdown />
           </View>
-          <Button
-            label="Copy Access Token"
-            onPress={async () => {
-              try {
-                const at = tokens?.accessToken ?? (await tokenStorage.get())?.accessToken;
-                if (!at) {
-                  Alert.alert('No token', 'No access token is available. Log in first.');
-                  return;
+          
+          <View style={{ marginBottom: 12 }}>
+            <Button
+              label="Copy Access Token"
+              onPress={async () => {
+                try {
+                  const at = tokens?.accessToken ?? (await tokenStorage.get())?.accessToken;
+                  if (!at) {
+                    Alert.alert('No token', 'No access token is available. Log in first.');
+                    return;
+                  }
+                  await Clipboard.setStringAsync(at);
+                  Alert.alert('Copied', 'Access token copied to clipboard.');
+                } catch (e) {
+                  console.warn('Copy token failed', e);
+                  Alert.alert('Failed', 'Unable to copy token to clipboard.');
                 }
-                await Clipboard.setStringAsync(at);
-                Alert.alert('Copied', 'Access token copied to clipboard.');
-              } catch (e) {
-                console.warn('Copy token failed', e);
-                Alert.alert('Failed', 'Unable to copy token to clipboard.');
-              }
-            }}
-            fullWidth
-          />
+              }}
+              fullWidth
+            />
+          </View>
+
+          {/* Messages Debug Section */}
+          <Text style={{ 
+            fontSize: 16, 
+            fontWeight: '500',
+            marginBottom: 8,
+            color: colors.text 
+          }}>Messages Service Debug</Text>
+          
+          <View style={{ marginBottom: 8 }}>
+            <Button
+              label={debugLoading ? "Loading..." : "Test Config"}
+              onPress={testMessagesConfig}
+              fullWidth
+            />
+          </View>
+          
+          <View style={{ marginBottom: 8 }}>
+            <Button
+              label={debugLoading ? "Loading..." : "Test Token Validation"}
+              onPress={testTokenValidation}
+              fullWidth
+            />
+          </View>
+          
+          <View style={{ marginBottom: 12 }}>
+            <Button
+              label={debugLoading ? "Loading..." : "Test Request Info"}
+              onPress={testRequestInfo}
+              fullWidth
+            />
+          </View>
         </>
       )}
 
