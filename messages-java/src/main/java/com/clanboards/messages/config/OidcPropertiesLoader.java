@@ -18,7 +18,6 @@ public class OidcPropertiesLoader {
 
   private static final String OIDC_ISSUER_KEY = "oidc.issuer";
   private static final String OIDC_AUDIENCE_KEY = "oidc.audience";
-  private static final String OIDC_USER_SERVICE_URL_KEY = "oidc.user_service_url";
 
   private final SystemConfigRepository configRepository;
   private final OidcProperties oidcProperties;
@@ -58,25 +57,12 @@ public class OidcPropertiesLoader {
                     "Using default audience from application.yml: {}",
                     oidcProperties.getAudience()));
 
-    // Load user service URL from database, fallback to existing value
-    configRepository
-        .findByKey(OIDC_USER_SERVICE_URL_KEY)
-        .ifPresentOrElse(
-            config -> {
-              logger.info("Loaded user service URL from database: {}", config.getValue());
-              oidcProperties.setUserServiceUrl(config.getValue());
-            },
-            () ->
-                logger.info(
-                    "Using default user service URL from application.yml: {}",
-                    oidcProperties.getUserServiceUrl()));
-
     logger.info(
-        "OIDC configuration loaded - Issuer: {}, Audience: {}, User Service URL: {}, JWKS URL: {}",
+        "OIDC configuration loaded - Issuer: {}, Audience: {}, JWKS Source: {}, JWKS DB Key: {}",
         oidcProperties.getIssuer(),
         oidcProperties.getAudience(),
-        oidcProperties.getUserServiceUrl(),
-        oidcProperties.getJwksUrl());
+        oidcProperties.getJwksSource(),
+        oidcProperties.getJwksDbKey());
   }
 
   /**
