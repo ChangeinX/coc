@@ -1,9 +1,15 @@
 SHELL := /bin/bash
 
+# Ensure local tool shims take precedence (created by setup)
+BIN_DIR := $(CURDIR)/.tools/bin
+export PATH := $(BIN_DIR):$(PATH)
+
 # Configuration
 JAVA_VERSION ?= 21
 GRADLE_VERSION ?= 8.14.3
 GRADLE_USER_HOME ?= $(CURDIR)/.gradle
+# Prefer Python 3.11 if present (used for local venvs)
+PYTHON311 := $(shell command -v python3.11 >/dev/null 2>&1 && echo python3.11 || echo python3)
 
 # Java modules in this monorepo
 JAVA_MODULES := java-auth-common messages-java user_service notifications recruiting clash-data
@@ -11,6 +17,8 @@ JAVA_MODULES := java-auth-common messages-java user_service notifications recrui
 .PHONY: help
 help:
 	@echo "Available targets:";
+	@echo "  setup                  Bootstrap dev env (Python 3.11, nox, ruff, hooks, npm ci)";
+	@echo "  doctor                 Diagnose local dev setup and suggest fixes";
 	@echo "  hooks                   Install pre-commit git hook";
 	@echo "  env-check               Show tool versions and warn on mismatches";
 	@echo "  lint                    Lint Python + Java (spotless) + mobile";
@@ -44,6 +52,32 @@ help:
 .PHONY: hooks
 hooks:
 	bash tools/setup-git-hooks.sh
+
+# One-shot environment bootstrap for local development
+.PHONY: setup
+setup: env-check hooks
+	@echo "== Bootstrapping local development environment =="
+	@mkdir -p $(BIN_DIR)
+	# Ensure Python 3.11 exists (used by nox sessions)
+	bash tools/bootstrap-python.sh
+	# Ensure pipx-managed CLIs (nox, ruff)
+	bash tools/bootstrap-pipx.sh nox ruff
+	# Install front-end deps when npm is available
+	@if command -v npm >/dev/null 2>&1; then \
+		$(MAKE) -s mobile-setup; \
+		if [ -f front-end/app/package.json ]; then $(MAKE) -s web-setup || true; fi; \
+	else \
+		echo "npm not found — skipping front-end dependency install"; \
+	fi
+	@echo "\n✅ Setup complete. Suggested next steps:"; \
+	echo "  - make check        # lint + gradle alignment"; \
+	echo "  - make test         # java/mobile/lambda tests (nox required)"; \
+	echo "  - git commit        # pre-commit hook will run fast checks";
+
+# Doctor: print diagnostics and suggestions (non-destructive)
+.PHONY: doctor
+doctor:
+	bash tools/doctor.sh
 
 # Environment check
 .PHONY: env-check
@@ -153,9 +187,13 @@ lambda-test:
 .PHONY: lambda-test-standalone
 lambda-test-standalone:
 	cd lambdas/refresh-worker && \
-	python3 -m venv .venv && \
-	source .venv/bin/activate && \
-	pip install -r requirements-test.txt && \
+	if command -v uv >/dev/null 2>&1; then \
+		echo "[uv] creating 3.11 venv and installing deps"; \
+		uv venv -p 3.11 .venv && source .venv/bin/activate && uv pip install -r requirements-test.txt ; \
+	else \
+		echo "[venv] creating 3.11 venv and installing deps"; \
+		$(PYTHON311) -m venv .venv && source .venv/bin/activate && pip install -r requirements-test.txt ; \
+	fi && \
 	PYTHONPATH=../../ pytest -v test_lambda_function.py
 
 # Align Gradle wrapper distribution across modules to $(GRADLE_VERSION)
@@ -218,4 +256,3 @@ ci-gradle-align-check:
 	echo "Wrapper URLs:"; echo "$$urls"; \
 	if [ "$$count" -ne 1 ]; then echo "Mismatch in Gradle wrapper distributionUrl across modules"; exit 1; fi; \
 	echo "Gradle wrapper URLs are aligned"
-
