@@ -36,7 +36,7 @@ public class OidcAuthAutoConfiguration {
   }
 
   @Bean
-  @ConditionalOnMissingBean
+  @ConditionalOnMissingBean(name = "oidcAuthenticationFilter")
   public OidcAuthenticationFilter oidcAuthenticationFilter(OidcTokenValidator tokenValidator) {
     return new OidcAuthenticationFilter(tokenValidator);
   }
