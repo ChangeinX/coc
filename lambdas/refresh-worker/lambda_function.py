@@ -5,12 +5,13 @@ This worker processes refresh requests from the Redis queue and calls the approp
 CoC API refresh functions to keep the database up-to-date with fresh data.
 """
 
-import asyncio
 import json
 import logging
 import os
 import sys
 import time
+import asyncio
+
 
 try:
     import boto3

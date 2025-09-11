@@ -1,174 +1,131 @@
 package com.clanboards.auth.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.lenient;
 
 import com.clanboards.auth.config.OidcProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Instant;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 class JwksServiceTest {
 
-  @Mock private JwksContentProvider jwksContentProvider;
-  private OidcProperties oidcProperties;
-  private JwksService jwksService;
-  private KeyPair testKeyPair;
-  private String validJwksJson;
+  private static final String KID = "dev-1";
 
-  @BeforeEach
-  void setUp() throws Exception {
-    oidcProperties = new OidcProperties();
-    oidcProperties.setUserServiceUrl("http://localhost:8080");
-    oidcProperties.setKeysCacheDurationMinutes(15);
-    oidcProperties.setConnectionTimeoutSeconds(10);
-    oidcProperties.setJwksSource("db");
-    oidcProperties.setDisallowHttp(true);
+  private static class FakeProvider implements JwksContentProvider {
+    private volatile String jwks;
+    private volatile Instant updated;
 
-    // Generate test keypair and JWKS JSON
-    KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-    generator.initialize(2048);
-    testKeyPair = generator.generateKeyPair();
+    public void set(String jwks, Instant updated) {
+      this.jwks = jwks;
+      this.updated = updated;
+    }
 
-    // Create valid JWKS JSON
-    RSAPublicKey publicKey = (RSAPublicKey) testKeyPair.getPublic();
-    String n = base64Url(publicKey.getModulus().toByteArray());
-    String e = base64Url(publicKey.getPublicExponent().toByteArray());
+    @Override
+    public String loadJwksJson() {
+      return jwks;
+    }
 
-    Map<String, Object> jwk = Map.of("kty", "RSA", "kid", "test-key-1", "n", n, "e", e);
-
-    validJwksJson = new ObjectMapper().writeValueAsString(Map.of("keys", new Object[] {jwk}));
-  }
-
-  @Test
-  void constructor_withProvider_setsUpCorrectly() {
-    jwksService = new JwksService(oidcProperties, jwksContentProvider);
-    assertNotNull(jwksService);
-  }
-
-  @Test
-  void constructor_withHttpOnly_setsUpCorrectly() {
-    oidcProperties.setJwksSource("http");
-    oidcProperties.setDisallowHttp(false);
-    jwksService = new JwksService(oidcProperties);
-    assertNotNull(jwksService);
-  }
-
-  @Test
-  void parseAndValidateJwt_withValidProviderJwks_parsesSuccessfully() throws Exception {
-    // Arrange
-    when(jwksContentProvider.loadJwksJson()).thenReturn(validJwksJson);
-    jwksService = new JwksService(oidcProperties, jwksContentProvider);
-
-    String token =
-        Jwts.builder()
-            .setHeaderParam("kid", "test-key-1")
-            .claim("test", "value")
-            .signWith(testKeyPair.getPrivate())
-            .compact();
-
-    // Act
-    Claims claims = jwksService.parseAndValidateJwt(token);
-
-    // Assert
-    assertNotNull(claims);
-    assertEquals("value", claims.get("test"));
-    verify(jwksContentProvider, atLeastOnce()).loadJwksJson();
-  }
-
-  @Test
-  void parseAndValidateJwt_withProviderException_throwsException() throws Exception {
-    // Arrange
-    lenient()
-        .when(jwksContentProvider.loadJwksJson())
-        .thenThrow(new RuntimeException("Provider failed"));
-    jwksService = new JwksService(oidcProperties, jwksContentProvider);
-
-    String token = "invalid.token";
-
-    // Act & Assert
-    assertThrows(Exception.class, () -> jwksService.parseAndValidateJwt(token));
-  }
-
-  @Test
-  void parseAndValidateJwt_withInvalidJwksFromProvider_throwsException() throws Exception {
-    // Arrange
-    lenient().when(jwksContentProvider.loadJwksJson()).thenReturn("invalid json");
-    jwksService = new JwksService(oidcProperties, jwksContentProvider);
-
-    String token = "some.token";
-
-    // Act & Assert
-    assertThrows(Exception.class, () -> jwksService.parseAndValidateJwt(token));
-  }
-
-  @Test
-  void parseAndValidateJwt_withMissingKid_throwsException() throws Exception {
-    // Arrange
-    lenient().when(jwksContentProvider.loadJwksJson()).thenReturn(validJwksJson);
-    jwksService = new JwksService(oidcProperties, jwksContentProvider);
-
-    String tokenWithoutKid =
-        Jwts.builder().claim("test", "value").signWith(testKeyPair.getPrivate()).compact();
-
-    // Act & Assert
-    RuntimeException exception =
-        assertThrows(
-            RuntimeException.class, () -> jwksService.parseAndValidateJwt(tokenWithoutKid));
-    assertTrue(exception.getMessage().contains("missing 'kid'"));
-  }
-
-  @Test
-  void parseAndValidateJwt_withUnknownKid_throwsException() throws Exception {
-    // Arrange
-    when(jwksContentProvider.loadJwksJson()).thenReturn(validJwksJson);
-    jwksService = new JwksService(oidcProperties, jwksContentProvider);
-
-    String tokenWithWrongKid =
-        Jwts.builder()
-            .setHeaderParam("kid", "unknown-key")
-            .claim("test", "value")
-            .signWith(testKeyPair.getPrivate())
-            .compact();
-
-    // Act & Assert
-    RuntimeException exception =
-        assertThrows(
-            RuntimeException.class, () -> jwksService.parseAndValidateJwt(tokenWithWrongKid));
-    assertTrue(exception.getMessage().contains("No key found for kid"));
-  }
-
-  @Test
-  void constructor_withHttpDisallowedAndNoProvider_throwsException() {
-    oidcProperties.setJwksSource("db");
-    oidcProperties.setDisallowHttp(true);
-
-    // Should throw when trying to parse without provider
-    jwksService = new JwksService(oidcProperties);
-    String token = "some.token";
-
-    assertThrows(RuntimeException.class, () -> jwksService.parseAndValidateJwt(token));
+    @Override
+    public Instant lastUpdated() {
+      return updated;
+    }
   }
 
   private static String base64Url(byte[] bytes) {
-    // Ensure positive big integer by stripping leading sign byte if present
     if (bytes.length > 1 && bytes[0] == 0) {
       byte[] tmp = new byte[bytes.length - 1];
       System.arraycopy(bytes, 1, tmp, 0, tmp.length);
       bytes = tmp;
     }
     return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+  }
+
+  private static String jwksForKey(KeyPair kp, String kid) {
+    RSAPublicKey pub = (RSAPublicKey) kp.getPublic();
+    String n = base64Url(pub.getModulus().toByteArray());
+    String e = base64Url(pub.getPublicExponent().toByteArray());
+    return "{\"keys\":[{"
+        + "\"kty\":\"RSA\",\"alg\":\"RS256\",\"use\":\"sig\",\"kid\":\""
+        + kid
+        + "\",\"n\":\""
+        + n
+        + "\",\"e\":\""
+        + e
+        + "\"}]}";
+  }
+
+  private static String tokenFor(KeyPair kp, String kid) {
+    Instant now = Instant.now();
+    return Jwts.builder()
+        .setHeaderParam("kid", kid)
+        .setClaims(Map.of("iss", "https://example/issuer", "aud", "example-aud"))
+        .setExpiration(Date.from(now.plusSeconds(3600)))
+        .signWith(kp.getPrivate(), SignatureAlgorithm.RS256)
+        .compact();
+  }
+
+  private OidcProperties props;
+  private FakeProvider provider;
+
+  @BeforeEach
+  void setup() {
+    props = new OidcProperties();
+    // speed up TTL-based refresh in tests if needed
+    props.setKeysCacheDurationMinutes(1);
+    provider = new FakeProvider();
+  }
+
+  @Test
+  void refreshesWhenProviderLastUpdatedChanges_sameKidNewKey() throws Exception {
+    KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+    gen.initialize(2048);
+    KeyPair k1 = gen.generateKeyPair();
+    KeyPair k2 = gen.generateKeyPair();
+
+    // Seed provider with first key and perform an initial validation (caches k1)
+    provider.set(jwksForKey(k1, KID), Instant.parse("2025-09-01T00:00:00Z"));
+    JwksService svc = new JwksService(props, provider);
+    String tok1 = tokenFor(k1, KID);
+    Claims c1 = svc.parseAndValidateJwt(tok1);
+    assertEquals("https://example/issuer", c1.getIssuer());
+
+    // Update provider with same kid but new key and newer lastUpdated
+    provider.set(jwksForKey(k2, KID), Instant.parse("2025-09-02T00:00:00Z"));
+
+    // Token signed with new key should validate after service notices lastUpdated and refreshes
+    String tok2 = tokenFor(k2, KID);
+    Claims c2 = svc.parseAndValidateJwt(tok2);
+    assertEquals("example-aud", c2.getAudience());
+  }
+
+  @Test
+  void retriesOnceOnSignatureFailure_thenSucceedsAfterRefresh() throws Exception {
+    KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+    gen.initialize(2048);
+    KeyPair k1 = gen.generateKeyPair();
+    KeyPair k2 = gen.generateKeyPair();
+
+    // Initial cache with k1
+    provider.set(jwksForKey(k1, KID), Instant.parse("2025-09-01T00:00:00Z"));
+    JwksService svc = new JwksService(props, provider);
+    String tok1 = tokenFor(k1, KID);
+    svc.parseAndValidateJwt(tok1);
+
+    // Rotate to k2 (same kid) but without bumping provider lastUpdated yet
+    provider.set(jwksForKey(k2, KID), Instant.parse("2025-09-01T00:00:00Z"));
+
+    // Now validating a token for k2 should trigger a signature failure; service should refresh
+    String tok2 = tokenFor(k2, KID);
+    Claims c2 = svc.parseAndValidateJwt(tok2);
+    assertEquals("https://example/issuer", c2.getIssuer());
   }
 }

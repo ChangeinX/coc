@@ -35,6 +35,7 @@ public class JwksService {
   private final JwksContentProvider jwksContentProvider;
   private final Map<String, PublicKey> keyCache = new ConcurrentHashMap<>();
   private volatile Instant lastFetch = Instant.EPOCH;
+  private volatile Instant providerLastUpdated = null;
 
   public JwksService(OidcProperties oidcProperties) {
     this(oidcProperties, null);
@@ -53,16 +54,45 @@ public class JwksService {
   }
 
   public Claims parseAndValidateJwt(String token) throws Exception {
-    return Jwts.parserBuilder()
-        .setSigningKeyResolver(new JwksSigningKeyResolver())
-        .build()
-        .parseClaimsJws(token)
-        .getBody();
+    try {
+      return Jwts.parserBuilder()
+          .setSigningKeyResolver(new JwksSigningKeyResolver())
+          .build()
+          .parseClaimsJws(token)
+          .getBody();
+    } catch (io.jsonwebtoken.security.SignatureException se) {
+      // Signature failed. Force a one-time refresh and retry to handle same-kid/new-key rotations.
+      logger.warn("JWT signature validation failed. Forcing JWKS refresh and retry.");
+      try {
+        fetchJwksKeys();
+      } catch (Exception e) {
+        logger.warn("Forced JWKS refresh failed after signature error", e);
+      }
+
+      return Jwts.parserBuilder()
+          .setSigningKeyResolver(new JwksSigningKeyResolver())
+          .build()
+          .parseClaimsJws(token)
+          .getBody();
+    }
   }
 
   private void refreshKeysIfNeeded() {
     Duration cacheDuration = Duration.ofMinutes(oidcProperties.getKeysCacheDurationMinutes());
-    if (Instant.now().minus(cacheDuration).isAfter(lastFetch)) {
+    boolean ttlExpired = Instant.now().minus(cacheDuration).isAfter(lastFetch);
+    boolean providerUpdated = false;
+    if (jwksContentProvider != null) {
+      try {
+        Instant lu = jwksContentProvider.lastUpdated();
+        if (lu != null && (providerLastUpdated == null || lu.isAfter(providerLastUpdated))) {
+          providerUpdated = true;
+        }
+      } catch (Exception e) {
+        logger.debug("Failed to read provider lastUpdated: {}", e.getMessage());
+      }
+    }
+
+    if (ttlExpired || providerUpdated) {
       try {
         fetchJwksKeys();
       } catch (Exception e) {
@@ -77,6 +107,11 @@ public class JwksService {
     if (jwksContentProvider != null) {
       logger.debug("Fetching JWKS keys from provider");
       jwksJson = jwksContentProvider.loadJwksJson();
+      try {
+        providerLastUpdated = jwksContentProvider.lastUpdated();
+      } catch (Exception e) {
+        // ignore; keep previous value
+      }
     } else if (oidcProperties.isDisallowHttp()) {
       throw new RuntimeException(
           "HTTP JWKS fetching is disabled but no JwksContentProvider available. "
@@ -168,5 +203,41 @@ public class JwksService {
 
       return key;
     }
+  }
+
+  /**
+   * Exposes a fingerprint of cached keys for diagnostics (kid -> SHA-256 of RSA modulus in hex).
+   */
+  public Map<String, String> getCachedKeyFingerprints() {
+    java.util.Map<String, String> out = new java.util.HashMap<>();
+    for (var e : keyCache.entrySet()) {
+      var k = e.getValue();
+      if (k instanceof java.security.interfaces.RSAPublicKey rsa) {
+        byte[] modBytes = rsa.getModulus().toByteArray();
+        if (modBytes.length > 1 && modBytes[0] == 0) {
+          byte[] tmp = new byte[modBytes.length - 1];
+          System.arraycopy(modBytes, 1, tmp, 0, tmp.length);
+          modBytes = tmp;
+        }
+        try {
+          var md = java.security.MessageDigest.getInstance("SHA-256");
+          byte[] digest = md.digest(modBytes);
+          out.put(e.getKey(), java.util.HexFormat.of().formatHex(digest));
+        } catch (Exception ex) {
+          out.put(e.getKey(), "<error>");
+        }
+      } else {
+        out.put(e.getKey(), "<non-rsa>");
+      }
+    }
+    return out;
+  }
+
+  public Instant getLastFetch() {
+    return lastFetch;
+  }
+
+  public Instant getProviderLastUpdated() {
+    return providerLastUpdated;
   }
 }

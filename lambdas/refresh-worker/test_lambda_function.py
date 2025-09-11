@@ -4,6 +4,7 @@ Test suite for CoC refresh worker Lambda function.
 Following TDD approach - these tests are written first and should initially fail,
 then the Lambda function will be enhanced to pass all tests.
 """
+# ruff: noqa: E402
 
 import json
 import sys
@@ -47,6 +48,7 @@ from lambda_function import (  # noqa: E402
 
 # Import actual coclib enums
 from coclib.queue.refresh_queue import RefreshType  # noqa: E402
+
 
 
 class TestLambdaHandler:
@@ -236,6 +238,7 @@ class TestHandleFailedRequest:
         # Should schedule retry with 2-minute delay (2^1)
         mock_queue.queue_refresh.assert_called_once()
         # call_args = mock_queue.queue_refresh.call_args[0][0]
+
         # Verify retry request was created (exact call verification would require more setup)
     
     def test_handle_failed_request_max_retries_exceeded(self):
