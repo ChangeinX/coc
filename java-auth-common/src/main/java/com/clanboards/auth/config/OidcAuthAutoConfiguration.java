@@ -1,9 +1,11 @@
 package com.clanboards.auth.config;
 
 import com.clanboards.auth.graphql.OidcGraphQLInterceptor;
+import com.clanboards.auth.service.JwksContentProvider;
 import com.clanboards.auth.service.JwksService;
 import com.clanboards.auth.service.OidcTokenValidator;
 import com.clanboards.auth.web.OidcAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -17,8 +19,14 @@ public class OidcAuthAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public JwksService jwksService(OidcProperties oidcProperties) {
-    return new JwksService(oidcProperties);
+  public JwksService jwksService(
+      OidcProperties oidcProperties, 
+      @Autowired(required = false) JwksContentProvider jwksContentProvider) {
+    if (jwksContentProvider != null || "db".equals(oidcProperties.getJwksSource())) {
+      return new JwksService(oidcProperties, jwksContentProvider);
+    } else {
+      return new JwksService(oidcProperties);
+    }
   }
 
   @Bean

@@ -1,14 +1,27 @@
-# Messages-Java Authentication Integration
+# Authentication Integration - Zero-HTTP JWKS Implementation
 
 ## Overview
 
-The messages-java service has been successfully integrated with the shared OIDC authentication system using the `java-auth-common` library. This document outlines the complete authentication flow, environment variables, and integration patterns for other services.
+The authentication system has been upgraded to **eliminate all service-to-service HTTP calls** for token validation. The messages-java service and other Java services now validate JWT tokens using a **database-backed JWKS** system instead of HTTP calls to the user_service.
+
+## Key Architectural Change: Zero HTTP Calls
+
+### Before: HTTP-Based JWKS (❌ DEPRECATED)
+```
+messages-java → HTTP GET → user_service/oauth2/jwks.json → Validate JWT
+```
+
+### After: Database-Backed JWKS (✅ CURRENT)
+```
+user_service → Publishes JWKS → Database (system_config)
+messages-java → Reads JWKS → Database → Validate JWT (NO HTTP CALLS)
+```
 
 ## Configuration Approach
 
-### Database-Driven Configuration (Recommended)
+### Database-Driven JWKS Configuration (COMPLETE)
 
-OIDC configuration is now **database-driven** using the `system_config` table. This allows runtime updates without service restarts or rebuilds.
+JWKS (JSON Web Key Set) data is now **database-backed** using the `system_config` table. This eliminates HTTP dependencies between services while providing centralized key management.
 
 ### Required Database Setup
 
@@ -23,26 +36,28 @@ flask db upgrade
 INSERT INTO system_config (key, value, description) VALUES
 ('oidc.issuer', 'https://dev.api.clan-boards.com/api/v1/users', 'JWT issuer claim - must match ALB domain'),
 ('oidc.audience', 'clanboards-mobile', 'Expected JWT audience'),
-('oidc.user_service_url', 'https://dev.api.clan-boards.com/api/v1/users', 'User service base URL for JWKS')
+('oidc.jwks', '{"keys":[]}', 'JWKS JSON - auto-populated by user_service on startup')
 ON CONFLICT (key) DO UPDATE SET 
   value = EXCLUDED.value,
   description = EXCLUDED.description,
   updated_at = CURRENT_TIMESTAMP;
 ```
 
-### Environment Variables (Fallback)
+**Important**: The `oidc.jwks` entry will be **automatically populated** by the user_service on startup. Do not manually edit this value.
 
-Services fall back to these if database values are not present:
+### Environment Variables (Updated Configuration)
 
+**Messages-Java and other consuming services:**
 ```bash
-# OIDC Configuration (fallback values)
+# OIDC Configuration - Database-Backed (NO HTTP CALLS)
 auth.oidc.issuer=https://dev.api.clan-boards.com/api/v1/users
 auth.oidc.audience=clanboards-mobile
-auth.oidc.user-service-url=https://dev.api.clan-boards.com/api/v1/users
+auth.oidc.jwks-source=db
+auth.oidc.jwks-db-key=oidc.jwks
+auth.oidc.disallow-http=true
 
 # Optional OIDC Configuration (with defaults)
 auth.oidc.keys-cache-duration-minutes=15
-auth.oidc.connection-timeout-seconds=10
 
 # Database & Redis (existing)
 spring.datasource.url=jdbc:postgresql://localhost:5432/messages
@@ -54,11 +69,26 @@ spring.data.redis.url=redis://localhost:6379
 server.port=8010
 ```
 
+**User-Service (JWKS publisher):**
+```bash
+# OIDC Configuration
+auth.oidc.issuer=https://dev.api.clan-boards.com/api/v1/users
+auth.oidc.audience=clanboards-mobile
+auth.oidc.jwks-db-key=oidc.jwks
+
+# Database connection
+spring.datasource.url=jdbc:postgresql://localhost:5432/users
+spring.datasource.username=users_user
+spring.datasource.password=your_password
+```
+
 ### Key Configuration Values Explained:
 
 - **`oidc.issuer`**: Must match the JWT issuer claim exactly (ALB domain + `/api/v1/users`)
 - **`oidc.audience`**: Must match the JWT audience claim (`clanboards-mobile`)
-- **`oidc.user_service_url`**: Base URL for JWKS endpoint discovery (same as issuer typically)
+- **`oidc.jwks-source`**: Set to `"db"` to use database-backed JWKS (eliminates HTTP calls)
+- **`oidc.jwks-db-key`**: Database key where JWKS JSON is stored (`"oidc.jwks"`)
+- **`oidc.disallow-http`**: Set to `true` to prevent HTTP fallback (guarantees zero HTTP calls)
 
 ## Authentication Architecture Flow
 
@@ -71,7 +101,18 @@ Google OAuth / Apple Sign-in → User Service → JWT Tokens (Access + ID + Refr
             Returns tokens to client
 ```
 
-### 2. Client Authentication to Messages Service
+### 2. JWKS Publication (User Service - NEW)
+```
+User Service Startup → JwksPublisher (@PostConstruct)
+                 ↓
+        Generates JWKS JSON from KeyHolder
+                 ↓
+     Saves to system_config table (key: 'oidc.jwks')
+                 ↓
+           Available to all services
+```
+
+### 3. Client Authentication to Messages Service
 
 #### Frontend/Mobile → Messages REST API:
 ```
@@ -79,7 +120,7 @@ Mobile App → API Request with "Authorization: Bearer <access_token>"
     ↓
 Messages Service (OidcAuthenticationFilter)
     ↓
-Validates token against User Service JWKS endpoint
+Validates token using Database JWKS (NO HTTP CALL)
     ↓
 Extracts userId from token/session
     ↓
@@ -94,7 +135,7 @@ Mobile App → WebSocket CONNECT with "Authorization: Bearer <access_token>"
     ↓
 Messages Service (WebSocketAuthChannelInterceptor)
     ↓
-Validates token on CONNECT
+Validates token using Database JWKS (NO HTTP CALL)
     ↓
 Stores user session in WebSocket session attributes
     ↓
@@ -103,20 +144,33 @@ Validates authentication on subsequent STOMP messages
 Routes messages to appropriate chat channels
 ```
 
-### 3. Token Validation Process
+### 4. Token Validation Process (Updated - Zero HTTP)
 
 ```
 1. Extract Bearer token from Authorization header
-2. Fetch JWKS from User Service: {user-service-url}/oauth2/jwks.json
-3. Verify JWT signature using public key from JWKS
-4. Validate issuer claim matches auth.oidc.issuer
-5. Validate audience claim matches auth.oidc.audience
-6. Check token expiration
-7. Extract userId from:
+2. Load JWKS from Database: SELECT value FROM system_config WHERE key='oidc.jwks'
+3. Parse JWKS JSON and extract public keys (cached for 15 minutes)
+4. Verify JWT signature using public key from database JWKS
+5. Validate issuer claim matches auth.oidc.issuer
+6. Validate audience claim matches auth.oidc.audience
+7. Check token expiration
+8. Extract userId from:
    - Session ID (sid claim) → lookup in session repository
    - Direct userId claim
    - Subject (sub) claim
-8. Add user context to request/session
+9. Add user context to request/session
+```
+
+### 5. Key Rotation Process (NEW)
+
+```
+User Service Key Rotation:
+1. Generate new RSA keypair
+2. Update KeyHolder with new keys
+3. Call jwksPublisher.republishJwks()
+4. New JWKS JSON saved to database
+5. All services pick up new keys within cache TTL (15 min)
+6. Zero downtime, zero HTTP calls
 ```
 
 ## Client Implementation

@@ -32,15 +32,21 @@ public class JwksService {
   private final OidcProperties oidcProperties;
   private final HttpClient httpClient;
   private final ObjectMapper objectMapper;
+  private final JwksContentProvider jwksContentProvider;
   private final Map<String, PublicKey> keyCache = new ConcurrentHashMap<>();
   private volatile Instant lastFetch = Instant.EPOCH;
 
   public JwksService(OidcProperties oidcProperties) {
+    this(oidcProperties, null);
+  }
+
+  public JwksService(OidcProperties oidcProperties, JwksContentProvider jwksContentProvider) {
     this.oidcProperties = oidcProperties;
-    this.httpClient =
+    this.jwksContentProvider = jwksContentProvider;
+    this.httpClient = jwksContentProvider == null ?
         HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(oidcProperties.getConnectionTimeoutSeconds()))
-            .build();
+            .build() : null;
     this.objectMapper = new ObjectMapper();
   }
 
@@ -64,24 +70,37 @@ public class JwksService {
   }
 
   private void fetchJwksKeys() throws Exception {
-    String jwksUrl = oidcProperties.getJwksUrl();
-    logger.debug("Fetching JWKS keys from: {}", jwksUrl);
-
-    HttpRequest request =
-        HttpRequest.newBuilder()
-            .uri(URI.create(jwksUrl))
-            .timeout(Duration.ofSeconds(oidcProperties.getConnectionTimeoutSeconds()))
-            .GET()
-            .build();
-
-    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-    if (response.statusCode() != 200) {
+    String jwksJson;
+    
+    if (jwksContentProvider != null) {
+      logger.debug("Fetching JWKS keys from provider");
+      jwksJson = jwksContentProvider.loadJwksJson();
+    } else if (oidcProperties.isDisallowHttp()) {
       throw new RuntimeException(
-          "Failed to fetch JWKS: " + response.statusCode() + " - " + response.body());
+          "HTTP JWKS fetching is disabled but no JwksContentProvider available. "
+          + "Set auth.oidc.disallow-http=false or provide a JwksContentProvider bean.");
+    } else {
+      String jwksUrl = oidcProperties.getJwksUrl();
+      logger.debug("Fetching JWKS keys from HTTP: {}", jwksUrl);
+
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(URI.create(jwksUrl))
+              .timeout(Duration.ofSeconds(oidcProperties.getConnectionTimeoutSeconds()))
+              .GET()
+              .build();
+
+      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      if (response.statusCode() != 200) {
+        throw new RuntimeException(
+            "Failed to fetch JWKS: " + response.statusCode() + " - " + response.body());
+      }
+      
+      jwksJson = response.body();
     }
 
-    JsonNode jwks = objectMapper.readTree(response.body());
+    JsonNode jwks = objectMapper.readTree(jwksJson);
     JsonNode keys = jwks.get("keys");
 
     if (keys == null || !keys.isArray()) {

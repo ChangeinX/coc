@@ -11,6 +11,9 @@ public class OidcProperties {
   private String userServiceUrl = "http://localhost:8080";
   private int keysCacheDurationMinutes = 15;
   private int connectionTimeoutSeconds = 10;
+  private String jwksSource = "db";
+  private String jwksDbKey = "oidc.jwks";
+  private boolean disallowHttp = true;
 
   public String getIssuer() {
     return issuer;
@@ -54,5 +57,29 @@ public class OidcProperties {
 
   public String getJwksUrl() {
     return userServiceUrl + "/api/v1/users/oauth2/jwks.json";
+  }
+
+  public String getJwksSource() {
+    return jwksSource;
+  }
+
+  public void setJwksSource(String jwksSource) {
+    this.jwksSource = jwksSource;
+  }
+
+  public String getJwksDbKey() {
+    return jwksDbKey;
+  }
+
+  public void setJwksDbKey(String jwksDbKey) {
+    this.jwksDbKey = jwksDbKey;
+  }
+
+  public boolean isDisallowHttp() {
+    return disallowHttp;
+  }
+
+  public void setDisallowHttp(boolean disallowHttp) {
+    this.disallowHttp = disallowHttp;
   }
 }
