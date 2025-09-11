@@ -186,7 +186,7 @@ export default function SettingsScreen() {
       
       Alert.alert(
         'Messages Service Config',
-        `Issuer: ${configData.issuer}\nAudience: ${configData.audience}\nJWKS: ${configData.jwksUrl}`,
+        `Issuer: ${configData.issuer}\nAudience: ${configData.audience}\nJWKS Source: ${configData.jwksSource}\nJWKS DB Key: ${configData.jwksDbKey}\nDisallow HTTP: ${configData.disallowHttp}`,
         [{ text: 'Copy', onPress: () => Clipboard.setStringAsync(JSON.stringify(configData, null, 2)) }]
       );
     } catch (error) {

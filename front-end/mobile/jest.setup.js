@@ -28,7 +28,7 @@ jest.mock('expo-constants', () => ({
   expoConfig: {
     extra: {
       ENV: 'dev',
-      API_URL: 'http://localhost:5000',
+      API_URL: 'https://api.dev.clan-boards.com',
     },
   },
 }));

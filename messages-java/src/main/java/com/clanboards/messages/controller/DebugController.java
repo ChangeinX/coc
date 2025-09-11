@@ -36,8 +36,9 @@ public class DebugController {
     Map<String, Object> config = new HashMap<>();
     config.put("issuer", oidcProperties.getIssuer());
     config.put("audience", oidcProperties.getAudience());
-    config.put("userServiceUrl", oidcProperties.getUserServiceUrl());
-    config.put("jwksUrl", oidcProperties.getJwksUrl());
+    config.put("jwksSource", oidcProperties.getJwksSource());
+    config.put("jwksDbKey", oidcProperties.getJwksDbKey());
+    config.put("disallowHttp", oidcProperties.isDisallowHttp());
     config.put("keysCacheDurationMinutes", oidcProperties.getKeysCacheDurationMinutes());
     config.put("connectionTimeoutSeconds", oidcProperties.getConnectionTimeoutSeconds());
     config.put("currentTime", Instant.now().toString());
