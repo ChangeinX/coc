@@ -82,7 +82,7 @@ export interface LoyaltyData {
 export const dashboardApi = {
   // Get clan data
   getClan: async (clanTag: string): Promise<ClanData> => {
-    return apiFetch<ClanData>(`/api/v1/clan/${encodeURIComponent(clanTag)}`, {
+    return apiFetch<ClanData>(`/api/v1/clan-data/clans/${encodeURIComponent(clanTag)}`, {
       auth: true,
     });
   },
@@ -90,7 +90,7 @@ export const dashboardApi = {
   // Get at-risk members
   getAtRiskMembers: async (clanTag: string): Promise<RiskData[]> => {
     return apiFetch<RiskData[]>(
-      `/api/v1/clan/${encodeURIComponent(clanTag)}/members/at-risk`,
+      `/api/v1/clan-data/clans/${encodeURIComponent(clanTag)}/members/at-risk`,
       { auth: true }
     );
   },
@@ -98,7 +98,7 @@ export const dashboardApi = {
   // Get member loyalty data
   getMemberLoyalty: async (clanTag: string): Promise<LoyaltyData> => {
     return apiFetch<LoyaltyData>(
-      `/api/v1/clan/${encodeURIComponent(clanTag)}/members/loyalty`,
+      `/api/v1/clan-data/clans/${encodeURIComponent(clanTag)}/members/loyalty`,
       { auth: true }
     );
   },
