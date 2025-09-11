@@ -1,4 +1,5 @@
 from __future__ import annotations
+# no-op: pre-commit python path test
 
 from datetime import datetime, timedelta
 from typing import Dict, Iterable
