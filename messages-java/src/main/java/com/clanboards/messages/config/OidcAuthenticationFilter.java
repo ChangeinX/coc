@@ -30,7 +30,8 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
           "/health",
           "/api/v1/chat/debug/config",
           "/api/v1/chat/debug/validate",
-          "/api/v1/chat/debug/request-info");
+          "/api/v1/chat/debug/request-info",
+          "/api/v1/chat/debug/jwks-cache");
 
   public OidcAuthenticationFilter(OidcTokenValidator tokenValidator) {
     this.tokenValidator = tokenValidator;
@@ -78,6 +79,8 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
           request.setAttribute("userId", String.valueOf(userId));
           request.setAttribute("authenticated", true);
           logger.debug("REST request authenticated for userId: {}", userId);
+          // Small info-level breadcrumb to aid production debugging without leaking sensitive data
+          logger.info("Auth OK {} {} userId={}", method, requestUri, userId);
         } else {
           logger.warn("Valid token but could not extract userId. Claims: {}", claims);
           sendUnauthorized(response, "Invalid user in token");

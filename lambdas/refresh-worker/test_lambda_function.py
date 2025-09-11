@@ -4,13 +4,12 @@ Test suite for CoC refresh worker Lambda function.
 Following TDD approach - these tests are written first and should initially fail,
 then the Lambda function will be enhanced to pass all tests.
 """
+# ruff: noqa: E402
 
-import asyncio
 import json
 import sys
-import time
 import unittest.mock as mock
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -48,7 +47,7 @@ from lambda_function import (
 )
 
 # Import actual coclib enums
-from coclib.queue.refresh_queue import RefreshType, RefreshPriority, RefreshRequest
+from coclib.queue.refresh_queue import RefreshType
 
 
 class TestLambdaHandler:
@@ -228,7 +227,7 @@ class TestHandleFailedRequest:
         
         mock_queue = MagicMock()
         
-        with patch('coclib.queue.refresh_queue.RefreshRequest') as MockRefreshRequest:
+        with patch('coclib.queue.refresh_queue.RefreshRequest'):
             with patch('datetime.datetime') as mock_datetime:
                 mock_now = datetime(2023, 1, 1, 12, 0, 0)
                 mock_datetime.utcnow.return_value = mock_now
@@ -237,7 +236,6 @@ class TestHandleFailedRequest:
         
         # Should schedule retry with 2-minute delay (2^1)
         mock_queue.queue_refresh.assert_called_once()
-        call_args = mock_queue.queue_refresh.call_args[0][0]
         # Verify retry request was created (exact call verification would require more setup)
     
     def test_handle_failed_request_max_retries_exceeded(self):
@@ -340,7 +338,7 @@ class TestRateLimiting:
                             with patch('coclib.config.Config') as mock_config:
                                 mock_config.COC_REQS_PER_SEC = 2  # 2 requests per second
                                 
-                                result = lambda_handler({}, mock_context)
+                                lambda_handler({}, mock_context)
         
         # Should enforce rate limiting (sleep between requests)
         assert mock_sleep.call_count >= 4  # 5 requests - 1 = 4 sleeps
@@ -428,7 +426,7 @@ class TestCloudWatchMetrics:
                             mock_cloudwatch = MagicMock()
                             mock_boto_client.return_value = mock_cloudwatch
                             
-                            result = lambda_handler({}, mock_context)
+                            lambda_handler({}, mock_context)
         
         # Should publish metrics to CloudWatch
         # (This will be implemented in the Green phase)

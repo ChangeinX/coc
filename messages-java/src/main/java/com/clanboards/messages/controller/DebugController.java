@@ -1,6 +1,7 @@
 package com.clanboards.messages.controller;
 
 import com.clanboards.auth.config.OidcProperties;
+import com.clanboards.auth.service.JwksService;
 import com.clanboards.auth.service.OidcTokenValidator;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,10 +24,13 @@ public class DebugController {
 
   private final OidcProperties oidcProperties;
   private final OidcTokenValidator tokenValidator;
+  private final JwksService jwksService;
 
-  public DebugController(OidcProperties oidcProperties, OidcTokenValidator tokenValidator) {
+  public DebugController(
+      OidcProperties oidcProperties, OidcTokenValidator tokenValidator, JwksService jwksService) {
     this.oidcProperties = oidcProperties;
     this.tokenValidator = tokenValidator;
+    this.jwksService = jwksService;
   }
 
   @GetMapping("/config")
@@ -147,5 +151,16 @@ public class DebugController {
     info.put("hasSidCookie", hasSidCookie);
 
     return ResponseEntity.ok(info);
+  }
+
+  @GetMapping("/jwks-cache")
+  public ResponseEntity<Map<String, Object>> getJwksCache() {
+    Map<String, Object> out = new HashMap<>();
+    out.put("kids", jwksService.getCachedKeyFingerprints());
+    var lf = jwksService.getLastFetch();
+    var lu = jwksService.getProviderLastUpdated();
+    out.put("lastFetch", lf != null ? lf.toString() : null);
+    out.put("providerLastUpdated", lu != null ? lu.toString() : null);
+    return ResponseEntity.ok(out);
   }
 }

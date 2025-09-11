@@ -10,7 +10,7 @@ import pytest
 # Add project root to path so we can import coclib
 sys.path.insert(0, '../..')
 
-from coclib.queue.refresh_queue import RefreshType, RefreshPriority, RefreshRequest
+from coclib.queue.refresh_queue import RefreshType
 
 
 @pytest.fixture

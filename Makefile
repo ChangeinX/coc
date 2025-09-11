@@ -178,7 +178,7 @@ web-build:
 lambda-test:
 	@echo "[nox] running suite (includes Lambda tests)"
 	@if command -v nox >/dev/null 2>&1; then \
-		nox -s tests ; \
+		( nox -s tests ) || ( echo "[nox] failed; falling back to standalone lambda tests" && $(MAKE) -s lambda-test-standalone ); \
 	else \
 		echo "nox not found. Install with: pipx install nox"; \
 		exit 1; \

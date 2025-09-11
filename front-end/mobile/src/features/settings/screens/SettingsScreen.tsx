@@ -255,6 +255,27 @@ export default function SettingsScreen() {
     }
   };
 
+  const testJwksCache = async () => {
+    setDebugLoading(true);
+    try {
+      const res = await fetch(`${MESSAGES_URL}/api/v1/chat/debug/jwks-cache`);
+      const data = await res.json();
+      const kids = data?.kids ? Object.keys(data.kids).length : 0;
+      const firstKid = data?.kids ? Object.keys(data.kids)[0] : undefined;
+      const firstFp = firstKid ? data.kids[firstKid] : undefined;
+      const summary = `Cached KIDs: ${kids}\nLast Fetch: ${data.lastFetch ?? 'n/a'}\nProvider Updated: ${data.providerLastUpdated ?? 'n/a'}${firstKid ? `\nFirst: ${firstKid} → ${firstFp}` : ''}`;
+      Alert.alert(
+        'JWKS Cache',
+        summary,
+        [{ text: 'Copy Details', onPress: () => Clipboard.setStringAsync(JSON.stringify(data, null, 2)) }]
+      );
+    } catch (error) {
+      Alert.alert('Error', `Failed to load JWKS cache: ${error}`);
+    } finally {
+      setDebugLoading(false);
+    }
+  };
+
   const Button = ({ label, onPress, active, fullWidth }: { 
     label: string; 
     onPress: () => void; 
@@ -485,6 +506,14 @@ export default function SettingsScreen() {
             <Button
               label={debugLoading ? "Loading..." : "Test Request Info"}
               onPress={testRequestInfo}
+              fullWidth
+            />
+          </View>
+
+          <View style={{ marginBottom: 12 }}>
+            <Button
+              label={debugLoading ? "Loading..." : "Show JWKS Cache"}
+              onPress={testJwksCache}
               fullWidth
             />
           </View>
