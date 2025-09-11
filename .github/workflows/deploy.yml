@@ -63,6 +63,7 @@ jobs:
               - front-end/public-home/**
             messages:
               - messages-java/**
+              - java-auth-common/**
             user:
               - user_service/**
             notifications:
@@ -228,7 +229,7 @@ jobs:
           case "$SERVICE" in
             messages)
               DOCKERFILE=messages-java/Dockerfile
-              CONTEXT=messages-java
+              CONTEXT=.
               REPOSITORY=$MESSAGES_REPOSITORY
               SERVICE_NAME=$MESSAGES_SERVICE
               CHANGED=${{ needs.detect.outputs.messages_any_changed }}
