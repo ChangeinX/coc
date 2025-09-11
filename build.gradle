@@ -1,0 +1,5 @@
+// Root build file for the microservices monorepo
+
+wrapper {
+    gradleVersion = '8.7'
+}

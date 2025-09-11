@@ -198,7 +198,19 @@ class Session(db.Model):
     ip = db.Column(db.String(50))
     user_agent = db.Column(db.String(255))
 
-    user = db.relationship("User", backref=db.backref("sessions", lazy="dynamic"))
+
+class SystemConfig(db.Model):
+    """Centralized system configuration that can be updated without code deployment."""
+    __tablename__ = "system_config"
+
+    key = db.Column(db.String(100), primary_key=True)
+    value = db.Column(db.Text, nullable=False)
+    description = db.Column(db.Text)
+    updated_at = db.Column(
+        db.DateTime,
+        server_default=db.func.now(),
+        onupdate=db.func.now(),
+    )
 
 
 class Legal(db.Model):

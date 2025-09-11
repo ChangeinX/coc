@@ -5,7 +5,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "sessions")
-public class Session {
+public class Session implements com.clanboards.auth.model.Session {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;

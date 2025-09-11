@@ -1,5 +1,6 @@
-package com.clanboards.messages.service;
+package com.clanboards.auth.service;
 
+import com.clanboards.auth.config.OidcProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -22,24 +23,24 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class JwksService {
   private static final Logger logger = LoggerFactory.getLogger(JwksService.class);
 
-  private final String jwksUri;
+  private final OidcProperties oidcProperties;
   private final HttpClient httpClient;
   private final ObjectMapper objectMapper;
   private final Map<String, PublicKey> keyCache = new ConcurrentHashMap<>();
   private volatile Instant lastFetch = Instant.EPOCH;
-  private static final Duration CACHE_DURATION = Duration.ofMinutes(15);
 
-  public JwksService(
-      @Value("${auth.user-service-url:http://localhost:8080}") String userServiceUrl) {
-    this.jwksUri = userServiceUrl + "/api/v1/users/oauth2/jwks.json";
-    this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+  public JwksService(OidcProperties oidcProperties) {
+    this.oidcProperties = oidcProperties;
+    this.httpClient =
+        HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(oidcProperties.getConnectionTimeoutSeconds()))
+            .build();
     this.objectMapper = new ObjectMapper();
   }
 
@@ -52,7 +53,8 @@ public class JwksService {
   }
 
   private void refreshKeysIfNeeded() {
-    if (Instant.now().minus(CACHE_DURATION).isAfter(lastFetch)) {
+    Duration cacheDuration = Duration.ofMinutes(oidcProperties.getKeysCacheDurationMinutes());
+    if (Instant.now().minus(cacheDuration).isAfter(lastFetch)) {
       try {
         fetchJwksKeys();
       } catch (Exception e) {
@@ -62,19 +64,21 @@ public class JwksService {
   }
 
   private void fetchJwksKeys() throws Exception {
-    logger.debug("Fetching JWKS keys from: {}", jwksUri);
+    String jwksUrl = oidcProperties.getJwksUrl();
+    logger.debug("Fetching JWKS keys from: {}", jwksUrl);
 
     HttpRequest request =
         HttpRequest.newBuilder()
-            .uri(URI.create(jwksUri))
-            .timeout(Duration.ofSeconds(10))
+            .uri(URI.create(jwksUrl))
+            .timeout(Duration.ofSeconds(oidcProperties.getConnectionTimeoutSeconds()))
             .GET()
             .build();
 
     HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
     if (response.statusCode() != 200) {
-      throw new RuntimeException("Failed to fetch JWKS: " + response.statusCode());
+      throw new RuntimeException(
+          "Failed to fetch JWKS: " + response.statusCode() + " - " + response.body());
     }
 
     JsonNode jwks = objectMapper.readTree(response.body());
