@@ -39,32 +39,49 @@ public class OidcTokenValidator {
    * @throws TokenValidationException if the token is invalid
    */
   public Claims validateToken(String token) throws TokenValidationException {
+    logger.debug("Starting token validation");
     try {
       Claims claims = jwksService.parseAndValidateJwt(token);
+      logger.debug("JWT parsing and signature validation successful");
 
       // Validate issuer
       String issuer = claims.getIssuer();
-      if (!oidcProperties.getIssuer().equals(issuer)) {
-        throw new TokenValidationException("Invalid issuer: " + issuer);
+      String expectedIssuer = oidcProperties.getIssuer();
+      logger.debug("Token issuer: '{}', Expected issuer: '{}'", issuer, expectedIssuer);
+      if (!expectedIssuer.equals(issuer)) {
+        throw new TokenValidationException(
+            "Invalid issuer: '" + issuer + "', expected: '" + expectedIssuer + "'");
       }
 
       // Validate audience
       String audience = claims.getAudience();
-      if (!oidcProperties.getAudience().equals(audience)) {
-        throw new TokenValidationException("Invalid audience: " + audience);
+      String expectedAudience = oidcProperties.getAudience();
+      logger.debug("Token audience: '{}', Expected audience: '{}'", audience, expectedAudience);
+      if (!expectedAudience.equals(audience)) {
+        throw new TokenValidationException(
+            "Invalid audience: '" + audience + "', expected: '" + expectedAudience + "'");
       }
 
       // Validate expiration
       Instant expiration = claims.getExpiration().toInstant();
-      if (expiration.isBefore(Instant.now())) {
-        throw new TokenValidationException("Token expired at: " + expiration);
+      Instant now = Instant.now();
+      logger.debug(
+          "Token expiration: {}, Current time: {}, Is expired: {}",
+          expiration,
+          now,
+          expiration.isBefore(now));
+      if (expiration.isBefore(now)) {
+        throw new TokenValidationException(
+            "Token expired at: " + expiration + ", current time: " + now);
       }
 
+      logger.debug("Token validation completed successfully");
       return claims;
     } catch (TokenValidationException e) {
+      logger.warn("Token validation failed: {}", e.getMessage());
       throw e;
     } catch (Exception e) {
-      logger.debug("Token validation failed: {}", e.getMessage());
+      logger.error("Unexpected token validation error: {}", e.getMessage(), e);
       throw new TokenValidationException("Invalid token", e);
     }
   }
