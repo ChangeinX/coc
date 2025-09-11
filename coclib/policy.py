@@ -1,5 +1,4 @@
 from __future__ import annotations
-# no-op2: pre-commit python path test with ruff present
 
 from datetime import datetime, timedelta
 from typing import Dict, Iterable

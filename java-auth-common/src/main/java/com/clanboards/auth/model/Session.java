@@ -13,4 +13,3 @@ public interface Session {
 
   Instant getExpiresAt();
 }
-// no-op: trigger pre-commit java path (spotless)

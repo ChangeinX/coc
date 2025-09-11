@@ -83,4 +83,3 @@ public class OidcProperties {
     this.disallowHttp = disallowHttp;
   }
 }
-// pre-commit: concurrency test comment

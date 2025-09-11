@@ -7,5 +7,3 @@ import { registerRootComponent } from 'expo';
 import App from './src/App';
 
 registerRootComponent(App);
-// pre-commit: concurrency test
-// pre-commit hook test: no-op change to trigger mobile checks

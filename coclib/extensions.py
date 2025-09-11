@@ -1,5 +1,4 @@
 import os
-# pre-commit: multi-path concurrency test
 
 # Check if running in Lambda environment
 IS_LAMBDA = bool(os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
