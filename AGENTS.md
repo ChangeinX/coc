@@ -1,19 +1,25 @@
 # Codex Guidelines
 
-This monorepo hosts several microservices and a front-end that make up a Clash of Clans dashboard. The key directories are:
+This monorepo hosts several Java microservices and front-end clients for the Clan Boards dashboard. The current, actively developed stack is mobile‑first. The legacy Flask API has been archived.
 
-- `back-end/` – Flask API service, generic routes
-- `front-end/app/` – React dashboard built with Vite
-- `coclib/` – shared Python modules for the project
-- `db/` – minimal Flask app used solely for running migrations. Also holds graphql schema for messages.
-- `migrations/` – Alembic migration scripts
-- `messages-java/` - Chat service implemented in Spring Boot
-- `user_service/` - Friend service implemented in Spring Boot
-- `notifications/` - Notifications service implemented in Spring Boot
-- `recruiting/` - Recruiting service implemented in Spring Boot
-- `lambdas/` - Lambdas for notifications from DynamoDB
+Key directories:
 
-Each directory contains its own `AGENTS.md` with project specific notes. Check those files when working in a subfolder.
+- `front-end/mobile/` – React Native app (Expo). Primary client going forward.
+- `front-end/app/` – Vite React web dashboard. PWA features are obsolete; kept to reference during migration.
+- `front-end/public-home/` – Minimal Next.js public site (legal/policy pages).
+- `messages-java/` – Chat service (Spring Boot, REST/WebSocket/GraphQL).
+- `user_service/` – User/friends + auth issuer (Spring Boot, OIDC provider).
+- `notifications/` – Notifications service (Spring Boot).
+- `recruiting/` – Recruiting service (Spring Boot).
+- `clash-data/` – Clash data APIs (Spring Boot; players, wars, assets).
+- `java-auth-common/` – Shared Java authentication library published to `mavenLocal` in CI.
+- `coclib/` – Shared Python modules for migrations and tooling.
+- `db/` – Minimal Flask app used only to run Alembic migrations; holds `messages.graphql` schema.
+- `migrations/` – Alembic migration scripts.
+- `lambdas/` – Serverless functions, including `refresh-worker` (Python 3.11) and `dynamodb-to-sqs.js`.
+- `archived/back-end/` – Archived Flask API; do not modify.
+
+Each directory may contain its own `AGENTS.md` with project‑specific notes. Check those files when working in a subfolder.
 
 ## Crawling the codebase
 - Shared models and utilities reside in `coclib`.
@@ -24,20 +30,41 @@ Each directory contains its own `AGENTS.md` with project specific notes. Check t
 Validate changes using:
 
 ```bash
-# Lint and run tests with Nox
+# Lint and run tests with Nox (convenience wrapper; requires Python 3.11 and nox installed)
 nox -s lint tests
 
 # Lint Python sources manually if needed
-ruff back-end coclib db
+ruff coclib db lambdas/refresh-worker
 
-# Install deps and run front-end tests and build
-cd front-end/app
-npm install
+# Mobile app checks (Node 20+)
+cd front-end/mobile
+npm ci
+npm run lint
+npm run typecheck
+npm test
+
+# Web app (optional; PWA is obsolete)
+cd ../app
+npm ci
 npm test
 npm run build
 ```
 
 Any lint errors or build failures should fail the PR.
+
+### Makefile shortcuts
+- `make help` lists available commands
+- `make lint` runs Python, Java (spotless), and mobile lint/typecheck
+- `make test` runs Java tests, mobile tests, and Lambda tests (via nox)
+- `make lambda-test-standalone` runs Lambda tests without nox
+
+### Lambda tests
+- With nox: `nox -s tests` (executes refresh-worker tests as part of the suite)
+- Without nox (manual):
+  - `cd lambdas/refresh-worker`
+  - `python -m venv .venv && source .venv/bin/activate` (Python 3.11)
+  - `pip install -r requirements-test.txt`
+  - `PYTHONPATH=../../ pytest -v test_lambda_function.py`
 
 ## CI notes
 
@@ -64,6 +91,15 @@ Any lint errors or build failures should fail the PR.
 ## Development notes
 
 - Keep shared logic in `coclib` rather than duplicating it in other projects.
-- Dockerfiles expect Python 3.11 and Node 18+.
+- Dockerfiles expect Python 3.11 and Node 20+.
 - Follow Ruff's default style rules for Python code.
 - This is a living document. Update it if anything is incorrect or needs updating.
+
+### Local Gradle notes
+- Ensure JDK 21 is active. If your environment restricts `~/.gradle`, set `export GRADLE_USER_HOME=$(pwd)/.gradle` before running wrapper commands.
+- Avoid the global `gradle` CLI to prevent wrapper/version drift; use the module `./gradlew` consistently.
+- All modules are aligned to Gradle $(8.14.3) via their wrapper properties; use `make gradle-align` to re-pin distribution URLs if needed.
+
+## Lambdas
+- `lambdas/refresh-worker/` (Python 3.11) handles background refresh queue; see `DEPLOYMENT.md` and `package-lambda.sh` for packaging and Infra‑as‑Code hooks. Tests are exercised by `nox -s tests` and can be run with `pytest` locally.
+- `lambdas/dynamodb-to-sqs.js` forwards DynamoDB stream events to SQS.
