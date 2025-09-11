@@ -64,7 +64,7 @@ server.port=8010
 
 ### 1. Token Issuance (User Service)
 ```
-Google OAuth → User Service → JWT Tokens (Access + ID + Refresh)
+Google OAuth / Apple Sign-in → User Service → JWT Tokens (Access + ID + Refresh)
                      ↓
                Stores session in database
                      ↓
