@@ -43,10 +43,12 @@ public class JwksService {
   public JwksService(OidcProperties oidcProperties, JwksContentProvider jwksContentProvider) {
     this.oidcProperties = oidcProperties;
     this.jwksContentProvider = jwksContentProvider;
-    this.httpClient = jwksContentProvider == null ?
-        HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(oidcProperties.getConnectionTimeoutSeconds()))
-            .build() : null;
+    this.httpClient =
+        jwksContentProvider == null
+            ? HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(oidcProperties.getConnectionTimeoutSeconds()))
+                .build()
+            : null;
     this.objectMapper = new ObjectMapper();
   }
 
@@ -71,14 +73,14 @@ public class JwksService {
 
   private void fetchJwksKeys() throws Exception {
     String jwksJson;
-    
+
     if (jwksContentProvider != null) {
       logger.debug("Fetching JWKS keys from provider");
       jwksJson = jwksContentProvider.loadJwksJson();
     } else if (oidcProperties.isDisallowHttp()) {
       throw new RuntimeException(
           "HTTP JWKS fetching is disabled but no JwksContentProvider available. "
-          + "Set auth.oidc.disallow-http=false or provide a JwksContentProvider bean.");
+              + "Set auth.oidc.disallow-http=false or provide a JwksContentProvider bean.");
     } else {
       String jwksUrl = oidcProperties.getJwksUrl();
       logger.debug("Fetching JWKS keys from HTTP: {}", jwksUrl);
@@ -90,13 +92,14 @@ public class JwksService {
               .GET()
               .build();
 
-      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<String> response =
+          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       if (response.statusCode() != 200) {
         throw new RuntimeException(
             "Failed to fetch JWKS: " + response.statusCode() + " - " + response.body());
       }
-      
+
       jwksJson = response.body();
     }
 

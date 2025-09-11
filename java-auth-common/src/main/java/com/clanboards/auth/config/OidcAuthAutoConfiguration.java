@@ -20,7 +20,7 @@ public class OidcAuthAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public JwksService jwksService(
-      OidcProperties oidcProperties, 
+      OidcProperties oidcProperties,
       @Autowired(required = false) JwksContentProvider jwksContentProvider) {
     if (jwksContentProvider != null || "db".equals(oidcProperties.getJwksSource())) {
       return new JwksService(oidcProperties, jwksContentProvider);

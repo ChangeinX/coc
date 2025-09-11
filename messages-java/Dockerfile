@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1.7
-# CI: No-op comment to trigger messages service rebuild
 FROM gradle:8.7-jdk21 AS build
 WORKDIR /workspace
 COPY settings.gradle ./

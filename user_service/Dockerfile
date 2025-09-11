@@ -11,6 +11,6 @@ RUN --mount=type=cache,id=gradle-cache,target=/home/gradle/.gradle \
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /opt/app
 COPY --from=build /workspace/user-service/build/libs/*.jar app.jar
-
+# no-op trigger to rebuild user service
 EXPOSE 8020
 ENTRYPOINT ["java","-jar","/opt/app/app.jar","--server.port=8020"]
