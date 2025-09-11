@@ -1,6 +1,6 @@
 # Clash of Clans Dashboard
 
-[![CI](https://github.com/ChangeinX/coc/actions/workflows/pr.yml/badge.svg?branch=main)](https://github.com/ChangeinX/coc/actions/workflows/pr.yml)
+[![Build and Deploy](https://github.com/ChangeinX/coc/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/ChangeinX/coc/actions/workflows/deploy.yml)
 
 Modernized monorepo for the Clan Boards project. The stack has shifted to Java microservices and a mobile‑first client. The legacy Flask API has been archived.
 
