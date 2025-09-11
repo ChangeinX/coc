@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1.7
-FROM gradle:8.7-jdk21 AS build
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace/recruiting
-COPY build.gradle settings.gradle ./
-RUN --mount=type=cache,id=gradle-cache,target=/home/gradle/.gradle \
-    gradle --daemon --build-cache dependencies
-COPY src ./src
-RUN --mount=type=cache,id=gradle-cache,target=/home/gradle/.gradle \
-    gradle --daemon --build-cache bootJar
+# Copy full project to use Gradle Wrapper (no global gradle CLI)
+COPY . .
+WORKDIR /workspace/recruiting
+RUN --mount=type=cache,id=gradle-cache,target=/root/.gradle \
+    ./gradlew --no-daemon --build-cache dependencies && \
+    ./gradlew --no-daemon --build-cache bootJar
 
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /opt/app
