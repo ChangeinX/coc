@@ -30,32 +30,32 @@ public class OidcPropertiesLoader {
 
   @PostConstruct
   public void loadFromDatabase() {
-    logger.info("Loading OIDC configuration from database...");
+    logger.info("Loading OIDC configuration from database (mandatory)...");
 
-    // Load issuer from database, fallback to existing value
-    configRepository
-        .findByKey(OIDC_ISSUER_KEY)
-        .ifPresentOrElse(
-            config -> {
-              logger.info("Loaded issuer from database: {}", config.getValue());
-              oidcProperties.setIssuer(config.getValue());
-            },
-            () ->
-                logger.info(
-                    "Using default issuer from application.yml: {}", oidcProperties.getIssuer()));
+    String issuer =
+        configRepository.findByKey(OIDC_ISSUER_KEY).map(cfg -> cfg.getValue()).orElse(null);
 
-    // Load audience from database, fallback to existing value
-    configRepository
-        .findByKey(OIDC_AUDIENCE_KEY)
-        .ifPresentOrElse(
-            config -> {
-              logger.info("Loaded audience from database: {}", config.getValue());
-              oidcProperties.setAudience(config.getValue());
-            },
-            () ->
-                logger.info(
-                    "Using default audience from application.yml: {}",
-                    oidcProperties.getAudience()));
+    String audience =
+        configRepository.findByKey(OIDC_AUDIENCE_KEY).map(cfg -> cfg.getValue()).orElse(null);
+
+    if (issuer == null || issuer.isBlank()) {
+      throw new IllegalStateException(
+          "Missing required OIDC configuration: system_config('"
+              + OIDC_ISSUER_KEY
+              + "') not set. "
+              + "Seed database config before starting the service.");
+    }
+
+    if (audience == null || audience.isBlank()) {
+      throw new IllegalStateException(
+          "Missing required OIDC configuration: system_config('"
+              + OIDC_AUDIENCE_KEY
+              + "') not set. "
+              + "Seed database config before starting the service.");
+    }
+
+    oidcProperties.setIssuer(issuer);
+    oidcProperties.setAudience(audience);
 
     logger.info(
         "OIDC configuration loaded - Issuer: {}, Audience: {}, JWKS Source: {}, JWKS DB Key: {}",

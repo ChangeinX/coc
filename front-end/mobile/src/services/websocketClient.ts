@@ -65,7 +65,7 @@ class WebSocketService {
         return;
       }
 
-      const baseUrl = MESSAGES_URL || 'http://localhost:8001';
+      const baseUrl = MESSAGES_URL;
       
       this.client = new Client({
         webSocketFactory: () => new SockJS(`${baseUrl}/api/v1/chat/socket`),

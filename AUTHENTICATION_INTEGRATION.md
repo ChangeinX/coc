@@ -50,8 +50,10 @@ ON CONFLICT (key) DO UPDATE SET
 **Messages-Java and other consuming services:**
 ```bash
 # OIDC Configuration - Database-Backed (NO HTTP CALLS)
-auth.oidc.issuer=https://dev.api.clan-boards.com/api/v1/users
-auth.oidc.audience=clanboards-mobile
+# Issuer and Audience are loaded from database system_config and are REQUIRED.
+# Services will fail to start if these keys are missing:
+#   - system_config(oidc.issuer)
+#   - system_config(oidc.audience)
 auth.oidc.jwks-source=db
 auth.oidc.jwks-db-key=oidc.jwks
 auth.oidc.disallow-http=true
@@ -84,8 +86,8 @@ spring.datasource.password=your_password
 
 ### Key Configuration Values Explained:
 
-- **`oidc.issuer`**: Must match the JWT issuer claim exactly (ALB domain + `/api/v1/users`)
-- **`oidc.audience`**: Must match the JWT audience claim (`clanboards-mobile`)
+- **`oidc.issuer` (DB)**: Must match the JWT issuer claim exactly (ALB domain + `/api/v1/users`)
+- **`oidc.audience` (DB)**: Must match the JWT audience claim (`clanboards-mobile`)
 - **`oidc.jwks-source`**: Set to `"db"` to use database-backed JWKS (eliminates HTTP calls)
 - **`oidc.jwks-db-key`**: Database key where JWKS JSON is stored (`"oidc.jwks"`)
 - **`oidc.disallow-http`**: Set to `true` to prevent HTTP fallback (guarantees zero HTTP calls)
