@@ -39,7 +39,7 @@ mock.patch('coclib.db_session.lambda_db_setup').start()
 mock.patch('coclib.db_session.lambda_db_cleanup').start()
 mock.patch('coclib.db_session.get_db_session').start()
 
-from lambda_function import (
+from lambda_function import (  # noqa: E402
     lambda_handler,
     health_check_handler,
     process_refresh_request,
@@ -47,7 +47,8 @@ from lambda_function import (
 )
 
 # Import actual coclib enums
-from coclib.queue.refresh_queue import RefreshType
+from coclib.queue.refresh_queue import RefreshType  # noqa: E402
+
 
 
 class TestLambdaHandler:
@@ -236,6 +237,8 @@ class TestHandleFailedRequest:
         
         # Should schedule retry with 2-minute delay (2^1)
         mock_queue.queue_refresh.assert_called_once()
+        # call_args = mock_queue.queue_refresh.call_args[0][0]
+
         # Verify retry request was created (exact call verification would require more setup)
     
     def test_handle_failed_request_max_retries_exceeded(self):

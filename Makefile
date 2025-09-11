@@ -22,6 +22,7 @@ help:
 	@echo "  hooks                   Install pre-commit git hook";
 	@echo "  env-check               Show tool versions and warn on mismatches";
 	@echo "  lint                    Lint Python + Java (spotless) + mobile";
+	@echo "  lint-apply              Auto-fix lint issues (Ruff/Spotless/ESLint)";
 	@echo "  check                   Lint + Gradle wrapper alignment check";
 	@echo "  test                    Run Java tests, mobile tests, and lambda tests (via nox)";
 	@echo "  verify                  check + full test suite";
@@ -97,6 +98,10 @@ env-check:
 .PHONY: lint
 lint: lint-python lint-java mobile-lint mobile-typecheck
 
+# Apply auto-fixes across supported stacks
+.PHONY: lint-apply
+lint-apply: fmt-python fmt-java mobile-fix
+
 .PHONY: check
 check: env-check lint ci-gradle-align-check
 
@@ -112,6 +117,17 @@ lint-python:
 	@echo "[ruff] checking coclib db lambdas/refresh-worker"
 	@if command -v ruff >/dev/null 2>&1; then \
 		ruff check coclib db lambdas/refresh-worker ; \
+	else \
+		echo "ruff not found. Install with: pipx install ruff"; \
+		exit 1; \
+	fi
+
+# Python formatting and autofix (Ruff)
+.PHONY: fmt-python
+fmt-python:
+	@echo "[ruff] fixing + formatting Python sources"
+	@if command -v ruff >/dev/null 2>&1; then \
+		ruff check --fix coclib db lambdas/refresh-worker && ruff format coclib db lambdas/refresh-worker ; \
 	else \
 		echo "ruff not found. Install with: pipx install ruff"; \
 		exit 1; \
