@@ -31,6 +31,7 @@ describe('useSessionManager', () => {
     isAuthenticated: false,
     handleSessionExpired: jest.fn(),
     isTokenExpired: jest.fn(),
+    updateTokens: jest.fn(),
   };
 
   beforeEach(() => {
@@ -129,6 +130,12 @@ describe('useSessionManager', () => {
     );
     
     expect(mockTokenStorage.set).toHaveBeenCalledWith({
+      accessToken: 'new-token-789',
+      refreshToken: 'refresh-456',
+      expiresAt: expect.any(Number),
+    });
+    
+    expect(mockAuthState.updateTokens).toHaveBeenCalledWith({
       accessToken: 'new-token-789',
       refreshToken: 'refresh-456',
       expiresAt: expect.any(Number),

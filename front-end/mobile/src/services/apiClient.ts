@@ -154,11 +154,17 @@ async function tryRefresh(): Promise<boolean> {
       const data = await res.json();
       const expiresAt = Date.now() + (data.expires_in * 1000); // Convert seconds to milliseconds
       
-      await tokenStorage.set({ 
+      const newTokens = { 
         accessToken: data.access_token, 
         refreshToken: rt,
         expiresAt 
-      });
+      };
+      
+      await tokenStorage.set(newTokens);
+      
+      // Update auth store state to prevent continuous refresh attempts
+      const { useAuthStore } = await import('@store/auth.store');
+      useAuthStore.getState().updateTokens(newTokens);
       
       console.log('Token refresh successful');
       return true;
