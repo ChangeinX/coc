@@ -1,6 +1,9 @@
 # syntax=docker/dockerfile:1.7
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
+# Copy Gradle Wrapper so we can use ./gradlew inside the container
+COPY gradlew ./
+COPY gradle ./gradle
 COPY settings.gradle ./
 COPY java-auth-common ./java-auth-common
 COPY messages-java ./messages-java
