@@ -23,7 +23,7 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
 
   // Endpoints that don't require authentication
   private static final Set<String> EXCLUDED_PATHS =
-      Set.of("/api/v1/chat/health", "/actuator/health", "/health");
+      Set.of("/api/v1/health", "/api/v1/chat/health", "/actuator/health", "/health");
 
   public OidcAuthenticationFilter(OidcTokenValidator tokenValidator) {
     this.tokenValidator = tokenValidator;
