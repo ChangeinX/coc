@@ -46,6 +46,21 @@ Any lint errors or build failures should fail the PR.
 - The old monolithic `nox` CI driver is retained for local dev convenience; CI no longer calls `nox` directly.
 - Path filters skip unaffected jobs to reduce build time.
 
+## Git hooks
+
+- Install the fast pre-commit hook with:
+  - `bash tools/setup-git-hooks.sh`
+- Behavior:
+  - Runs only relevant checks for staged files in parallel
+  - Python: `ruff` on changed files under `coclib`, `db`, `lambdas/refresh-worker`
+  - Java: `spotlessCheck` for changed modules (tests opt-in)
+  - Mobile: `lint` and `typecheck` (tests opt-in)
+- Opt-ins via env vars on commit:
+  - `PRECOMMIT_FULL=1` use legacy `nox -s lint tests`
+  - `PRECOMMIT_JAVA_TESTS=1` also run Gradle tests
+  - `PRECOMMIT_MOBILE_TESTS=1` run mobile tests
+  - `PRECOMMIT_APP_TESTS=1` run web app tests
+
 ## Development notes
 
 - Keep shared logic in `coclib` rather than duplicating it in other projects.

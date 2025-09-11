@@ -1,6 +1,6 @@
 # Clash of Clans Dashboard
 
-This monorepo contains a Flask API and a React dashboard.
+This monorepo contains a Flask API and a React dashboard. 
 
 ## Google Sign-In setup
 
@@ -31,4 +31,3 @@ Clan and player records are stored exactly as returned by the [Clash of Clans AP
 ## Legal
 
 This material is unofficial and is not endorsed by Supercell. For more information see Supercell's Fan Content Policy: www.supercell.com/fan-content-policy.
-

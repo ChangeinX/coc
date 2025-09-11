@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+
+# Fast, incremental pre-commit checks for this monorepo.
+# - Skips heavy CI orchestration (nox) by default
+# - Detects staged changes and runs only relevant, lightweight checks
+# - Executes independent checks in parallel to minimize wall time
+#
+# Env toggles:
+#   PRECOMMIT_FULL=1            -> run `nox -s lint tests` (legacy behavior)
+#   PRECOMMIT_JAVA_TESTS=1      -> also run Gradle `test` for changed Java modules
+#   PRECOMMIT_MOBILE_TESTS=1    -> also run `npm test` for front-end/mobile
+#   PRECOMMIT_APP_TESTS=1       -> also run `npm test` for front-end/app
+#   PRECOMMIT_VERBOSE=1         -> print verbose commands
+
+set -euo pipefail
+
+say() { echo -e "$*"; }
+run() { if [[ "${PRECOMMIT_VERBOSE:-}" == "1" ]]; then say "+ $*"; fi; "$@"; }
+
+say "🔍 Running fast pre-commit checks..."
+
+# Optional legacy full run
+if [[ "${PRECOMMIT_FULL:-}" == "1" ]]; then
+  if command -v nox >/dev/null 2>&1; then
+    say "🧹 PRECOMMIT_FULL=1 set — running nox (lint+tests)"
+    run nox -s lint tests
+    say "✅ All pre-commit checks passed!"
+    exit 0
+  else
+    say "❌ PRECOMMIT_FULL requested but nox not found. Install: pip install nox"
+    exit 1
+  fi
+fi
+
+# Collect staged files (bash 3 compatible)
+CHANGED_STR=$(git diff --cached --name-only --diff-filter=ACMRT)
+IFS=$'\n' CHANGED=($CHANGED_STR)
+unset IFS
+
+if [[ -z "$CHANGED_STR" ]]; then
+  say "ℹ️  No staged changes detected; nothing to check."
+  exit 0
+fi
+
+has_changed_prefix() {
+  local prefix="$1"
+  for f in "${CHANGED[@]}"; do
+    [[ "$f" == $prefix* ]] && return 0
+  done
+  return 1
+}
+
+has_changed_regex() {
+  local pattern="$1"
+  for f in "${CHANGED[@]}"; do
+    [[ "$f" =~ $pattern ]] && return 0
+  done
+  return 1
+}
+
+# Determine what changed
+PY_CHANGED=false
+JAVA_CHANGED_MODULES=()
+APP_CHANGED=false
+MOBILE_CHANGED=false
+
+if has_changed_regex '^(coclib/|db/|lambdas/refresh-worker/).+\.py$|^noxfile\.py$'; then
+  PY_CHANGED=true
+fi
+
+for mod in java-auth-common messages-java user_service notifications recruiting clash-data; do
+  if has_changed_prefix "$mod/"; then
+    JAVA_CHANGED_MODULES+=("$mod")
+  fi
+done
+
+if has_changed_prefix "front-end/app/"; then APP_CHANGED=true; fi
+if has_changed_prefix "front-end/mobile/"; then MOBILE_CHANGED=true; fi
+
+# Async runner
+pids=()
+names=()
+run_async() { # name, cmd...
+  local name="$1"; shift
+  ( "$@" ) &
+  local pid=$!
+  pids+=("$pid")
+  names+=("$name")
+}
+
+fail=0
+wait_all() {
+  local i
+  for i in "${!pids[@]}"; do
+    local pid=${pids[$i]}
+    local name=${names[$i]}
+    if ! wait "$pid"; then
+      say "❌ $name failed"
+      fail=1
+    else
+      say "✅ $name passed"
+    fi
+  done
+}
+
+# 1) Python: ruff on changed areas (no installs here)
+if [[ "$PY_CHANGED" == true ]]; then
+  if command -v ruff >/dev/null 2>&1; then
+    # Prefer checking only changed files if ruff present
+    IFS=$'\n' PY_FILES=($(printf '%s\n' "${CHANGED[@]}" | grep -E '^(coclib|db|lambdas/refresh-worker)/.+\.py$' || true))
+    unset IFS
+    if [[ -n "${PY_FILES:-}" ]]; then
+      run_async "ruff (changed python)" ruff check --force-exclude ${PY_FILES:+"${PY_FILES[@]}"}
+    fi
+  else
+    say "⚠️  ruff not found; skipping Python lint. Install: pipx install ruff (or pip install ruff)"
+  fi
+fi
+
+# 2) Java: spotlessCheck for changed modules (tests opt-in)
+if [[ ${#JAVA_CHANGED_MODULES[@]} -gt 0 ]]; then
+  if command -v java >/dev/null 2>&1; then
+    # Ensure recruiting wrapper exists (one-time)
+    if [[ " ${JAVA_CHANGED_MODULES[*]} " == *" recruiting "* ]]; then
+      if [[ ! -f recruiting/gradle/wrapper/gradle-wrapper.jar ]]; then
+        if [[ -x messages-java/gradlew ]]; then
+          run messages-java/gradlew -p recruiting wrapper || true
+        fi
+      fi
+    fi
+    for mod in "${JAVA_CHANGED_MODULES[@]}"; do
+      if [[ -x "$mod/gradlew" ]]; then
+        if [[ "${PRECOMMIT_JAVA_TESTS:-}" == "1" ]]; then
+          run_async "gradle ($mod: spotless+test)" bash -c "cd '$mod' && ./gradlew --no-daemon -q spotlessCheck test"
+        else
+          run_async "gradle ($mod: spotless)" bash -c "cd '$mod' && ./gradlew --no-daemon -q spotlessCheck"
+        fi
+      fi
+    done
+  else
+    say "⚠️  Java not found; skipping Java checks."
+  fi
+fi
+
+# 3) Front-end app: opt-in tests only (no default lint script)
+if [[ "$APP_CHANGED" == true && "${PRECOMMIT_APP_TESTS:-}" == "1" ]]; then
+  if command -v npm >/dev/null 2>&1; then
+    if [[ -d front-end/app/node_modules ]]; then
+      run_async "web app tests" bash -c "cd front-end/app && npm test --silent"
+    else
+      say "⚠️  skipping web app tests (run npm ci in front-end/app)"
+    fi
+  else
+    say "⚠️  npm not found; skipping web app tests."
+  fi
+fi
+
+# 4) Mobile: lint+typecheck by default; tests opt-in
+if [[ "$MOBILE_CHANGED" == true ]]; then
+  if command -v npm >/dev/null 2>&1; then
+    if [[ -d front-end/mobile/node_modules ]]; then
+      run_async "mobile lint" bash -c "cd front-end/mobile && npm run -s lint"
+      run_async "mobile typecheck" bash -c "cd front-end/mobile && npm run -s typecheck"
+      if [[ "${PRECOMMIT_MOBILE_TESTS:-}" == "1" ]]; then
+        run_async "mobile tests" bash -c "cd front-end/mobile && npm test --silent"
+      fi
+    else
+      say "⚠️  skipping mobile checks (run npm ci in front-end/mobile)"
+    fi
+  else
+    say "⚠️  npm not found; skipping mobile checks."
+  fi
+fi
+
+# If nothing queued (e.g., only docs), exit cleanly
+if [[ ${#pids[@]} -eq 0 ]]; then
+  say "ℹ️  No relevant code changes to check."
+  exit 0
+fi
+
+wait_all
+
+if [[ $fail -ne 0 ]]; then
+  say "\n❌ Pre-commit checks failed. Fix the issues above or use --no-verify (not recommended)."
+  exit 1
+fi
+
+say "\n✅ All pre-commit checks passed!"
