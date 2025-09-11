@@ -39,6 +39,13 @@ npm run build
 
 Any lint errors or build failures should fail the PR.
 
+## CI notes
+
+- PR CI runs jobs in parallel per stack (Python lint, Lambdas tests, front-end web/mobile, and a Java matrix including `java-auth-common`).
+- Java modules run `spotlessCheck` and `test` with Gradle caching enabled. `coc-py/:coc-java` is published to `mavenLocal` in each Java job before builds.
+- The old monolithic `nox` CI driver is retained for local dev convenience; CI no longer calls `nox` directly.
+- Path filters skip unaffected jobs to reduce build time.
+
 ## Development notes
 
 - Keep shared logic in `coclib` rather than duplicating it in other projects.
