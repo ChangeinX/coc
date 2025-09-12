@@ -7,7 +7,6 @@ plugins {
 
 group = 'com.clanboards'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '21'
 
 def javaVersion = JavaVersion.VERSION_21
 java {

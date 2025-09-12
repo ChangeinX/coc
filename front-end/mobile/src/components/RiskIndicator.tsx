@@ -17,14 +17,14 @@ export function RiskIndicator({
 }: RiskIndicatorProps) {
   const theme = useTheme();
 
-  const getRiskLevel = (score: number) => {
-    if (score < 30) return 'low';
-    if (score < 70) return 'medium';
+  const getRiskLevel = (riskScore: number) => {
+    if (riskScore < 30) return 'low';
+    if (riskScore < 70) return 'medium';
     return 'high';
   };
 
-  const getRiskColor = (score: number) => {
-    const level = getRiskLevel(score);
+  const getRiskColor = (riskScore: number) => {
+    const level = getRiskLevel(riskScore);
     switch (level) {
       case 'low':
         return theme.colors.success;
@@ -37,8 +37,8 @@ export function RiskIndicator({
     }
   };
 
-  const getRiskLabel = (score: number) => {
-    const level = getRiskLevel(score);
+  const getRiskLabel = (riskScore: number) => {
+    const level = getRiskLevel(riskScore);
     switch (level) {
       case 'low':
         return 'Low Risk';

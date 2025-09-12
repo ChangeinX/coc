@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@theme/index';
 
 export interface RoleIconProps {
@@ -12,8 +12,8 @@ export function RoleIcon({ role, size = 'md', showText = false }: RoleIconProps)
   const theme = useTheme();
 
   // Role icon and color mapping
-  const getRoleInfo = (role: string) => {
-    const roleKey = role.toLowerCase();
+  const getRoleInfo = (roleValue: string) => {
+    const roleKey = roleValue.toLowerCase();
     switch (roleKey) {
       case 'leader':
         return {
@@ -75,34 +75,45 @@ export function RoleIcon({ role, size = 'md', showText = false }: RoleIconProps)
   };
 
   const roleInfo = getRoleInfo(role);
-  const styles = getSizeStyles();
+  const sizeStyles = getSizeStyles();
+
+  const dynamicContainerStyle = {
+    backgroundColor: roleInfo.bgColor,
+    borderRadius: sizeStyles.borderRadius,
+    borderColor: roleInfo.color + '40',
+    paddingHorizontal: sizeStyles.containerPadding,
+    paddingVertical: sizeStyles.containerPadding * 0.5,
+    gap: theme.spacing.xs,
+  };
+
+  const dynamicIconStyle = {
+    fontSize: sizeStyles.iconSize,
+  };
+
+  const dynamicTextStyle = {
+    fontSize: sizeStyles.textSize,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: roleInfo.color,
+  };
 
   return (
-    <View style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: roleInfo.bgColor,
-      borderRadius: styles.borderRadius,
-      borderWidth: 1,
-      borderColor: roleInfo.color + '40',
-      paddingHorizontal: styles.containerPadding,
-      paddingVertical: styles.containerPadding * 0.5,
-      gap: theme.spacing.xs,
-    }}>
-      <Text style={{
-        fontSize: styles.iconSize,
-      }}>
+    <View style={[styles.container, dynamicContainerStyle]}>
+      <Text style={dynamicIconStyle}>
         {roleInfo.icon}
       </Text>
       {showText && (
-        <Text style={{
-          fontSize: styles.textSize,
-          fontWeight: theme.typography.fontWeight.medium,
-          color: roleInfo.color,
-        }}>
+        <Text style={dynamicTextStyle}>
           {roleInfo.label}
         </Text>
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+});

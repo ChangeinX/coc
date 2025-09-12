@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useTheme, useThemedStyles } from '@theme/index';
 
 export interface LoadingSpinnerProps {
@@ -48,11 +48,7 @@ export function LoadingSpinner({
         color={spinnerColor}
       />
       {message && (
-        <Text style={{
-          ...commonStyles.bodySecondary,
-          textAlign: 'center',
-          maxWidth: 200,
-        }}>
+        <Text style={[commonStyles.bodySecondary, styles.messageText]}>
           {message}
         </Text>
       )}
@@ -73,13 +69,24 @@ export function SkeletonLoader({
 }) {
   const theme = useTheme();
 
+  const dynamicStyles = {
+    width,
+    height,
+    backgroundColor: theme.colors.surfaceTertiary,
+    borderRadius: borderRadius || theme.borderRadius.sm,
+  };
+
   return (
-    <View style={[{
-      width,
-      height,
-      backgroundColor: theme.colors.surfaceTertiary,
-      borderRadius: borderRadius || theme.borderRadius.sm,
-      opacity: 0.7,
-    }, style]} />
+    <View style={[dynamicStyles, styles.skeletonBase, style]} />
   );
 }
+
+const styles = StyleSheet.create({
+  messageText: {
+    textAlign: 'center',
+    maxWidth: 200,
+  },
+  skeletonBase: {
+    opacity: 0.7,
+  },
+});
