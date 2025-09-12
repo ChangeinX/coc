@@ -37,6 +37,7 @@ dependencies {
     
     // Jackson for JSON processing
     api 'com.fasterxml.jackson.core:jackson-databind'
+    api 'org.springframework.security:spring-security-oauth2-jose'
     
     // Logging
     api 'org.slf4j:slf4j-api'

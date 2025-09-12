@@ -1,4 +1,4 @@
-package com.clanboards.messages.config;
+package com.clanboards.auth.config;
 
 import com.clanboards.auth.service.OidcTokenValidator;
 import io.jsonwebtoken.Claims;
@@ -7,24 +7,31 @@ import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 
-@Configuration
-public class OidcJwtDecoderConfig {
-  private static final Logger log = LoggerFactory.getLogger(OidcJwtDecoderConfig.class);
+/**
+ * Provides a JwtDecoder backed by the existing OidcTokenValidator so services can use the Spring
+ * Security OAuth2 Resource Server (JWT) flow without direct jjwt usage.
+ */
+@AutoConfiguration
+public class OidcJwtDecoderConfiguration {
+  private static final Logger log = LoggerFactory.getLogger(OidcJwtDecoderConfiguration.class);
 
   @Bean
+  @ConditionalOnMissingBean(JwtDecoder.class)
   public JwtDecoder jwtDecoder(OidcTokenValidator tokenValidator) {
     return token -> {
       try {
         Claims claims = tokenValidator.validateToken(token);
 
         Map<String, Object> headers = new HashMap<>();
-        headers.put("alg", "RS256");
+        // Algorithm is not exposed by jjwt Claims; we conservatively set header hints
+        headers.putIfAbsent("alg", "RS256");
 
         Map<String, Object> claimMap = new HashMap<>();
         for (Map.Entry<String, Object> e : claims.entrySet()) {
@@ -35,8 +42,16 @@ public class OidcJwtDecoderConfig {
         Instant expiresAt =
             claims.getExpiration() != null ? claims.getExpiration().toInstant() : null;
 
-        // Ensure subject is present for principal naming
         String subject = claims.getSubject();
+        if (subject != null) {
+          claimMap.putIfAbsent("sub", subject);
+        }
+        if (claims.getIssuer() != null) {
+          claimMap.putIfAbsent("iss", claims.getIssuer());
+        }
+        if (claims.getAudience() != null) {
+          claimMap.putIfAbsent("aud", claims.getAudience());
+        }
 
         return new Jwt(token, issuedAt, expiresAt, headers, claimMap) {
           @Override

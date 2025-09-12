@@ -304,101 +304,49 @@ auth:
     connection-timeout-seconds: ${AUTH_OIDC_CONNECTION_TIMEOUT:10}
 ```
 
-### Step 3: Configure Authentication
+### Step 3: Configure Resource Server (Recommended)
 
-Create auth configuration class:
-
-```java
-@Configuration
-@EnableConfigurationProperties(OidcProperties.class)
-public class AuthConfig {
-
-    @Bean
-    @Primary
-    public OidcTokenValidator oidcTokenValidatorWithSessions(
-            JwksService jwksService, 
-            OidcProperties oidcProperties, 
-            YourSessionRepository sessionRepository) {
-        
-        // Adapter to bridge your session repository with shared auth library
-        com.clanboards.auth.repository.SessionRepository<YourSession> authSessionRepo = 
-            new com.clanboards.auth.repository.SessionRepository<YourSession>() {
-                @Override
-                public Optional<YourSession> findById(Long id) {
-                    return sessionRepository.findById(id);
-                }
-            };
-        
-        return new OidcTokenValidator(jwksService, oidcProperties, authSessionRepo);
-    }
-}
-```
-
-### Step 4: Add REST Authentication Filter
-
-```java
-@Component
-public class OidcAuthenticationFilter implements Filter {
-    private static final Set<String> EXCLUDED_PATHS = Set.of(
-        "/api/v1/your-service/health",
-        "/actuator/health",
-        "/health"
-    );
-
-    private final OidcTokenValidator tokenValidator;
-
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
-            throws IOException, ServletException {
-        
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        String path = httpRequest.getRequestURI();
-        
-        if (EXCLUDED_PATHS.contains(path)) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        String authHeader = httpRequest.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            ((HttpServletResponse) response).setStatus(HttpStatus.UNAUTHORIZED.value());
-            return;
-        }
-
-        try {
-            String token = authHeader.substring(7);
-            Claims claims = tokenValidator.validateToken(token);
-            Long userId = tokenValidator.extractUserId(claims);
-            
-            // Add user context to request attributes
-            httpRequest.setAttribute("userId", userId);
-            httpRequest.setAttribute("claims", claims);
-            
-            chain.doFilter(request, response);
-        } catch (Exception e) {
-            ((HttpServletResponse) response).setStatus(HttpStatus.UNAUTHORIZED.value());
-        }
-    }
-}
-```
-
-### Step 5: Register Filter
+Use Spring Security OAuth2 Resource Server with a `JwtDecoder` provided by
+`java-auth-common`.
 
 ```java
 @Configuration
 public class SecurityConfig {
-    
-    @Bean
-    public FilterRegistrationBean<OidcAuthenticationFilter> authenticationFilter(
-            OidcAuthenticationFilter filter) {
-        FilterRegistrationBean<OidcAuthenticationFilter> registration = 
-            new FilterRegistrationBean<>(filter);
-        registration.addUrlPatterns("/api/v1/your-service/*");
-        registration.setOrder(1);
-        return registration;
-    }
+
+  @Bean
+  @Order(1)
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .authorizeHttpRequests(authz ->
+            authz.requestMatchers(
+                    "/api/v1/your-service/health",
+                    "/actuator/health",
+                    "/health")
+                .permitAll()
+                .anyRequest()
+                .authenticated())
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt())
+        .csrf(csrf -> csrf.disable())
+        .httpBasic(b -> b.disable())
+        .formLogin(f -> f.disable());
+    return http.build();
+  }
 }
 ```
+
+Notes:
+- No custom filter is required.
+- `java-auth-common` auto-configures `JwtDecoder` using DB-backed JWKS and
+  OIDC issuer/audience validations.
+- To integrate your service's session repository (optional), you can still
+  override the `OidcTokenValidator` bean to pass a repository adapter so that
+  `extractUserId` can resolve `sid` to your user id.
+
+### Step 4: (Optional) WebSocket Authentication
+
+If your service uses STOMP/WebSocket, add a `ChannelInterceptor` that validates
+the bearer token on CONNECT and sets a `Principal`/session attributes. REST
+requests are already covered by the resource server configuration.
 
 ### Step 6: WebSocket Authentication (if needed)
 

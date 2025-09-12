@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = com.clanboards.messages.controller.TestSecureController.class)
 @AutoConfigureMockMvc
-@Import({SecurityConfig.class, OidcJwtDecoderConfig.class})
+@Import({SecurityConfig.class})
 class GraphQLAuthIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
