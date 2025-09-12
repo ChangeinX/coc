@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.clanboards.auth.config.OidcProperties;
 import com.clanboards.auth.service.JwksService;
 import com.clanboards.auth.service.OidcTokenValidator;
-import com.clanboards.messages.config.OidcAuthenticationFilter;
 import com.clanboards.messages.config.SecurityConfig;
 import java.time.Instant;
 import java.util.Map;
@@ -22,7 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = DebugController.class)
 @AutoConfigureMockMvc
-@Import({SecurityConfig.class, OidcAuthenticationFilter.class})
+@Import({SecurityConfig.class})
 class DebugControllerJwksCacheTest {
 
   @Autowired private MockMvc mockMvc;
@@ -30,6 +29,8 @@ class DebugControllerJwksCacheTest {
   @MockBean private OidcProperties oidcProperties;
 
   @MockBean private OidcTokenValidator tokenValidator;
+  // Mock decoder to satisfy resource server autowiring in tests
+  @MockBean private org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
 
   @MockBean private JwksService jwksService;
 

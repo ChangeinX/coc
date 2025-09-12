@@ -27,7 +27,7 @@ class SecurityConfigTest {
 
   @Mock private HttpServletRequest request;
   @Mock private HttpServletResponse response;
-  @Mock private OidcAuthenticationFilter oidcAuthenticationFilter;
+  // No longer using custom OIDC filter; resource server handles auth
   @Mock private AccessDeniedException accessDeniedException;
   @Mock private AuthenticationException authenticationException;
 
@@ -38,7 +38,7 @@ class SecurityConfigTest {
 
   @BeforeEach
   void setUp() throws Exception {
-    securityConfig = new SecurityConfig(oidcAuthenticationFilter);
+    securityConfig = new SecurityConfig();
 
     // Setup logger capture
     logger = (Logger) LoggerFactory.getLogger(SecurityConfig.class);
@@ -59,8 +59,8 @@ class SecurityConfigTest {
     MDC.put("requestId", "test-403");
     when(request.getMethod()).thenReturn("POST");
     when(request.getRequestURI()).thenReturn("/api/v1/chat/graphql");
-    when(request.getAttribute("userId")).thenReturn("12345");
-    when(request.getAttribute("authenticated")).thenReturn(true);
+    java.security.Principal principal = () -> "12345";
+    when(request.getUserPrincipal()).thenReturn(principal);
     when(request.getHeader("Authorization")).thenReturn("Bearer token");
     when(request.getHeader("Cookie")).thenReturn("sid=cookie");
     when(request.getRemoteAddr()).thenReturn("192.168.1.1");
@@ -109,8 +109,7 @@ class SecurityConfigTest {
     MDC.put("requestId", "test-403-no-user");
     when(request.getMethod()).thenReturn("GET");
     when(request.getRequestURI()).thenReturn("/api/v1/chat/test");
-    when(request.getAttribute("userId")).thenReturn(null);
-    when(request.getAttribute("authenticated")).thenReturn(null);
+    when(request.getUserPrincipal()).thenReturn(null);
     when(request.getHeader("Authorization")).thenReturn(null);
     when(request.getHeader("Cookie")).thenReturn(null);
     when(request.getRemoteAddr()).thenReturn("127.0.0.1");
@@ -152,7 +151,8 @@ class SecurityConfigTest {
     MDC.put("requestId", "test-401");
     when(request.getMethod()).thenReturn("POST");
     when(request.getRequestURI()).thenReturn("/api/v1/chat/graphql");
-    when(request.getAttribute("userId")).thenReturn("67890");
+    java.security.Principal principal401 = () -> "67890";
+    when(request.getUserPrincipal()).thenReturn(principal401);
     when(request.getHeader("Authorization")).thenReturn("Bearer expired-token");
     when(request.getHeader("Cookie")).thenReturn(null);
     when(request.getRemoteAddr()).thenReturn("10.0.0.1");
@@ -200,7 +200,7 @@ class SecurityConfigTest {
 
     when(request.getMethod()).thenReturn("GET");
     when(request.getRequestURI()).thenReturn("/api/test");
-    when(request.getAttribute("userId")).thenReturn(null);
+    when(request.getUserPrincipal()).thenReturn(null);
     when(request.getHeader("Authorization")).thenReturn(null);
     when(request.getHeader("Cookie")).thenReturn(null);
     when(request.getRemoteAddr()).thenReturn("127.0.0.1");
@@ -221,7 +221,7 @@ class SecurityConfigTest {
   @Test
   void securityFilterChain_ShouldBeConfiguredCorrectly() throws Exception {
     // Given
-    SecurityConfig config = new SecurityConfig(oidcAuthenticationFilter);
+    SecurityConfig config = new SecurityConfig();
 
     // When
     AccessDeniedHandler handler = config.accessDeniedHandler();

@@ -15,18 +15,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
   private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
-
-  private final OidcAuthenticationFilter oidcAuthenticationFilter;
-
-  public SecurityConfig(OidcAuthenticationFilter oidcAuthenticationFilter) {
-    this.oidcAuthenticationFilter = oidcAuthenticationFilter;
-  }
 
   @Bean
   public AccessDeniedHandler accessDeniedHandler() {
@@ -34,8 +27,9 @@ public class SecurityConfig {
         HttpServletResponse response,
         AccessDeniedException accessDeniedException) -> {
       String requestId = MDC.get("requestId");
-      String userId = (String) request.getAttribute("userId");
-      Boolean authenticated = (Boolean) request.getAttribute("authenticated");
+      String userId =
+          request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : null;
+      boolean authenticated = request.getUserPrincipal() != null;
 
       logger.error(
           "[{}] ACCESS DENIED (403): {} {} - User: {}, Authenticated: {}, Exception: {}",
@@ -43,7 +37,7 @@ public class SecurityConfig {
           request.getMethod(),
           request.getRequestURI(),
           userId != null ? userId : "none",
-          Boolean.TRUE.equals(authenticated),
+          authenticated,
           accessDeniedException.getMessage());
 
       logger.error(
@@ -67,7 +61,8 @@ public class SecurityConfig {
         HttpServletResponse response,
         AuthenticationException authException) -> {
       String requestId = MDC.get("requestId");
-      String userId = (String) request.getAttribute("userId");
+      String userId =
+          request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : null;
 
       logger.error(
           "[{}] AUTHENTICATION FAILED (401): {} {} - User: {}, Exception: {}",
@@ -112,7 +107,7 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
-        .addFilterBefore(oidcAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt())
         .exceptionHandling(
             exceptions ->
                 exceptions

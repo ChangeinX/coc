@@ -5,33 +5,40 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.clanboards.auth.service.OidcTokenValidator;
-import io.jsonwebtoken.Claims;
+import java.time.Instant;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = com.clanboards.messages.controller.TestSecureController.class)
 @AutoConfigureMockMvc
-@Import({SecurityConfig.class, OidcAuthenticationFilter.class})
+@Import({SecurityConfig.class, OidcJwtDecoderConfig.class})
 class GraphQLAuthIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @MockBean private OidcTokenValidator tokenValidator;
+  @MockBean private JwtDecoder jwtDecoder;
 
   // Controller is provided as a separate test class under controller package
 
   @Test
   void secureEndpoint_AllowsWhenBearerTokenValid_andSetsSecurityContext() throws Exception {
-    Claims claims = Mockito.mock(Claims.class);
-    when(tokenValidator.validateToken("valid-token")).thenReturn(claims);
-    when(tokenValidator.extractUserId(claims)).thenReturn(67890L);
+    Instant now = Instant.now();
+    Jwt jwt =
+        new Jwt(
+            "valid-token",
+            now,
+            now.plusSeconds(3600),
+            Map.of("alg", "RS256"),
+            Map.of("sub", "67890"));
+    when(jwtDecoder.decode("valid-token")).thenReturn(jwt);
 
     mockMvc
         .perform(post("/api/v1/chat/secure-test").header("Authorization", "Bearer valid-token"))

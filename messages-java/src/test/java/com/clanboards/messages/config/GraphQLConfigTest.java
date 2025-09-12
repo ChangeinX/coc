@@ -19,6 +19,9 @@ import org.slf4j.MDC;
 import org.springframework.graphql.server.WebGraphQlInterceptor;
 import org.springframework.graphql.server.WebGraphQlRequest;
 import org.springframework.graphql.server.WebGraphQlResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import reactor.core.publisher.Mono;
@@ -39,6 +42,7 @@ class GraphQLConfigTest {
   @BeforeEach
   void setUp() {
     config = new GraphQLConfig();
+    SecurityContextHolder.clearContext();
 
     // Setup logger capture
     logger = (Logger) LoggerFactory.getLogger(GraphQLConfig.class);
@@ -65,8 +69,11 @@ class GraphQLConfigTest {
 
     when(graphqlRequest.getDocument()).thenReturn("query { listChats { id kind } }");
     when(requestAttributes.getRequest()).thenReturn(servletRequest);
-    when(servletRequest.getAttribute("userId")).thenReturn("12345");
-    when(servletRequest.getAttribute("authenticated")).thenReturn(true);
+    // Set authentication in SecurityContext
+    var auth =
+        new UsernamePasswordAuthenticationToken(
+            "12345", null, java.util.List.of(new SimpleGrantedAuthority("ROLE_USER")));
+    SecurityContextHolder.getContext().setAuthentication(auth);
     when(chain.next(any())).thenReturn(Mono.just(graphqlResponse));
 
     try (MockedStatic<RequestContextHolder> mockedHolder =
@@ -101,8 +108,7 @@ class GraphQLConfigTest {
     when(graphqlRequest.getDocument())
         .thenReturn("mutation { sendMessage(chatId: \"test\", content: \"hello\") { id } }");
     when(requestAttributes.getRequest()).thenReturn(servletRequest);
-    when(servletRequest.getAttribute("userId")).thenReturn(null);
-    when(servletRequest.getAttribute("authenticated")).thenReturn(false);
+    SecurityContextHolder.clearContext();
     when(servletRequest.getHeader("Authorization")).thenReturn("Bearer invalid");
     when(servletRequest.getHeader("Cookie")).thenReturn(null);
     when(chain.next(any())).thenReturn(Mono.just(graphqlResponse));
@@ -188,8 +194,10 @@ class GraphQLConfigTest {
 
     when(graphqlRequest.getDocument()).thenReturn("query { listChats }");
     when(requestAttributes.getRequest()).thenReturn(servletRequest);
-    when(servletRequest.getAttribute("userId")).thenReturn("456");
-    when(servletRequest.getAttribute("authenticated")).thenReturn(true);
+    var auth2 =
+        new UsernamePasswordAuthenticationToken(
+            "456", null, java.util.List.of(new SimpleGrantedAuthority("ROLE_USER")));
+    SecurityContextHolder.getContext().setAuthentication(auth2);
     when(chain.next(any())).thenReturn(Mono.just(graphqlResponse));
 
     try (MockedStatic<RequestContextHolder> mockedHolder =

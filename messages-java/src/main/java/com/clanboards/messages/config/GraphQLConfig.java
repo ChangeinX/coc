@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.graphql.server.WebGraphQlInterceptor;
 import org.springframework.graphql.server.WebGraphQlRequest;
 import org.springframework.graphql.server.WebGraphQlResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import reactor.core.publisher.Mono;
@@ -21,53 +23,48 @@ public class GraphQLConfig {
     return new WebGraphQlInterceptor() {
       @Override
       public Mono<WebGraphQlResponse> intercept(WebGraphQlRequest request, Chain chain) {
-        // Get the HTTP servlet request
         ServletRequestAttributes attributes =
             (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        String requestId = org.slf4j.MDC.get("requestId");
+
+        final String userIdFinal;
+        final boolean authenticatedFinal;
         if (attributes != null) {
           HttpServletRequest servletRequest = attributes.getRequest();
-
-          // Extract authentication data from request attributes (set by OidcAuthenticationFilter)
-          String userId = (String) servletRequest.getAttribute("userId");
-          Boolean authenticated = (Boolean) servletRequest.getAttribute("authenticated");
-          String requestId = org.slf4j.MDC.get("requestId");
+          Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+          userIdFinal = (auth != null && auth.isAuthenticated()) ? auth.getName() : null;
+          authenticatedFinal = auth != null && auth.isAuthenticated();
 
           log.info(
               "[{}] GraphQL interceptor: userId={}, authenticated={}, operation={}",
               requestId != null ? requestId : "unknown",
-              userId,
-              authenticated,
+              userIdFinal,
+              authenticatedFinal,
               getOperationName(request.getDocument()));
 
-          // Log authentication details for troubleshooting
-          if (userId == null || !Boolean.TRUE.equals(authenticated)) {
+          if (userIdFinal != null) {
+            String ip = servletRequest.getHeader("X-Forwarded-For");
+            String ua = servletRequest.getHeader("User-Agent");
+            request.configureExecutionInput(
+                (executionInput, builder) ->
+                    builder
+                        .graphQLContext(
+                            contextBuilder ->
+                                contextBuilder
+                                    .put("userId", userIdFinal)
+                                    .put("authenticated", authenticatedFinal)
+                                    .put("ip", ip)
+                                    .put("ua", ua))
+                        .build());
+            log.debug("Added userId {} to GraphQL context", userIdFinal);
+          } else {
             log.warn(
                 "[{}] GraphQL auth issue - userId: {}, authenticated: {}, hasAuthHeader: {}, hasCookie: {}",
                 requestId != null ? requestId : "unknown",
-                userId,
-                authenticated,
-                servletRequest.getHeader("Authorization") != null,
-                servletRequest.getHeader("Cookie") != null);
-          }
-
-          // Add authentication context to GraphQL execution context
-          if (userId != null) {
-            request.configureExecutionInput(
-                (executionInput, builder) -> {
-                  return builder
-                      .graphQLContext(
-                          contextBuilder -> {
-                            contextBuilder
-                                .put("userId", userId)
-                                .put("authenticated", Boolean.TRUE.equals(authenticated))
-                                .put("ip", servletRequest.getHeader("X-Forwarded-For"))
-                                .put("ua", servletRequest.getHeader("User-Agent"));
-                          })
-                      .build();
-                });
-            log.debug("Added userId {} to GraphQL context", userId);
-          } else {
-            log.debug("No userId found in request attributes for GraphQL context");
+                null,
+                false,
+                attributes.getRequest().getHeader("Authorization") != null,
+                attributes.getRequest().getHeader("Cookie") != null);
           }
         } else {
           log.warn("No ServletRequestAttributes found for GraphQL request");
@@ -82,8 +79,6 @@ public class GraphQLConfig {
     if (document == null || document.isBlank()) {
       return "unknown";
     }
-
-    // Simple regex to extract operation name from GraphQL document
     try {
       if (document.contains("query")) {
         if (document.contains("listChats")) return "listChats";
