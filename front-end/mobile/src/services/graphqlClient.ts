@@ -61,27 +61,76 @@ export class GraphQLError extends Error {
   }
 }
 
+let graphqlRequestCounter = 0;
+
+function generateGraphQLCorrelationId(): string {
+  return `gql-${Date.now()}-${++graphqlRequestCounter}`;
+}
+
 export async function graphqlRequest<T = any>(
   query: string,
   variables: Record<string, any> = {}
 ): Promise<T> {
+  const correlationId = generateGraphQLCorrelationId();
   const url = `${MESSAGES_URL}/api/v1/chat/graphql`;
   
-  const response = await apiFetch<GraphQLResponse<T>>(url, {
-    method: 'POST',
-    auth: true,
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
+  // Extract operation name from query for better logging
+  const operationMatch = query.match(/(?:query|mutation|subscription)\s+(\w+)/);
+  const operationName = operationMatch ? operationMatch[1] : 'unknown';
+  
+  console.log(`[${correlationId}] 📊 GRAPHQL REQUEST (${operationName}):`, {
+    url,
+    operationName,
+    variables,
+    query: query.substring(0, 200) + (query.length > 200 ? '...' : ''),
+    timestamp: new Date().toISOString()
   });
 
-  if (response.errors && response.errors.length > 0) {
-    const errorMessage = response.errors.map(e => e.message).join('; ');
-    throw new GraphQLError(errorMessage, response.errors);
-  }
+  const startTime = Date.now();
+  
+  try {
+    const response = await apiFetch<GraphQLResponse<T>>(url, {
+      method: 'POST',
+      auth: true,
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
 
-  return response.data as T;
+    const duration = Date.now() - startTime;
+    
+    console.log(`[${correlationId}] 📊 GRAPHQL RESPONSE (${operationName}):`, {
+      hasData: Boolean(response.data),
+      hasErrors: Boolean(response.errors && response.errors.length > 0),
+      errorCount: response.errors?.length || 0,
+      durationMs: duration
+    });
+
+    if (response.errors && response.errors.length > 0) {
+      console.error(`[${correlationId}] ❌ GRAPHQL ERRORS (${operationName}):`, response.errors);
+      const errorMessage = response.errors.map(e => e.message).join('; ');
+      throw new GraphQLError(errorMessage, response.errors);
+    }
+
+    if (response.data) {
+      console.log(`[${correlationId}] ✅ GRAPHQL SUCCESS (${operationName}):`, {
+        dataKeys: Object.keys(response.data),
+        dataSize: JSON.stringify(response.data).length
+      });
+    }
+
+    return response.data as T;
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error(`[${correlationId}] ❌ GRAPHQL ERROR (${operationName}) after ${duration}ms:`, {
+      error,
+      isGraphQLError: error instanceof GraphQLError,
+      isApiError: (error as any)?.name === 'ApiError',
+      statusCode: (error as any)?.status
+    });
+    throw error;
+  }
 }
 
 // Chat-specific GraphQL operations

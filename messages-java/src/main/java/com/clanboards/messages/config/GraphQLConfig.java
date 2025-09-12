@@ -30,8 +30,25 @@ public class GraphQLConfig {
           // Extract authentication data from request attributes (set by OidcAuthenticationFilter)
           String userId = (String) servletRequest.getAttribute("userId");
           Boolean authenticated = (Boolean) servletRequest.getAttribute("authenticated");
+          String requestId = org.slf4j.MDC.get("requestId");
 
-          log.debug("GraphQL interceptor: userId={}, authenticated={}", userId, authenticated);
+          log.info(
+              "[{}] GraphQL interceptor: userId={}, authenticated={}, operation={}",
+              requestId != null ? requestId : "unknown",
+              userId,
+              authenticated,
+              getOperationName(request.getDocument()));
+
+          // Log authentication details for troubleshooting
+          if (userId == null || !Boolean.TRUE.equals(authenticated)) {
+            log.warn(
+                "[{}] GraphQL auth issue - userId: {}, authenticated: {}, hasAuthHeader: {}, hasCookie: {}",
+                requestId != null ? requestId : "unknown",
+                userId,
+                authenticated,
+                servletRequest.getHeader("Authorization") != null,
+                servletRequest.getHeader("Cookie") != null);
+          }
 
           // Add authentication context to GraphQL execution context
           if (userId != null) {
@@ -59,5 +76,26 @@ public class GraphQLConfig {
         return chain.next(request);
       }
     };
+  }
+
+  String getOperationName(String document) {
+    if (document == null || document.isBlank()) {
+      return "unknown";
+    }
+
+    // Simple regex to extract operation name from GraphQL document
+    try {
+      if (document.contains("query")) {
+        if (document.contains("listChats")) return "listChats";
+        if (document.contains("getMessages")) return "getMessages";
+      }
+      if (document.contains("mutation")) {
+        if (document.contains("sendMessage")) return "sendMessage";
+        if (document.contains("createDirectChat")) return "createDirectChat";
+      }
+      return "unknown";
+    } catch (Exception e) {
+      return "unknown";
+    }
   }
 }
