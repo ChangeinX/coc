@@ -117,6 +117,7 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
             sendUnauthorized(response, "Authentication failed", requestId);
             return;
           }
+          
           logger.debug(
               "[{}] REST request authenticated for userId: {}",
               requestId != null ? requestId : "unknown",

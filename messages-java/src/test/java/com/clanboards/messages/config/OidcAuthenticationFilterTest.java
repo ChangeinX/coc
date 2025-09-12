@@ -26,6 +26,7 @@ import org.slf4j.MDC;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+
 @ExtendWith(MockitoExtension.class)
 class OidcAuthenticationFilterTest {
 
@@ -43,6 +44,7 @@ class OidcAuthenticationFilterTest {
   void setUp() throws Exception {
     // Ensure clean SecurityContext for each test
     SecurityContextHolder.clearContext();
+
     filter = new OidcAuthenticationFilter(tokenValidator);
 
     // Setup logger capture with DEBUG level enabled
