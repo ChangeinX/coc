@@ -31,7 +31,7 @@ function ChatMessage({
   onRetry,
   onLongPress,
 }: ChatMessageProps) {
-  const { colors, typography } = useTheme();
+  const { colors } = useTheme();
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);

@@ -5,17 +5,15 @@ import {
   FlatList,
   Pressable,
   StyleSheet,
-  Alert,
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@theme/index';
 import { chatOperations } from '@services/graphqlClient';
 import { apiFetch, ApiError } from '@services/apiClient';
-import { MESSAGES_URL, API_URL } from '@env';
+import { MESSAGES_URL } from '@env';
 import { LoadingSpinner } from '@components/index';
 import useChat from '@hooks/useChat';
 import useMultiChat, { globalShardFor } from '@hooks/useMultiChat';
@@ -59,7 +57,7 @@ export default function ChatPanel({
   restriction = null,
 }: ChatPanelProps) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
+  const _insets = useSafeAreaInsets();
   
   const [tab, setTab] = useState<TabType>(() => {
     if (initialDirectId) return 'Friends';
@@ -71,7 +69,7 @@ export default function ChatPanel({
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [infoMap, setInfoMap] = useState<Record<string, PlayerInfo>>({});
-  const [infoLoading, setInfoLoading] = useState(true);
+  const [_infoLoading, setInfoLoading] = useState(true);
   const [clanMembers, setClanMembers] = useState<Member[]>([]);
 
   const flatListRef = useRef<FlatList>(null);
@@ -163,8 +161,8 @@ export default function ChatPanel({
           });
           setInfoMap(updated);
         }
-      } catch (error) {
-        console.error('Failed to load player info:', error);
+      } catch (loadError) {
+        console.error('Failed to load player info:', loadError);
       } finally {
         if (!ignore) {
           setInfoLoading(false);
@@ -219,8 +217,8 @@ export default function ChatPanel({
           }));
           setClanMembers(members);
         }
-      } catch (error) {
-        console.error('Failed to load clan members:', error);
+      } catch (loadError) {
+        console.error('Failed to load clan members:', loadError);
         if (!ignore) {
           setClanMembers([]);
         }
@@ -271,8 +269,8 @@ export default function ChatPanel({
           await sendMessage(trimmedText, userId);
         }
       }
-    } catch (error) {
-      console.error('Failed to send message:', error);
+    } catch (sendError) {
+      console.error('Failed to send message:', sendError);
       setText(trimmedText); // Restore text on error
     } finally {
       setSending(false);
@@ -283,15 +281,15 @@ export default function ChatPanel({
     retry();
   }, [retry]);
 
-  const handleSelectDirectChat = useCallback((chatId: string) => {
-    setDirectChatId(chatId);
+  const handleSelectDirectChat = useCallback((selectedChatId: string) => {
+    setDirectChatId(selectedChatId);
   }, []);
 
   const handleBackToFriends = useCallback(() => {
     setDirectChatId(null);
   }, []);
 
-  const renderMessage = ({ item, index }: { item: any; index: number }) => {
+  const renderMessage = ({ item }: { item: any; index: number }) => {
     const sender = item.senderId;
     const info = infoMap[sender];
     const isSelf = sender === userId;

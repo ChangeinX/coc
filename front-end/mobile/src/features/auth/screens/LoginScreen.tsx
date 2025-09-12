@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 export default function LoginScreen() {
   const setTokens = useAuthStore((s) => s.setTokens);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
 
   const onAppleSignIn = async () => {
     try {

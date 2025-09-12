@@ -59,7 +59,7 @@ describe('SearchBar', () => {
 
   it('calls onSubmit when submit button is pressed', () => {
     const onSubmit = jest.fn();
-    const { getByText, getByPlaceholderText } = renderWithTheme(
+    const { getByText } = renderWithTheme(
       <SearchBar {...defaultProps} onSubmit={onSubmit} value="test" />
     );
     

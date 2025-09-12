@@ -6,18 +6,13 @@ import {
   Alert,
   FlatList,
   Text,
-  TouchableOpacity,
-  Dimensions
+  TouchableOpacity
 } from 'react-native';
 import { useThemedStyles, useTheme } from '@theme/index';
 import { 
   StatCard, 
   MemberCard, 
   LoadingSpinner, 
-  RiskIndicator,
-  TownHallIcon,
-  RoleIcon,
-  DonationIndicator,
   SwipeableSortBar,
   FloatingActionButton,
   MemberCardSkeleton,
@@ -52,7 +47,7 @@ export default function DashboardScreen() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('health');
   const [sortField, setSortField] = useState<SortField>('loyalty');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [_selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   // Get player info to find their clan
   const { data: playerInfo } = usePlayerInfo(user?.player_tag);
@@ -69,8 +64,8 @@ export default function DashboardScreen() {
     onForeground: () => {
       if (clanTag && dashboardData) {
         // Only auto-refresh if data is older than 5 minutes
-        const lastUpdate = Date.now(); // You'd normally store this in the query cache
-        const fiveMinutes = 5 * 60 * 1000;
+        const _lastUpdate = Date.now(); // You'd normally store this in the query cache
+        const _fiveMinutes = 5 * 60 * 1000;
         // For now, just refresh every time app comes to foreground
         handleRefresh();
       }
@@ -130,7 +125,7 @@ export default function DashboardScreen() {
         if (isAvailable()) await light(); // Light haptic on refresh start
         await refreshMutation.mutateAsync(clanTag);
         if (isAvailable()) await success(); // Success haptic when complete
-      } catch (error) {
+      } catch (_error) {
         if (isAvailable()) await errorHaptic(); // Error haptic on failure
         Alert.alert('Error', 'Failed to refresh clan data');
       }

@@ -12,12 +12,12 @@ export function TownHallIcon({ level, size = 'md', showLevel = true }: TownHallI
   const theme = useTheme();
 
   // Town Hall icon mapping - using castle/building emojis with color coding
-  const getTownHallIcon = (level: number) => {
-    if (level >= 16) return '🏰'; // Legendary
-    if (level >= 14) return '🏯'; // High tier
-    if (level >= 12) return '🏛️'; // Mid-high tier
-    if (level >= 9) return '🏤'; // Mid tier
-    if (level >= 6) return '🏠'; // Low-mid tier
+  const getTownHallIcon = (thLevel: number) => {
+    if (thLevel >= 16) return '🏰'; // Legendary
+    if (thLevel >= 14) return '🏯'; // High tier
+    if (thLevel >= 12) return '🏛️'; // Mid-high tier
+    if (thLevel >= 9) return '🏤'; // Mid tier
+    if (thLevel >= 6) return '🏠'; // Low-mid tier
     return '🏘️'; // Low tier
   };
 
@@ -44,12 +44,12 @@ export function TownHallIcon({ level, size = 'md', showLevel = true }: TownHallI
     }
   };
 
-  const getBackgroundColor = (level: number) => {
-    if (level >= 16) return '#8B5CF6'; // Legendary purple
-    if (level >= 14) return theme.colors.warning; // Gold/yellow
-    if (level >= 12) return theme.colors.primary; // Blue
-    if (level >= 9) return theme.colors.success; // Green
-    if (level >= 6) return '#F97316'; // Orange
+  const getBackgroundColor = (thLevel: number) => {
+    if (thLevel >= 16) return '#8B5CF6'; // Legendary purple
+    if (thLevel >= 14) return theme.colors.warning; // Gold/yellow
+    if (thLevel >= 12) return theme.colors.primary; // Blue
+    if (thLevel >= 9) return theme.colors.success; // Green
+    if (thLevel >= 6) return '#F97316'; // Orange
     return '#6B7280'; // Gray
   };
 
