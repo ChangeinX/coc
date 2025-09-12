@@ -31,7 +31,10 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
           "/api/v1/chat/debug/config",
           "/api/v1/chat/debug/validate",
           "/api/v1/chat/debug/request-info",
-          "/api/v1/chat/debug/jwks-cache");
+          "/api/v1/chat/debug/jwks-cache",
+          "/api/v1/chat/socket",
+          "/api/v1/chat/socket/info",
+          "/api/v1/chat/socket/sockjs-node");
 
   public OidcAuthenticationFilter(OidcTokenValidator tokenValidator) {
     this.tokenValidator = tokenValidator;
@@ -41,7 +44,9 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
   protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
     String path = request.getRequestURI();
     // Skip authentication for excluded paths
-    return EXCLUDED_PATHS.contains(path) || path.startsWith("/actuator/");
+    return EXCLUDED_PATHS.contains(path)
+        || path.startsWith("/actuator/")
+        || path.startsWith("/api/v1/chat/socket/");
   }
 
   @Override
