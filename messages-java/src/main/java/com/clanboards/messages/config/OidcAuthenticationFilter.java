@@ -56,60 +56,93 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
 
     String requestUri = request.getRequestURI();
     String method = request.getMethod();
-    logger.debug("Processing authentication for {} {}", method, requestUri);
+    String requestId = org.slf4j.MDC.get("requestId");
+    logger.debug(
+        "[{}] Processing authentication for {} {}",
+        requestId != null ? requestId : "unknown",
+        method,
+        requestUri);
 
     // Check if userId is already set (e.g., by another auth mechanism)
     if (request.getAttribute("userId") != null) {
-      logger.debug("UserId already set by another mechanism, skipping OIDC validation");
+      logger.debug(
+          "[{}] UserId already set by another mechanism, skipping OIDC validation",
+          requestId != null ? requestId : "unknown");
       filterChain.doFilter(request, response);
       return;
     }
 
     String token = extractToken(request);
     if (token != null) {
-      logger.debug("Found authentication token, validating...");
+      logger.debug(
+          "[{}] Found authentication token, validating...",
+          requestId != null ? requestId : "unknown");
       try {
         Claims claims = tokenValidator.validateToken(token);
         logger.debug(
-            "Token validation successful. Claims: issuer={}, audience={}, subject={}, expiration={}",
+            "[{}] Token validation successful. Claims: issuer={}, audience={}, subject={}, expiration={}",
+            requestId != null ? requestId : "unknown",
             claims.getIssuer(),
             claims.getAudience(),
             claims.getSubject(),
             claims.getExpiration());
 
         Long userId = tokenValidator.extractUserId(claims);
-        logger.debug("Extracted userId from token: {}", userId);
+        logger.debug(
+            "[{}] Extracted userId from token: {}",
+            requestId != null ? requestId : "unknown",
+            userId);
 
         if (userId != null) {
           request.setAttribute("userId", String.valueOf(userId));
           request.setAttribute("authenticated", true);
-          logger.debug("REST request authenticated for userId: {}", userId);
+          logger.debug(
+              "[{}] REST request authenticated for userId: {}",
+              requestId != null ? requestId : "unknown",
+              userId);
           // Small info-level breadcrumb to aid production debugging without leaking sensitive data
-          logger.info("Auth OK {} {} userId={}", method, requestUri, userId);
+          logger.info(
+              "[{}] Auth OK {} {} userId={}",
+              requestId != null ? requestId : "unknown",
+              method,
+              requestUri,
+              userId);
         } else {
-          logger.warn("Valid token but could not extract userId. Claims: {}", claims);
-          sendUnauthorized(response, "Invalid user in token");
+          logger.warn(
+              "[{}] Valid token but could not extract userId. Claims: {}",
+              requestId != null ? requestId : "unknown",
+              claims);
+          sendUnauthorized(response, "Invalid user in token", requestId);
           return;
         }
       } catch (OidcTokenValidator.TokenValidationException e) {
-        logger.warn("Token validation failed for {} {}: {}", method, requestUri, e.getMessage());
-        sendUnauthorized(response, "Invalid or expired token");
+        logger.warn(
+            "[{}] Token validation failed for {} {}: {}",
+            requestId != null ? requestId : "unknown",
+            method,
+            requestUri,
+            e.getMessage());
+        sendUnauthorized(response, "Invalid or expired token", requestId);
         return;
       } catch (Exception e) {
         logger.error(
-            "Unexpected token validation error for {} {}: {}",
+            "[{}] Unexpected token validation error for {} {}: {}",
+            requestId != null ? requestId : "unknown",
             method,
             requestUri,
             e.getMessage(),
             e);
-        sendUnauthorized(response, "Authentication failed");
+        sendUnauthorized(response, "Authentication failed", requestId);
         return;
       }
     } else {
       // No token provided for protected endpoint
       logger.warn(
-          "No authentication token provided for protected endpoint: {} {}", method, requestUri);
-      sendUnauthorized(response, "Authentication required");
+          "[{}] No authentication token provided for protected endpoint: {} {}",
+          requestId != null ? requestId : "unknown",
+          method,
+          requestUri);
+      sendUnauthorized(response, "Authentication required", requestId);
       return;
     }
 
@@ -117,35 +150,57 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
   }
 
   private String extractToken(HttpServletRequest request) {
+    String requestId = org.slf4j.MDC.get("requestId");
+
     // Try Authorization header first
     String authHeader = request.getHeader("Authorization");
-    logger.debug("Authorization header present: {}", authHeader != null);
+    logger.debug(
+        "[{}] Authorization header present: {}",
+        requestId != null ? requestId : "unknown",
+        authHeader != null);
     if (authHeader != null && authHeader.startsWith("Bearer ")) {
       String token = authHeader.substring(7);
-      logger.debug("Extracted Bearer token from Authorization header (length: {})", token.length());
+      logger.debug(
+          "[{}] Extracted Bearer token from Authorization header (length: {})",
+          requestId != null ? requestId : "unknown",
+          token.length());
       return token;
     }
 
     // Fallback to cookie-based session
     String cookie = request.getHeader("Cookie");
-    logger.debug("Cookie header present: {}", cookie != null);
+    logger.debug(
+        "[{}] Cookie header present: {}",
+        requestId != null ? requestId : "unknown",
+        cookie != null);
     if (cookie != null) {
       for (String part : cookie.split(";")) {
         String trimmed = part.trim();
         if (trimmed.startsWith("sid=")) {
           String token = trimmed.substring(4);
-          logger.debug("Extracted session token from cookie (length: {})", token.length());
+          logger.debug(
+              "[{}] Extracted session token from cookie (length: {})",
+              requestId != null ? requestId : "unknown",
+              token.length());
           return token;
         }
       }
-      logger.debug("No 'sid' cookie found in cookie header");
+      logger.debug(
+          "[{}] No 'sid' cookie found in cookie header", requestId != null ? requestId : "unknown");
     }
 
-    logger.debug("No authentication token found in request headers");
+    logger.debug(
+        "[{}] No authentication token found in request headers",
+        requestId != null ? requestId : "unknown");
     return null;
   }
 
-  private void sendUnauthorized(HttpServletResponse response, String message) throws IOException {
+  private void sendUnauthorized(HttpServletResponse response, String message, String requestId)
+      throws IOException {
+    logger.warn(
+        "[{}] Sending 401 Unauthorized response: {}",
+        requestId != null ? requestId : "unknown",
+        message);
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType("application/json");
     response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"" + message + "\"}");
