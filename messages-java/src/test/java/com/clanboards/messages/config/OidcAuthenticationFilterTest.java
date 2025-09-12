@@ -23,6 +23,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
 class OidcAuthenticationFilterTest {
@@ -39,6 +41,8 @@ class OidcAuthenticationFilterTest {
 
   @BeforeEach
   void setUp() throws Exception {
+    // Ensure clean SecurityContext for each test
+    SecurityContextHolder.clearContext();
     filter = new OidcAuthenticationFilter(tokenValidator);
 
     // Setup logger capture with DEBUG level enabled
@@ -57,6 +61,32 @@ class OidcAuthenticationFilterTest {
     // Default mock behavior
     when(request.getRequestURI()).thenReturn("/api/v1/chat/graphql");
     when(request.getMethod()).thenReturn("POST");
+  }
+
+  @Test
+  void shouldPopulateSecurityContextOnValidToken() throws Exception {
+    // Given
+    when(request.getAttribute("userId")).thenReturn(null);
+    when(request.getHeader("Authorization")).thenReturn("Bearer valid-token");
+
+    Claims claims = mock(Claims.class);
+    when(claims.getIssuer()).thenReturn("test-issuer");
+    when(claims.getAudience()).thenReturn("test-audience");
+    when(claims.getSubject()).thenReturn("user-ctx-123");
+    when(claims.getExpiration()).thenReturn(new Date(System.currentTimeMillis() + 3600000));
+
+    when(tokenValidator.validateToken("valid-token")).thenReturn(claims);
+    when(tokenValidator.extractUserId(claims)).thenReturn(13579L);
+
+    // When
+    filter.doFilterInternal(request, response, filterChain);
+
+    // Then
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    assertNotNull(auth, "Authentication should be set in SecurityContext");
+    assertTrue(auth.isAuthenticated(), "Authentication should be marked authenticated");
+    assertEquals("13579", auth.getName(), "Principal name should be the userId string");
+    verify(filterChain).doFilter(request, response);
   }
 
   @Test

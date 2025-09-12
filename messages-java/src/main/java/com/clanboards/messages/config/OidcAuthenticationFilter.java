@@ -7,10 +7,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -96,6 +101,22 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
         if (userId != null) {
           request.setAttribute("userId", String.valueOf(userId));
           request.setAttribute("authenticated", true);
+          // Populate Spring Security context so downstream security checks pass
+          try {
+            UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                    String.valueOf(userId), null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+          } catch (Exception e) {
+            logger.error(
+                "[{}] Failed to set SecurityContext authentication: {}",
+                requestId != null ? requestId : "unknown",
+                e.getMessage(),
+                e);
+            sendUnauthorized(response, "Authentication failed", requestId);
+            return;
+          }
           logger.debug(
               "[{}] REST request authenticated for userId: {}",
               requestId != null ? requestId : "unknown",
