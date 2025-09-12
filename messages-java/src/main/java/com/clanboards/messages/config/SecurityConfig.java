@@ -32,7 +32,9 @@ public class SecurityConfig {
                         "/api/v1/chat/debug/config",
                         "/api/v1/chat/debug/validate",
                         "/api/v1/chat/debug/request-info",
-                        "/api/v1/chat/debug/jwks-cache")
+                        "/api/v1/chat/debug/jwks-cache",
+                        "/api/v1/chat/socket",
+                        "/api/v1/chat/socket/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
