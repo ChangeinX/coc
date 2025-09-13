@@ -60,6 +60,32 @@ export class ModerationError extends Error {
   get durationMinutes(): number | undefined {
     return this.moderationResponse.durationMinutes;
   }
+
+  /** Get user-friendly duration message */
+  get durationMessage(): string {
+    if (!this.durationMinutes) return '';
+    if (this.durationMinutes < 60) {
+      return `for ${this.durationMinutes} minute${this.durationMinutes > 1 ? 's' : ''}`;
+    }
+    const hours = Math.floor(this.durationMinutes / 60);
+    return `for ${hours} hour${hours > 1 ? 's' : ''}`;
+  }
+
+  /** Get user-friendly action message */
+  get userMessage(): string {
+    switch (this.action) {
+      case 'WARNING':
+        return this.reason;
+      case 'MUTED':
+        return `You are muted ${this.durationMessage}. ${this.reason}`;
+      case 'BANNED':
+        return `You are banned from chat. ${this.reason}`;
+      case 'READONLY':
+        return `You are in read-only mode. ${this.reason}`;
+      default:
+        return this.reason;
+    }
+  }
 }
 
 export class GraphQLError extends Error {

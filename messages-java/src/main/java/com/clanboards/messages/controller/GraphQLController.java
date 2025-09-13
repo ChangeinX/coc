@@ -19,6 +19,7 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.ContextValue;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -111,5 +112,55 @@ public class GraphQLController {
       default ->
           ModerationResponse.warning("Your message could not be sent due to moderation policies");
     };
+  }
+
+  @SchemaMapping(typeName = "SendMessageResult")
+  public String __resolveType(Object object) {
+    if (object instanceof SendMessageResult.Success) {
+      return "Message";
+    } else if (object instanceof SendMessageResult.Moderated) {
+      return "ModerationResponse";
+    }
+    throw new RuntimeException("Unknown SendMessageResult type: " + object.getClass());
+  }
+
+  @SchemaMapping(typeName = "Message", field = "id")
+  public String messageId(SendMessageResult.Success success) {
+    return success.message().id();
+  }
+
+  @SchemaMapping(typeName = "Message", field = "chatId")
+  public String messageChatId(SendMessageResult.Success success) {
+    return success.message().chatId();
+  }
+
+  @SchemaMapping(typeName = "Message", field = "ts")
+  public String messageTs(SendMessageResult.Success success) {
+    return success.message().ts().toString();
+  }
+
+  @SchemaMapping(typeName = "Message", field = "senderId")
+  public String messageSenderId(SendMessageResult.Success success) {
+    return success.message().senderId();
+  }
+
+  @SchemaMapping(typeName = "Message", field = "content")
+  public String messageContent(SendMessageResult.Success success) {
+    return success.message().content();
+  }
+
+  @SchemaMapping(typeName = "ModerationResponse", field = "action")
+  public ModerationResponse.ModerationAction moderationAction(SendMessageResult.Moderated moderated) {
+    return moderated.moderation().action();
+  }
+
+  @SchemaMapping(typeName = "ModerationResponse", field = "reason")
+  public String moderationReason(SendMessageResult.Moderated moderated) {
+    return moderated.moderation().reason();
+  }
+
+  @SchemaMapping(typeName = "ModerationResponse", field = "durationMinutes")
+  public Integer moderationDuration(SendMessageResult.Moderated moderated) {
+    return moderated.moderation().durationMinutes();
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { chatOperations, GraphQLError } from '@services/graphqlClient';
+import { chatOperations, GraphQLError, ModerationError } from '@services/graphqlClient';
 import { websocketService, ChatMessage } from '@services/websocketClient';
 import { messageStorage } from '@services/storage/messageStorage';
 
@@ -64,9 +64,14 @@ export default function useChat(chatId: string | null): UseChatReturn {
       } catch (sendError) {
         console.error('Failed to send outbox message:', sendError);
 
-        if (sendError instanceof GraphQLError) {
+        if (sendError instanceof ModerationError) {
+          // Remove message that was blocked by moderation
+          messageStorage.removeOutboxMessage(outboxMessage.id);
+          setMessages(prev => prev.filter(m => m.ts !== outboxMessage.ts));
+          setError(sendError.userMessage);
+        } else if (sendError instanceof GraphQLError) {
           if (sendError.isToxicityWarning || sendError.isBanned || sendError.isMuted) {
-            // Remove message that can't be sent
+            // Fallback: Remove message that can't be sent (legacy error handling)
             messageStorage.removeOutboxMessage(outboxMessage.id);
             setMessages(prev => prev.filter(m => m.ts !== outboxMessage.ts));
           } else {
@@ -75,9 +80,9 @@ export default function useChat(chatId: string | null): UseChatReturn {
               retryCount: outboxMessage.retryCount + 1,
               lastAttempt: new Date().toISOString(),
             });
-            
+
             // Mark as failed in UI
-            setMessages(prev => prev.map(m => 
+            setMessages(prev => prev.map(m =>
               m.ts === outboxMessage.ts ? { ...m, status: 'failed' } : m
             ));
           }
@@ -239,7 +244,11 @@ export default function useChat(chatId: string | null): UseChatReturn {
     } catch (messageError) {
       console.error('Failed to send message:', messageError);
 
-      if (messageError instanceof GraphQLError) {
+      if (messageError instanceof ModerationError) {
+        // Handle structured moderation response
+        setError(messageError.userMessage);
+        setMessages(prev => prev.filter(m => m.ts !== tempMessage.ts));
+      } else if (messageError instanceof GraphQLError) {
         if (messageError.isToxicityWarning) {
           setError('Keep it civil');
           setMessages(prev => prev.filter(m => m.ts !== tempMessage.ts));
@@ -259,7 +268,7 @@ export default function useChat(chatId: string | null): UseChatReturn {
       } else {
         // Store in outbox for retry
         messageStorage.addOutboxMessage(tempMessage);
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           m.ts === tempMessage.ts ? { ...m, status: 'failed' } : m
         ));
       }
