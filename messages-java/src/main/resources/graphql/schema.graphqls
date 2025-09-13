@@ -1,5 +1,12 @@
 enum ChatKind { CLAN GLOBAL DIRECT }
 
+enum ModerationAction {
+  WARNING
+  MUTED
+  BANNED
+  READONLY
+}
+
 type Chat {
   id: ID!
   kind: ChatKind!
@@ -17,6 +24,14 @@ type Message {
   content: String!
 }
 
+type ModerationResponse {
+  action: ModerationAction!
+  reason: String!
+  durationMinutes: Int
+}
+
+union SendMessageResult = Message | ModerationResponse
+
 type Friend {
   userId: ID!
   since: String!
@@ -30,7 +45,7 @@ type Query {
 
 type Mutation {
   createDirectChat(recipientId: ID!): Chat!
-  sendMessage(chatId: ID!, content: String!): Message!
+  sendMessage(chatId: ID!, content: String!): SendMessageResult!
   sendFriendRequest(to: ID!): ID!                # returns requestId
   respondFriendRequest(requestId: ID!, accept: Boolean!): Boolean!
 }

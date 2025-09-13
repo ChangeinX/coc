@@ -53,3 +53,7 @@ type Mutation {
 type Subscription {
   onMessage(chatId: ID!): Message
 }
+
+type User {
+  id: ID!
+}
