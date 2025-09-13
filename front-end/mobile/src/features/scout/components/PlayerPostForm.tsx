@@ -50,7 +50,7 @@ export default function PlayerPostForm({ onSubmit, onCancel, isLoading }: Player
     setDescription(text);
     // Clear error when user starts typing
     if (errors.description) {
-      const { description, ...otherErrors } = errors;
+      const { description: _description, ...otherErrors } = errors;
       setErrors(otherErrors);
     }
   };

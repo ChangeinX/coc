@@ -62,8 +62,8 @@ export function usePlayerRecruitFeed(options: UsePlayerRecruitFeedOptions = {}):
       }
     },
     refetch: () => refetch(),
-    createPost: async (data: CreatePlayerRecruitRequest) => {
-      await createMutation.mutateAsync(data);
+    createPost: async (postData: CreatePlayerRecruitRequest) => {
+      await createMutation.mutateAsync(postData);
     },
     isCreating: createMutation.isPending,
   };

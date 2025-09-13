@@ -7,7 +7,6 @@ import {
   Pressable,
   StyleSheet,
   Modal,
-  Dimensions,
   Platform,
 } from 'react-native';
 import { useTheme } from '@theme/index';
@@ -34,7 +33,6 @@ interface MentionCandidate {
   query: string;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
 
 export default function MentionInput({
   value,
@@ -46,7 +44,7 @@ export default function MentionInput({
   disabled = false,
   style,
 }: MentionInputProps) {
-  const { colors, typography } = useTheme();
+  const { colors } = useTheme();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<Member[]>([]);
   const [mentionCandidate, setMentionCandidate] = useState<MentionCandidate | null>(null);

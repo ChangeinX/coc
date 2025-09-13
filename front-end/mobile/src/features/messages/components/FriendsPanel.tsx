@@ -11,9 +11,8 @@ import {
   TextInput,
 } from 'react-native';
 import { useTheme } from '@theme/index';
-import { chatOperations } from '@services/graphqlClient';
 import { useAuthStore } from '@store/auth.store';
-import { apiFetch, ApiError } from '@services/apiClient';
+import { apiFetch } from '@services/apiClient';
 import { API_URL } from '@env';
 import { LoadingSpinner } from '@components/index';
 
@@ -34,7 +33,7 @@ interface FriendsPanelProps {
 }
 
 export default function FriendsPanel({ onSelectChat, userId }: FriendsPanelProps) {
-  const { colors, typography } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuthStore();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [isLoading, setIsLoading] = useState(true);

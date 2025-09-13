@@ -68,8 +68,8 @@ export default function useMultiChat(chatIds: string[]): UseChatReturn {
           
           // Remove the local "sending" message
           setMessages(prev => prev.filter(m => m.ts !== outboxMessage.ts));
-        } catch (error) {
-          console.error('Failed to send outbox message:', error);
+        } catch (sendError) {
+          console.error('Failed to send outbox message:', sendError);
           
           // Increment retry count
           messageStorage.updateOutboxMessage(outboxMessage.id, {
@@ -128,7 +128,7 @@ export default function useMultiChat(chatIds: string[]): UseChatReturn {
         const messagePromises = chatIds.map(chatId => 
           chatOperations.getMessages(chatId, undefined, PAGE_SIZE)
             .then(response => ({ chatId, messages: response.getMessages || [] }))
-            .catch(error => ({ chatId, messages: [], error }))
+            .catch(fetchError => ({ chatId, messages: [], error: fetchError }))
         );
 
         const results = await Promise.all(messagePromises);
@@ -227,8 +227,8 @@ export default function useMultiChat(chatIds: string[]): UseChatReturn {
             PAGE_SIZE
           );
           return response.getMessages || [];
-        } catch (error) {
-          console.error(`Error loading more messages for chat ${chatId}:`, error);
+        } catch (loadError) {
+          console.error(`Error loading more messages for chat ${chatId}:`, loadError);
           return [];
         }
       });

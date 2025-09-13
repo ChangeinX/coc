@@ -149,7 +149,7 @@ describe('RecruitCard', () => {
   });
 
   it('should not render requirements section when no requirements', () => {
-    const { requiredTrophies, requiredTownhallLevel, requiredBuilderBaseTrophies, ...dataWithoutRequirements } = mockRecruitPost.data;
+    const { requiredTrophies: _requiredTrophies, requiredTownhallLevel: _requiredTownhallLevel, requiredBuilderBaseTrophies: _requiredBuilderBaseTrophies, ...dataWithoutRequirements } = mockRecruitPost.data;
     const noRequirementsPost: ClanRecruitPost = {
       ...mockRecruitPost,
       data: dataWithoutRequirements,

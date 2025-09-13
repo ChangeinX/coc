@@ -10,7 +10,7 @@ import {
   PlayerPostForm,
 } from '../components';
 import { useRecruitFeed, usePlayerRecruitFeed } from '../hooks';
-import { createPlayerRecruitPost, createRecruitPost } from '../api/recruitingApi';
+import { createRecruitPost } from '../api/recruitingApi';
 import { useAuthStore } from '@store/auth.store';
 import { usePlayerInfo } from '@features/dashboard/hooks/usePlayerInfo';
 
