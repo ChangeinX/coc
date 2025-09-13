@@ -62,6 +62,25 @@ Details and integration guidance:
 - CI-like suite: `make ci` (java, mobile, web, lambdas)
 - Lambda tests only: `make lambda-test` (nox) or `make lambda-test-standalone`
 
+### Local Development
+Start the complete local development stack including Traefik reverse proxy:
+- `make local-up` - Start Traefik, PostgreSQL, migrate DB, launch user_service, seed OIDC config, run smoke tests
+- `make local-down` - Stop all services cleanly (preserves data)
+- `make local-destroy` - Stop all services and remove data volumes
+
+Services are available at:
+- API endpoints: `http://api.local.clanboards.test` (via Traefik proxy)
+- Direct service access: `http://localhost:8020` (user_service)
+- Traefik dashboard: `http://localhost:8080` (when enabled in config)
+
+The local stack includes:
+- Traefik reverse proxy (Docker container on port 80)
+- PostgreSQL database (Docker container on port 5433)
+- user_service (Spring Boot on port 8020)
+- Automatic OIDC configuration seeding for local development
+
+Individual component control is still available via `traefik-up/down`, `local-db-up/down`, etc.
+
 Common tasks:
 - Install pre‑commit hook: `bash tools/setup-git-hooks.sh` (see toggles in `tools/hooks/pre-commit`).
 - Lint and run tests (nox convenience): `nox -s lint tests`.

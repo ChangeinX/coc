@@ -1,6 +1,6 @@
 import { View, Text, Alert, Platform } from 'react-native';
 import * as Apple from 'expo-apple-authentication';
-import { AUTH_URL } from '@env';
+import { API_URL } from '@env';
 import { apiFetch } from '@services/apiClient';
 import { useAuthStore } from '@store/auth.store';
 import { useState } from 'react';
@@ -26,7 +26,7 @@ export default function LoginScreen() {
       if (!credential.identityToken) {
         throw new Error('No identity token from Apple');
       }
-      const url = `${AUTH_URL}/api/v1/users/auth/apple/exchange`;
+      const url = `${API_URL}/api/v1/users/auth/apple/exchange`;
       const res = await apiFetch<{ access_token: string; refresh_token?: string; expires_in?: number }>(url, {
         method: 'POST',
         body: JSON.stringify({ id_token: credential.identityToken }),

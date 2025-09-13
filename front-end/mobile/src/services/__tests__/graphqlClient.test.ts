@@ -4,7 +4,7 @@ import { apiFetch } from '../apiClient';
 // Mock dependencies
 jest.mock('../apiClient');
 jest.mock('@env', () => ({
-  MESSAGES_URL: 'https://test-messages.com'
+  API_URL: 'https://test-messages.com'
 }));
 
 // Mock console methods

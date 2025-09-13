@@ -11,7 +11,7 @@ jest.mock('@services/apiClient', () => ({
   triggerSessionExpired: jest.fn(),
 }));
 jest.mock('@env', () => ({
-  AUTH_URL: 'https://test-auth.example.com',
+  API_URL: 'https://test-auth.example.com',
 }));
 
 // Mock fetch

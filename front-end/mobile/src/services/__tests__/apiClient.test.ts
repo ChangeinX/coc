@@ -4,8 +4,7 @@ import { tokenStorage } from '../storage/secureStorage';
 // Mock dependencies
 jest.mock('../storage/secureStorage');
 jest.mock('@env', () => ({
-  API_URL: 'https://test-api.com',
-  AUTH_URL: 'https://test-auth.com'
+  API_URL: 'https://test-api.com'
 }));
 
 // Mock fetch

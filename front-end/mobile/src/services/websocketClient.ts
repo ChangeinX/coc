@@ -1,7 +1,7 @@
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { AppState, AppStateStatus } from 'react-native';
-import { MESSAGES_URL } from '@env';
+import { API_URL } from '@env';
 import { tokenStorage } from './storage/secureStorage';
 
 export interface ChatMessage {
@@ -65,7 +65,7 @@ class WebSocketService {
         return;
       }
 
-      const baseUrl = MESSAGES_URL;
+      const baseUrl = API_URL;
       
       this.client = new Client({
         webSocketFactory: () => new SockJS(`${baseUrl}/api/v1/chat/socket`),

@@ -14,7 +14,7 @@ import { useTheme } from '@theme/index';
 import { chatOperations } from '@services/graphqlClient';
 import { useAuthStore } from '@store/auth.store';
 import { apiFetch, ApiError } from '@services/apiClient';
-import { AUTH_URL } from '@env';
+import { API_URL } from '@env';
 import { LoadingSpinner } from '@components/index';
 
 interface Friend {
@@ -58,7 +58,7 @@ export default function FriendsPanel({ onSelectChat, userId }: FriendsPanelProps
       }
 
       type FriendDto = { userId: string; playerTag: string; since: string };
-      const url = `${AUTH_URL}/api/v1/friends/list?sub=${encodeURIComponent(user.sub)}`;
+      const url = `${API_URL}/api/v1/friends/list?sub=${encodeURIComponent(user.sub)}`;
       const list = await apiFetch<FriendDto[]>(url, { auth: true });
 
       // Fetch player names for tags

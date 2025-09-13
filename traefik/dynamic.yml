@@ -1,0 +1,63 @@
+# Traefik dynamic configuration mirroring ALB routing (HTTP only for local dev)
+
+http:
+  routers:
+    # Default app host (optional; harmless if app not running)
+    app:
+      rule: Host(`local.clanboards.test`)
+      entryPoints: [web]
+      service: app
+
+    # API host routing by path
+    api-user:
+      rule: Host(`api.local.clanboards.test`) && (PathPrefix(`/api/v1/friends`) || PathPrefix(`/api/v1/auth`) || PathPrefix(`/api/v1/logout`) || PathPrefix(`/api/v1/users`) || PathPrefix(`/api/v1/health`))
+      entryPoints: [web]
+      service: user
+
+    api-messages:
+      rule: Host(`api.local.clanboards.test`) && PathPrefix(`/api/v1/chat`)
+      entryPoints: [web]
+      service: messages
+
+    api-notifications:
+      rule: Host(`api.local.clanboards.test`) && PathPrefix(`/api/v1/notifications`)
+      entryPoints: [web]
+      service: notifications
+
+    api-recruiting:
+      rule: Host(`api.local.clanboards.test`) && PathPrefix(`/api/v1/recruiting`)
+      entryPoints: [web]
+      service: recruiting
+
+    api-clan-data:
+      rule: Host(`api.local.clanboards.test`) && PathPrefix(`/api/v1/clan-data`)
+      entryPoints: [web]
+      service: clan-data
+
+  services:
+    # Using host.docker.internal to reach host services from Traefik container
+    app:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3000"
+    messages:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8010"
+    user:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8020"
+    notifications:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8030"
+    recruiting:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8040"
+    clan-data:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8050"
+

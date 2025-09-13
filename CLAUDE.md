@@ -108,6 +108,19 @@ Any lint errors or build failures should fail the PR.
   - `PRECOMMIT_MOBILE_TESTS=1` run mobile tests
   - `PRECOMMIT_APP_TESTS=1` run web app tests
 
+## Local Development
+
+For local development, use the integrated stack that includes Traefik reverse proxy:
+- `make local-up` - Start complete local stack (Traefik + services)
+- `make local-down` - Stop all services cleanly
+- Services accessible via `http://api.local.clanboards.test` (Traefik routing)
+- Direct access still available at `http://localhost:8020`
+
+Troubleshooting:
+- If `make local-up` fails, check Docker is running for Traefik
+- Use `make traefik-logs` to debug routing issues
+- Individual services can be controlled with `traefik-up/down`, `local-db-up/down`
+
 ## Development notes
 
 - Keep shared logic in `coclib` rather than duplicating it in other projects.

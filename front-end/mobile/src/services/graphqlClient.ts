@@ -1,5 +1,5 @@
 import { apiFetch } from './apiClient';
-import { MESSAGES_URL } from '@env';
+import { API_URL } from '@env';
 
 export interface GraphQLResponse<T = any> {
   data?: T;
@@ -72,7 +72,7 @@ export async function graphqlRequest<T = any>(
   variables: Record<string, any> = {}
 ): Promise<T> {
   const correlationId = generateGraphQLCorrelationId();
-  const url = `${MESSAGES_URL}/api/v1/chat/graphql`;
+  const url = `${API_URL}/api/v1/chat/graphql`;
   
   // Extract operation name from query for better logging
   const operationMatch = query.match(/(?:query|mutation|subscription)\s+(\w+)/);
