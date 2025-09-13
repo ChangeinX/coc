@@ -1,9 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { useTheme } from '@theme/index';
 
 export default function VerifiedBadge() {
-  const { colors } = useTheme();
 
   return (
     <View

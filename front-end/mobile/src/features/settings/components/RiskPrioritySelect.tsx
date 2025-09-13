@@ -2,6 +2,42 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useTheme } from '@theme/index';
 
+interface PresetButtonProps {
+  presetKey: string;
+  preset: RiskPreset;
+  isSelected: boolean;
+  onPress: (weights: RiskWeights) => void;
+  colors: any;
+}
+
+const PresetButton = ({
+  presetKey: _presetKey,
+  preset,
+  isSelected,
+  onPress,
+  colors,
+}: PresetButtonProps) => (
+  <Pressable
+    onPress={() => onPress(preset.weights)}
+    style={{
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: isSelected ? colors.primary : colors.border,
+      marginBottom: 8,
+      backgroundColor: isSelected ? colors.primary + '10' : 'transparent',
+    }}
+  >
+    <Text style={{
+      color: isSelected ? colors.primary : colors.text,
+      fontWeight: isSelected ? '600' : '400',
+    }}>
+      {preset.label}
+    </Text>
+  </Pressable>
+);
+
 export interface RiskWeights {
   risk_weight_war: number;
   risk_weight_idle: number;
@@ -77,35 +113,6 @@ export default function RiskPrioritySelect({ weights, onSelect }: RiskPrioritySe
   const { colors } = useTheme();
   const currentPreset = getPreset(weights);
 
-  const PresetButton = ({ 
-    presetKey, 
-    preset, 
-    isSelected 
-  }: { 
-    presetKey: string; 
-    preset: RiskPreset; 
-    isSelected: boolean; 
-  }) => (
-    <Pressable
-      onPress={() => onSelect(preset.weights)}
-      style={{
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: isSelected ? colors.primary : colors.border,
-        marginBottom: 8,
-        backgroundColor: isSelected ? colors.primary + '10' : 'transparent',
-      }}
-    >
-      <Text style={{ 
-        color: isSelected ? colors.primary : colors.text,
-        fontWeight: isSelected ? '600' : '400',
-      }}>
-        {preset.label}
-      </Text>
-    </Pressable>
-  );
 
   return (
     <View>
@@ -115,6 +122,8 @@ export default function RiskPrioritySelect({ weights, onSelect }: RiskPrioritySe
           presetKey={key}
           preset={preset}
           isSelected={currentPreset === key}
+          onPress={onSelect}
+          colors={colors}
         />
       ))}
     </View>

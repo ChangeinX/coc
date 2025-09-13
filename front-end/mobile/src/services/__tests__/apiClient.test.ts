@@ -1,4 +1,4 @@
-import { apiFetch, ApiError } from '../apiClient';
+import { apiFetch } from '../apiClient';
 import { tokenStorage } from '../storage/secureStorage';
 
 // Mock dependencies
@@ -190,7 +190,7 @@ describe('apiClient logging enhancements', () => {
     await apiFetch('/test');
 
     // Then
-    const [url, options] = mockFetch.mock.calls[0];
+    const [_url, options] = mockFetch.mock.calls[0];
     const headers = options.headers as Headers;
     
     expect(headers.get('X-Request-ID')).toMatch(/mobile-\d+-\d+/);

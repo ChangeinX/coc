@@ -144,7 +144,7 @@ export const chatQueries = {
     }
   `,
 
-  getMessages: (limit = 20) => `
+  getMessages: (_limit = 20) => `
     query($id: ID!, $after: String, $limit: Int) {
       getMessages(chatId: $id, after: $after, limit: $limit) {
         id

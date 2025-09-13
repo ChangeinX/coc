@@ -110,7 +110,7 @@ describe('PlayerRecruitCard', () => {
   });
 
   it('should not render player details section when no details available', () => {
-    const { league, language, war, ...postWithoutDetails } = mockPlayerPost;
+    const { league: _league, language: _language, war: _war, ...postWithoutDetails } = mockPlayerPost;
     const noDetailsPost: PlayerRecruitPost = postWithoutDetails;
 
     render(<PlayerRecruitCard post={noDetailsPost} onPress={jest.fn()} onInvite={jest.fn()} />);
@@ -135,7 +135,7 @@ describe('PlayerRecruitCard', () => {
   });
 
   it('should not render avatar when not provided', () => {
-    const { avatar, ...postWithoutAvatar } = mockPlayerPost;
+    const { avatar: _avatar, ...postWithoutAvatar } = mockPlayerPost;
     const noAvatarPost: PlayerRecruitPost = postWithoutAvatar;
     render(<PlayerRecruitCard post={noAvatarPost} onPress={jest.fn()} onInvite={jest.fn()} />);
     

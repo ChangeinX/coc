@@ -65,7 +65,7 @@ export function ClanPostForm({ onSubmit, onCancel, isLoading, clanTag: prePopula
     setClanTag(text);
     // Clear error when user starts typing
     if (errors.clanTag) {
-      const { clanTag, ...otherErrors } = errors;
+      const { clanTag: _clanTag, ...otherErrors } = errors;
       setErrors(otherErrors);
     }
   };
@@ -74,7 +74,7 @@ export function ClanPostForm({ onSubmit, onCancel, isLoading, clanTag: prePopula
     setCallToAction(text);
     // Clear error when user starts typing
     if (errors.callToAction) {
-      const { callToAction, ...otherErrors } = errors;
+      const { callToAction: _callToAction, ...otherErrors } = errors;
       setErrors(otherErrors);
     }
   };

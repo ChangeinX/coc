@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { useTheme, useThemedStyles } from '@theme/index';
+import { useTheme } from '@theme/index';
 import { useHaptics, useScaleAnimation } from '@utils/index';
 import type { PlayerRecruitPost } from '../api/recruitingApi';
 
@@ -13,7 +13,6 @@ interface PlayerRecruitCardProps {
 
 export function PlayerRecruitCard({ post, onPress, onInvite, compact = false }: PlayerRecruitCardProps) {
   const theme = useTheme();
-  const commonStyles = useThemedStyles();
   const { light } = useHaptics();
   const { animatedStyle, press } = useScaleAnimation();
 

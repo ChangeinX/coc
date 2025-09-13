@@ -111,10 +111,6 @@ export default function SettingsScreen() {
     loadUserData();
   }, []);
 
-  // Handle profile changes
-  const handleProfileChange = (key: keyof UserProfile, value: any) => {
-    setProfile(prev => prev ? { ...prev, [key]: value } : null);
-  };
 
   // Handle risk priority selection
   const handleRiskPrioritySelect = (weights: RiskWeights) => {
@@ -199,8 +195,8 @@ export default function SettingsScreen() {
   const testTokenValidation = async () => {
     setDebugLoading(true);
     try {
-      const tokens = await tokenStorage.get();
-      if (!tokens?.accessToken) {
+      const storedTokens = await tokenStorage.get();
+      if (!storedTokens?.accessToken) {
         Alert.alert('Error', 'No access token available');
         return;
       }
@@ -208,7 +204,7 @@ export default function SettingsScreen() {
       const response = await fetch(`${API_URL}/api/v1/chat/debug/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: tokens.accessToken }),
+        body: JSON.stringify({ token: storedTokens.accessToken }),
       });
       
       const result = await response.json();
@@ -426,12 +422,12 @@ export default function SettingsScreen() {
         label="Logout"
         onPress={async () => {
           try {
-            const tokens = await tokenStorage.get();
-            if (tokens?.refreshToken) {
+            const userTokens = await tokenStorage.get();
+            if (userTokens?.refreshToken) {
               const res = await fetch(`${API_URL}/api/v1/users/oauth2/revoke`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ token: tokens.refreshToken }).toString(),
+                body: new URLSearchParams({ token: userTokens.refreshToken }).toString(),
               });
               if (!res.ok) console.warn('Failed to revoke refresh token');
             }

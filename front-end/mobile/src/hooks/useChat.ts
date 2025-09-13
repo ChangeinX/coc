@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { AppState } from 'react-native';
 import { chatOperations, GraphQLError } from '@services/graphqlClient';
 import { websocketService, ChatMessage } from '@services/websocketClient';
 import { messageStorage } from '@services/storage/messageStorage';
@@ -62,11 +61,11 @@ export default function useChat(chatId: string | null): UseChatReturn {
         
         // Remove the local "sending" message
         setMessages(prev => prev.filter(m => m.ts !== outboxMessage.ts));
-      } catch (error) {
-        console.error('Failed to send outbox message:', error);
-        
-        if (error instanceof GraphQLError) {
-          if (error.isToxicityWarning || error.isBanned || error.isMuted) {
+      } catch (sendError) {
+        console.error('Failed to send outbox message:', sendError);
+
+        if (sendError instanceof GraphQLError) {
+          if (sendError.isToxicityWarning || sendError.isBanned || sendError.isMuted) {
             // Remove message that can't be sent
             messageStorage.removeOutboxMessage(outboxMessage.id);
             setMessages(prev => prev.filter(m => m.ts !== outboxMessage.ts));
@@ -237,23 +236,23 @@ export default function useChat(chatId: string | null): UseChatReturn {
           m.ts === tempMessage.ts ? { ...m, status: 'failed' } : m
         ));
       }
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      
-      if (error instanceof GraphQLError) {
-        if (error.isToxicityWarning) {
+    } catch (messageError) {
+      console.error('Failed to send message:', messageError);
+
+      if (messageError instanceof GraphQLError) {
+        if (messageError.isToxicityWarning) {
           setError('Keep it civil');
           setMessages(prev => prev.filter(m => m.ts !== tempMessage.ts));
-        } else if (error.isBanned || error.isMuted || error.isReadOnly) {
-          const errorMsg = error.isBanned ? 'You are banned' : 
-                          error.isMuted ? 'You are muted for 24h' : 
+        } else if (messageError.isBanned || messageError.isMuted || messageError.isReadOnly) {
+          const errorMsg = messageError.isBanned ? 'You are banned' :
+                          messageError.isMuted ? 'You are muted for 24h' :
                           'You are temporarily read-only';
           setError(errorMsg);
           setMessages(prev => prev.filter(m => m.ts !== tempMessage.ts));
         } else {
           // Store in outbox for retry
           messageStorage.addOutboxMessage(tempMessage);
-          setMessages(prev => prev.map(m => 
+          setMessages(prev => prev.map(m =>
             m.ts === tempMessage.ts ? { ...m, status: 'failed' } : m
           ));
         }
