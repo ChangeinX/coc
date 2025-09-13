@@ -16,6 +16,52 @@ export interface GraphQLRequest {
   operationName?: string;
 }
 
+export interface ModerationResponse {
+  action: 'WARNING' | 'MUTED' | 'BANNED' | 'READONLY';
+  reason: string;
+  durationMinutes?: number;
+}
+
+export interface Message {
+  id: string;
+  chatId: string;
+  ts: string;
+  senderId: string;
+  content: string;
+}
+
+export type SendMessageResult = Message | ModerationResponse;
+
+export function isModerationResponse(result: SendMessageResult): result is ModerationResponse {
+  return 'action' in result;
+}
+
+export function isMessage(result: SendMessageResult): result is Message {
+  return 'id' in result;
+}
+
+export class ModerationError extends Error {
+  constructor(
+    message: string,
+    public moderationResponse: ModerationResponse
+  ) {
+    super(message);
+    this.name = 'ModerationError';
+  }
+
+  get action(): ModerationResponse['action'] {
+    return this.moderationResponse.action;
+  }
+
+  get reason(): string {
+    return this.moderationResponse.reason;
+  }
+
+  get durationMinutes(): number | undefined {
+    return this.moderationResponse.durationMinutes;
+  }
+}
+
 export class GraphQLError extends Error {
   constructor(
     message: string,
@@ -30,32 +76,32 @@ export class GraphQLError extends Error {
   }
 
   get isUnauthorized(): boolean {
-    return this.errors?.some(error => 
-      error.message.includes('unauthorized') || 
+    return this.errors?.some(error =>
+      error.message.includes('unauthorized') ||
       error.message.includes('Unauthorized')
     ) || false;
   }
 
   get isToxicityWarning(): boolean {
-    return this.errors?.some(error => 
+    return this.errors?.some(error =>
       error.message.includes('TOXICITY_WARNING')
     ) || false;
   }
 
   get isReadOnly(): boolean {
-    return this.errors?.some(error => 
+    return this.errors?.some(error =>
       error.message.includes('READONLY')
     ) || false;
   }
 
   get isMuted(): boolean {
-    return this.errors?.some(error => 
+    return this.errors?.some(error =>
       error.message.includes('MUTED')
     ) || false;
   }
 
   get isBanned(): boolean {
-    return this.errors?.some(error => 
+    return this.errors?.some(error =>
       error.message.includes('BANNED')
     ) || false;
   }
@@ -159,7 +205,18 @@ export const chatQueries = {
   sendMessage: () => `
     mutation($chatId: ID!, $content: String!) {
       sendMessage(chatId: $chatId, content: $content) {
-        id
+        ... on Message {
+          id
+          chatId
+          ts
+          senderId
+          content
+        }
+        ... on ModerationResponse {
+          action
+          reason
+          durationMinutes
+        }
       }
     }
   `,
@@ -192,13 +249,18 @@ export const chatOperations = {
   },
 
   async sendMessage(chatId: string, content: string) {
-    return graphqlRequest<{
-      sendMessage: {
-        id: string;
-      };
+    const response = await graphqlRequest<{
+      sendMessage: SendMessageResult;
     }>(chatQueries.sendMessage(), {
       chatId,
       content,
     });
+
+    const result = response.sendMessage;
+    if (isModerationResponse(result)) {
+      throw new ModerationError(result.reason, result);
+    }
+
+    return response;
   },
 };

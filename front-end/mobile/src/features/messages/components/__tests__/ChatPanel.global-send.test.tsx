@@ -49,12 +49,24 @@ jest.mock('@hooks/useChat', () => {
   };
 });
 
+// Mock ModerationError for testing
+class MockModerationError extends Error {
+  constructor(message: string, public moderationResponse: any) {
+    super(message);
+    this.name = 'ModerationError';
+  }
+  get action() { return this.moderationResponse.action; }
+  get reason() { return this.moderationResponse.reason; }
+  get durationMinutes() { return this.moderationResponse.durationMinutes; }
+}
+
 // Mock chat operations
 const mockSendMessage = jest.fn().mockResolvedValue({ sendMessage: { id: 'x' } });
 jest.mock('@services/graphqlClient', () => ({
   chatOperations: {
     sendMessage: (...args: any[]) => mockSendMessage(...args),
   },
+  ModerationError: MockModerationError,
 }));
 
 describe('ChatPanel - Global send', () => {
@@ -83,6 +95,81 @@ describe('ChatPanel - Global send', () => {
 
     // Ensure multi-chat hook's sendMessage wasn't used
     expect(mockUseMultiChatSend).not.toHaveBeenCalled();
+  });
+
+  it('shows moderation message when message is flagged for toxicity', async () => {
+    // Mock ModerationError to be thrown
+    mockSendMessage.mockRejectedValueOnce(
+      new MockModerationError(
+        'Your message was flagged for inappropriate content. Please be respectful in chat.',
+        {
+          action: 'WARNING',
+          reason: 'Your message was flagged for inappropriate content. Please be respectful in chat.',
+          durationMinutes: undefined
+        }
+      )
+    );
+
+    const { getByPlaceholderText, getByText, queryByText } = render(
+      <ThemeProvider>
+        <ChatPanel
+          chatId={null}
+          userId="user-123"
+          globalIds={['global#1']}
+          friendIds={[]}
+          initialTab="Global"
+        />
+      </ThemeProvider>
+    );
+
+    const input = getByPlaceholderText('Type a message...');
+    fireEvent.changeText(input, 'Toxic message');
+
+    const sendButton = getByText('Send');
+    fireEvent.press(sendButton);
+
+    await waitFor(() => {
+      expect(queryByText('Your message was flagged for inappropriate content. Please be respectful in chat.')).toBeTruthy();
+    });
+
+    // Text should be cleared for warnings to encourage rephrasing
+    expect(input.props.value).toBe('');
+  });
+
+  it('restores text for non-warning moderation errors', async () => {
+    // Mock ModerationError to be thrown
+    mockSendMessage.mockRejectedValueOnce(
+      new MockModerationError(
+        'You are temporarily muted',
+        {
+          action: 'MUTED',
+          reason: 'You are temporarily muted',
+          durationMinutes: 30
+        }
+      )
+    );
+
+    const { getByPlaceholderText, getByText } = render(
+      <ThemeProvider>
+        <ChatPanel
+          chatId={null}
+          userId="user-123"
+          globalIds={['global#1']}
+          friendIds={[]}
+          initialTab="Global"
+        />
+      </ThemeProvider>
+    );
+
+    const input = getByPlaceholderText('Type a message...');
+    fireEvent.changeText(input, 'Some message');
+
+    const sendButton = getByText('Send');
+    fireEvent.press(sendButton);
+
+    await waitFor(() => {
+      expect(input.props.value).toBe('Some message'); // Text should be restored
+    });
   });
 });
 

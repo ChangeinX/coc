@@ -93,6 +93,7 @@ export default function ChatPanel({
     status: 'NONE' | 'MUTED' | 'BANNED' | 'READONLY';
     remaining?: number;
   } | null>(null);
+  const [moderationMessage, setModerationMessage] = useState<string | null>(null);
 
   // Load player info for message senders
   useEffect(() => {
@@ -269,9 +270,25 @@ export default function ChatPanel({
           await sendMessage(trimmedText, userId);
         }
       }
-    } catch (sendError) {
+    } catch (sendError: unknown) {
       console.error('Failed to send message:', sendError);
-      setText(trimmedText); // Restore text on error
+
+      // Type guard for moderation error
+      if (sendError && typeof sendError === 'object' && 'name' in sendError &&
+          sendError.name === 'ModerationError' && 'moderationResponse' in sendError) {
+        const moderationError = sendError as any;
+        // Handle moderation-specific errors with user-friendly messages
+        setModerationMessage(moderationError.reason);
+        // Clear the moderation message after a few seconds
+        setTimeout(() => setModerationMessage(null), 5000);
+
+        // For warnings, don't restore text to encourage the user to rephrase
+        if (moderationError.action !== 'WARNING') {
+          setText(trimmedText); // Restore text for other moderation actions
+        }
+      } else {
+        setText(trimmedText); // Restore text for other errors
+      }
     } finally {
       setSending(false);
     }
@@ -359,6 +376,18 @@ export default function ChatPanel({
       <View style={[styles.restrictionBanner, { backgroundColor: '#f59e0b' }]}>
         <Text style={[styles.restrictionText, { color: 'white' }]}>
           {getMessage()}
+        </Text>
+      </View>
+    );
+  };
+
+  const renderModerationMessage = () => {
+    if (!moderationMessage) return null;
+
+    return (
+      <View style={[styles.moderationBanner, { backgroundColor: '#ef4444' }]}>
+        <Text style={[styles.moderationText, { color: 'white' }]}>
+          {moderationMessage}
         </Text>
       </View>
     );
@@ -486,6 +515,7 @@ export default function ChatPanel({
         {showInput && (
           <>
             {renderRestrictionBanner()}
+            {renderModerationMessage()}
             {!isRestricted && (
               <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.background }]}>
                 <MentionInput
@@ -578,6 +608,16 @@ const styles = StyleSheet.create({
   restrictionText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  moderationBanner: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  moderationText: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   directChatHeader: {
     paddingVertical: 8,
