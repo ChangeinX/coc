@@ -103,7 +103,15 @@ describe('useChat', () => {
   });
 
   it('sends message successfully', async () => {
-    mockChatOperations.sendMessage.mockResolvedValue({ sendMessage: { id: 'new-id' } });
+    mockChatOperations.sendMessage.mockResolvedValue({
+      sendMessage: {
+        id: 'new-id',
+        chatId: 'test-chat',
+        ts: '2024-01-01T00:00:00Z',
+        senderId: 'user123',
+        content: 'test message'
+      }
+    });
     
     // Set up connection handler mock to immediately call with connected=true
     mockWebsocketService.addConnectionHandler.mockImplementation((handler) => {
