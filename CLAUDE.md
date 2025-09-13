@@ -121,6 +121,11 @@ Troubleshooting:
 - Use `make traefik-logs` to debug routing issues
 - Individual services can be controlled with `traefik-up/down`, `local-db-up/down`
 
+**Android Build Issues**:
+- If `npm run android` fails with `ClassNotFoundException: org.gradle.wrapper.GradleWrapperMain`, the Gradle wrapper JAR is missing
+- Gradle wrapper JARs can be restored by downloading from: `https://github.com/gradle/gradle/raw/v8.14.3/gradle/wrapper/gradle-wrapper.jar`
+- Ensure you're using Java 17 in the mobile directory: `cd front-end/mobile && java -version`
+
 ## Development notes
 
 - Keep shared logic in `coclib` rather than duplicating it in other projects.
@@ -128,10 +133,24 @@ Troubleshooting:
 - Follow Ruff's default style rules for Python code.
 - This is a living document. Update it if anything is incorrect or needs updating.
 
+### Java Version Management
+This project uses **jenv** for automatic Java version switching:
+
+- **Mobile Development** (React Native/Android): Java 17 (automatically activated in `front-end/mobile/`)
+- **Backend Services** (Spring Boot): Java 21 (automatically activated in root and service directories)
+
+**Setup**: jenv is configured in `~/.zshrc` and manages Java versions per directory via `.java-version` files.
+
+**Manual Java switching** (if needed):
+- `jenv local 17` - Set Java 17 for current directory
+- `jenv local 21` - Set Java 21 for current directory
+- `jenv versions` - List available Java versions
+
 ### Local Gradle notes
-- Ensure JDK 21 is active. If your environment restricts `~/.gradle`, set `export GRADLE_USER_HOME=$(pwd)/.gradle` before running wrapper commands.
+- Java versions are managed automatically by jenv. Backend services use JDK 21, mobile uses JDK 17.
+- If your environment restricts `~/.gradle`, set `export GRADLE_USER_HOME=$(pwd)/.gradle` before running wrapper commands.
 - Avoid the global `gradle` CLI to prevent wrapper/version drift; use the module `./gradlew` consistently.
-- All modules are aligned to Gradle $(8.14.3) via their wrapper properties; use `make gradle-align` to re-pin distribution URLs if needed.
+- All modules are aligned to Gradle 8.14.3 via their wrapper properties; use `make gradle-align` to re-pin distribution URLs if needed.
 
 ## Lambdas
 - `lambdas/refresh-worker/` (Python 3.11) handles background refresh queue; see `DEPLOYMENT.md` and `package-lambda.sh` for packaging and Infra‑as‑Code hooks. Tests are exercised by `nox -s tests` and can be run with `pytest` locally.

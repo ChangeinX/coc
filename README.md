@@ -37,8 +37,21 @@ Details and integration guidance:
 - PWA features in the web app are deprecated; web remains for dashboard use but mobile is the primary target.
 
 ## Development
-- Requirements: Java 21, Node 20+, Python 3.11.
+- Requirements: **Java 17 + Java 21** (managed by jenv), Node 20+, Python 3.11.
 - Preferred local workflow uses fast pre‑commit checks and targeted stacks.
+
+### Java Version Management
+This project uses **jenv** for automatic Java version switching:
+- **Mobile Development** (React Native/Android): Java 17 (automatically activated in `front-end/mobile/`)
+- **Backend Services** (Spring Boot): Java 21 (automatically activated in root and service directories)
+
+Setup jenv (if not already configured):
+```bash
+brew install jenv
+# Add to ~/.zshrc: export PATH="$HOME/.jenv/bin:$PATH" && eval "$(jenv init -)"
+jenv add $(/usr/libexec/java_home -v 17)
+jenv add $(/usr/libexec/java_home -v 21)
+```
 
 ### Quick Start
 - Bootstrap everything: `make setup`
@@ -51,7 +64,7 @@ Details and integration guidance:
 ### Prerequisites
 - Install nox: `pipx install nox` (or `pip install nox` in a 3.11 venv)
 - Optionally install ruff: `pipx install ruff` (or use `nox -s lint`)
-- Ensure JDK 21 is active for Gradle builds
+- Java versions are managed automatically by jenv (Java 17 for mobile, Java 21 for backend)
 
 ### Makefile shortcuts
 - List commands: `make help`
@@ -80,6 +93,18 @@ The local stack includes:
 - Automatic OIDC configuration seeding for local development
 
 Individual component control is still available via `traefik-up/down`, `local-db-up/down`, etc.
+
+### Troubleshooting
+
+**Android Build Issues:**
+- If `npm run android` fails with `ClassNotFoundException: org.gradle.wrapper.GradleWrapperMain`, the Gradle wrapper JAR is missing
+- Restore missing wrapper: Download from `https://github.com/gradle/gradle/raw/v8.14.3/gradle/wrapper/gradle-wrapper.jar` to `front-end/mobile/android/gradle/wrapper/`
+- Verify Java 17 is active: `cd front-end/mobile && java -version`
+
+**Java Version Issues:**
+- If builds fail with wrong Java version, verify jenv is working: `jenv versions`
+- Reset Java for directory: `jenv local 17` (mobile) or `jenv local 21` (backend)
+- Check jenv is in PATH: `echo $PATH | grep jenv`
 
 Common tasks:
 - Install pre‑commit hook: `bash tools/setup-git-hooks.sh` (see toggles in `tools/hooks/pre-commit`).

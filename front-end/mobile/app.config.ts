@@ -26,6 +26,7 @@ export default ({ config }: { config: ExpoConfig }): ExpoConfig => ({
     bundler: 'metro',
     output: 'single',
   },
+  plugins: ['expo-apple-authentication', 'expo-asset'],
   extra: {
     ENV,
     API_URL: API_URLS[ENV] || API_URLS.dev,
