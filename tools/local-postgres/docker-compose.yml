@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ${CONTAINER_NAME:-coc-postgres-local}
+    environment:
+      POSTGRES_USER: ${DB_USER:-coc}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-coc}
+      POSTGRES_DB: ${DB_NAME:-coc_local}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - coc_local_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  coc_local_pgdata:

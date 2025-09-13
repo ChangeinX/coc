@@ -44,6 +44,12 @@ Validate changes using:
 # One-time bootstrap for local development (Python 3.11, nox/ruff via pipx, npm ci, hooks)
 make setup
 
+# Start complete local development stack (Traefik + services)
+make local-up
+
+# Stop local development stack
+make local-down
+
 # Lint and run tests with Nox (convenience wrapper; requires Python 3.11 and nox installed)
 nox -s lint tests
 

@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Alert, ScrollView, TextInput, Switch, Modal } from 'react-native';
 import { useTheme } from '@theme/index';
-import { AUTH_URL, API_URL, ENV, MESSAGES_URL } from '@env';
+import { API_URL, ENV } from '@env';
 import { useAuthStore } from '@store/auth.store';
 import { tokenStorage } from '@services/storage/secureStorage';
 import * as Clipboard from 'expo-clipboard';
@@ -84,7 +84,7 @@ export default function SettingsScreen() {
   const [debugLoading, setDebugLoading] = useState(false);
 
   const isDevEnv =
-    ENV === 'dev' || /localhost|dev/i.test(API_URL) || /localhost|dev/i.test(AUTH_URL);
+    ENV === 'dev' || /localhost|dev/i.test(API_URL);
 
   // Load profile and features on mount
   useEffect(() => {
@@ -181,7 +181,7 @@ export default function SettingsScreen() {
   const testMessagesConfig = async () => {
     setDebugLoading(true);
     try {
-      const config = await fetch(`${MESSAGES_URL}/api/v1/chat/debug/config`);
+      const config = await fetch(`${API_URL}/api/v1/chat/debug/config`);
       const configData = await config.json();
       
       Alert.alert(
@@ -205,7 +205,7 @@ export default function SettingsScreen() {
         return;
       }
 
-      const response = await fetch(`${MESSAGES_URL}/api/v1/chat/debug/validate`, {
+      const response = await fetch(`${API_URL}/api/v1/chat/debug/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: tokens.accessToken }),
@@ -241,7 +241,7 @@ export default function SettingsScreen() {
         hasBearerToken: boolean;
         hasSidCookie: boolean;
         [key: string]: any;
-      }>(`${MESSAGES_URL}/api/v1/chat/debug/request-info`, { auth: true });
+      }>(`${API_URL}/api/v1/chat/debug/request-info`, { auth: true });
       
       Alert.alert(
         'Request Info',
@@ -258,7 +258,7 @@ export default function SettingsScreen() {
   const testJwksCache = async () => {
     setDebugLoading(true);
     try {
-      const res = await fetch(`${MESSAGES_URL}/api/v1/chat/debug/jwks-cache`);
+      const res = await fetch(`${API_URL}/api/v1/chat/debug/jwks-cache`);
       const data = await res.json();
       const kids = data?.kids ? Object.keys(data.kids).length : 0;
       const firstKid = data?.kids ? Object.keys(data.kids)[0] : undefined;
@@ -428,7 +428,7 @@ export default function SettingsScreen() {
           try {
             const tokens = await tokenStorage.get();
             if (tokens?.refreshToken) {
-              const res = await fetch(`${AUTH_URL}/api/v1/users/oauth2/revoke`, {
+              const res = await fetch(`${API_URL}/api/v1/users/oauth2/revoke`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ token: tokens.refreshToken }).toString(),
@@ -452,8 +452,6 @@ export default function SettingsScreen() {
           <SectionHeader title="Developer" />
           <View style={{ marginBottom: 12 }}>
             <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>API: {API_URL}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>Auth: {AUTH_URL}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }} numberOfLines={1}>Messages: {MESSAGES_URL}</Text>
             <TokenExpiryCountdown />
           </View>
           

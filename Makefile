@@ -49,6 +49,26 @@ help:
 	@echo "  ci-python               Python lint (ruff)";
 	@echo "  ci-precommit            Run pre-commit full suite (nox) to mirror local hook";
 	@echo "  ci-gradle-align-check   Assert all Gradle wrappers are pinned uniformly";
+	@echo "  local-db-up             Start local Postgres (Docker)";
+	@echo "  local-db-migrate        Run Alembic migrations against local Postgres";
+	@echo "  local-db-psql           Open psql shell in local Postgres";
+	@echo "  local-db-psql-cmd       Run SQL via psql (SQL='select 1')";
+	@echo "  local-db-down           Stop local Postgres (keep data)";
+	@echo "  local-db-destroy        Stop and remove local Postgres + volume";
+	@echo "  local-db-status         Show container status";
+	@echo "  local-db-logs           Tail Postgres logs";
+	@echo "  local-up                Start Traefik, DB, migrate, launch user_service + messages-java, seed JWKS, smoke test";
+	@echo "  local-down              Stop all services, DB (preserve data), and Traefik";
+	@echo "  local-destroy           Stop all services, remove keys, destroy DB volume and Traefik";
+	@echo "  local-restart           Restart active services without rebuilding (SERVICE=name for specific)";
+	@echo "  local-rebuild           Rebuild services without restarting (SERVICE=name for specific)";
+	@echo "  local-reload            Rebuild and restart services (SERVICE=name for specific)";
+	@echo "  local-status            Show status of all services";
+	@echo "  traefik-up              Start local Traefik (:80) with repo config";
+	@echo "  traefik-down            Stop local Traefik";
+	@echo "  traefik-status          Show Traefik container status";
+	@echo "  traefik-logs            Tail Traefik logs (FOLLOW=1 to follow)";
+	@echo "  get-apple-token         Generate local Apple-style RS256 tokens (dev)";
 
 .PHONY: hooks
 hooks:
@@ -272,3 +292,126 @@ ci-gradle-align-check:
 	echo "Wrapper URLs:"; echo "$$urls"; \
 	if [ "$$count" -ne 1 ]; then echo "Mismatch in Gradle wrapper distributionUrl across modules"; exit 1; fi; \
 	echo "Gradle wrapper URLs are aligned"
+
+# Local Postgres helpers
+.PHONY: local-db-up local-db-migrate local-db-psql local-db-psql-cmd local-db-down local-db-destroy local-db-status local-db-logs
+local-db-up:
+	bash tools/local-db.sh up
+
+local-db-migrate:
+	bash tools/local-db.sh migrate
+
+local-db-psql:
+	bash tools/local-db.sh psql
+
+local-db-psql-cmd:
+	@[ -z "$(SQL)" ] && SQL="select 1" || true; \
+	bash tools/local-db.sh psql "$$SQL"
+
+local-db-down:
+	bash tools/local-db.sh down
+
+local-db-destroy:
+	bash tools/local-db.sh destroy
+
+local-db-status:
+	bash tools/local-db.sh status
+
+local-db-logs:
+	bash tools/local-db.sh logs
+
+# Local dev orchestration (extensible)
+.PHONY: local-up local-down local-destroy local-smoke
+local-up:
+	@echo "Starting Traefik reverse proxy..."
+	bash tools/traefik.sh up
+	@echo "Starting local services..."
+	bash tools/local-up.sh up
+
+local-down:
+	@echo "Stopping local services..."
+	bash tools/local-up.sh down
+	@echo "Stopping Traefik reverse proxy..."
+	bash tools/traefik.sh down
+
+local-destroy:
+	@echo "Destroying local services..."
+	bash tools/local-up.sh destroy
+	@echo "Stopping Traefik reverse proxy..."
+	bash tools/traefik.sh down
+
+local-smoke:
+	bash tools/local-up.sh smoke
+
+# Rapid service management for development
+.PHONY: local-restart local-rebuild local-reload local-status
+local-restart:
+	@if [ -n "$(SERVICE)" ]; then \
+		bash tools/service-manager.sh restart --service $(SERVICE); \
+	else \
+		bash tools/service-manager.sh restart; \
+	fi
+
+local-rebuild:
+	@if [ -n "$(SERVICE)" ]; then \
+		bash tools/service-manager.sh rebuild --service $(SERVICE); \
+	else \
+		bash tools/service-manager.sh rebuild; \
+	fi
+
+local-reload:
+	@if [ -n "$(SERVICE)" ]; then \
+		bash tools/service-manager.sh reload --service $(SERVICE); \
+	else \
+		bash tools/service-manager.sh reload; \
+	fi
+
+local-status:
+	bash tools/service-manager.sh status
+
+# Traefik (local reverse proxy mirroring ALB routes)
+.PHONY: traefik-up traefik-down traefik-status traefik-logs
+traefik-up:
+	bash tools/traefik.sh up
+
+traefik-down:
+	bash tools/traefik.sh down
+
+traefik-status:
+	bash tools/traefik.sh status
+
+traefik-logs:
+	bash tools/traefik.sh logs
+
+# Dev helper: mint RS256 access/id tokens using the local dev key and stored creds
+.PHONY: get-apple-token
+get-apple-token:
+	@set -euo pipefail; \
+	KEY_PATH="user_service/dev-keys/oidc-private-key.pem"; \
+	ENV_DIR="user_service/.dev"; \
+	ENV_FILE="$$ENV_DIR/token.env"; \
+	if [[ ! -f "$$KEY_PATH" ]]; then \
+		command -v openssl >/dev/null 2>&1 || { echo "openssl not found; cannot generate dev key" >&2; exit 1; }; \
+		mkdir -p "user_service/dev-keys"; \
+		openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$$KEY_PATH"; \
+		echo "[get-apple-token] generated dev RSA key at $$KEY_PATH"; \
+	fi; \
+	mkdir -p "$$ENV_DIR"; \
+	if [[ ! -f "$$ENV_FILE" ]]; then \
+		read -rp "Apple dev username (email): " u; \
+		read -rsp "Apple dev password (stored locally): " p; echo; \
+		printf "DEV_APPLE_USERNAME=%s\nDEV_APPLE_PASSWORD=%s\n" "$$u" "$$p" > "$$ENV_FILE"; \
+		chmod 600 "$$ENV_FILE"; \
+		echo "[get-apple-token] wrote $$ENV_FILE"; \
+	else \
+		. "$$ENV_FILE"; \
+		if [[ -z "$$DEV_APPLE_USERNAME" || -z "$$DEV_APPLE_PASSWORD" ]]; then \
+			read -rp "Apple dev username (email): " u; \
+			read -rsp "Apple dev password (stored locally): " p; echo; \
+			printf "DEV_APPLE_USERNAME=%s\nDEV_APPLE_PASSWORD=%s\n" "$$u" "$$p" > "$$ENV_FILE"; \
+			chmod 600 "$$ENV_FILE"; \
+			echo "[get-apple-token] updated $$ENV_FILE"; \
+		fi; \
+	fi; \
+	TOOLS_OUT=$$(tools/get-apple-token.sh --json); \
+	echo "$$TOOLS_OUT" | python3 -c 'import sys,json;d=json.load(sys.stdin); print("access_token:", d.get("access_token","")); print("id_token:", d.get("id_token","")); print("expires_in:", d.get("expires_in"))';

@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@theme/index';
 import { chatOperations } from '@services/graphqlClient';
 import { apiFetch, ApiError } from '@services/apiClient';
-import { MESSAGES_URL } from '@env';
+import { API_URL } from '@env';
 import { LoadingSpinner } from '@components/index';
 import useChat from '@hooks/useChat';
 import useMultiChat, { globalShardFor } from '@hooks/useMultiChat';
@@ -183,7 +183,7 @@ export default function ChatPanel({
     async function loadRestriction() {
       if (!userId) return;
       try {
-        const url = `${MESSAGES_URL}/api/v1/chat/restrictions/${encodeURIComponent(userId)}`;
+        const url = `${API_URL}/api/v1/chat/restrictions/${encodeURIComponent(userId)}`;
         const data = await apiFetch<{ status: 'NONE' | 'MUTED' | 'BANNED' | 'READONLY'; remaining?: number }>(url, { auth: true });
         if (!cancelled) setServerRestriction(data);
       } catch (err) {

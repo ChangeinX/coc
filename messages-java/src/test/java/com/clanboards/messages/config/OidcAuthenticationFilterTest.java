@@ -3,6 +3,7 @@ package com.clanboards.messages.config;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -10,6 +11,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.clanboards.auth.service.OidcTokenValidator;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-
 
 @ExtendWith(MockitoExtension.class)
 class OidcAuthenticationFilterTest {
@@ -118,6 +119,34 @@ class OidcAuthenticationFilterTest {
                         .getFormattedMessage()
                         .contains("[test-123] Processing authentication for"));
     assertTrue(foundProcessingLog, "Should log processing with correlation ID");
+  }
+
+  @Test
+  void shouldAuthenticateDuringAsyncDispatch() throws Exception {
+    // Given an async dispatch (e.g., Spring GraphQL secondary dispatch)
+    when(request.getDispatcherType()).thenReturn(DispatcherType.ASYNC);
+    // Allow any attribute lookup (OncePerRequestFilter uses an internal attr name)
+    lenient().when(request.getAttribute(any())).thenReturn(null);
+    when(request.getAttribute("userId")).thenReturn(null);
+    when(request.getHeader("Authorization")).thenReturn("Bearer async-valid-token");
+
+    Claims claims = mock(Claims.class);
+    when(claims.getIssuer()).thenReturn("issuer");
+    when(claims.getAudience()).thenReturn("aud");
+    when(claims.getSubject()).thenReturn("sub");
+    when(claims.getExpiration()).thenReturn(new Date(System.currentTimeMillis() + 60000));
+
+    when(tokenValidator.validateToken("async-valid-token")).thenReturn(claims);
+    when(tokenValidator.extractUserId(claims)).thenReturn(424242L);
+
+    // When
+    filter.doFilter(request, response, filterChain);
+
+    // Then: authentication should still occur on ASYNC dispatch
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    assertNotNull(auth);
+    assertEquals("424242", auth.getName());
+    verify(filterChain).doFilter(request, response);
   }
 
   @Test

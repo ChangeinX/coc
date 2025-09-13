@@ -3,7 +3,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useAuthStore } from '@store/auth.store';
 import { tokenStorage } from '@services/storage/secureStorage';
 import { triggerSessionExpired } from '@services/apiClient';
-import { AUTH_URL } from '@env';
+import { API_URL } from '@env';
 
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
@@ -23,7 +23,7 @@ export function useSessionManager() {
 
     isRefreshingRef.current = true;
     try {
-      const response = await fetch(`${AUTH_URL}/api/v1/users/oauth2/token`, {
+      const response = await fetch(`${API_URL}/api/v1/users/oauth2/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ 

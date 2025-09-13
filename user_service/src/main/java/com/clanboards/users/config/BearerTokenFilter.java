@@ -50,6 +50,10 @@ public class BearerTokenFilter extends OncePerRequestFilter {
     String authHeader = request.getHeader("Authorization");
     if (authHeader != null && authHeader.startsWith("Bearer ")) {
       String token = authHeader.substring(7);
+      logger.debug(
+          "Processing Bearer token. Expected issuer: '{}', audience: '{}'",
+          oidcProperties.getIssuer(),
+          oidcProperties.getAudience());
       try {
         PublicKey publicKey = keyHolder.getPublicKey();
         Claims claims =
@@ -61,13 +65,19 @@ public class BearerTokenFilter extends OncePerRequestFilter {
         Instant expiration = claims.getExpiration().toInstant();
 
         if (!oidcProperties.getIssuer().equals(issuer)) {
-          logger.debug("Invalid issuer in token: {}", issuer);
+          logger.debug(
+              "Invalid issuer in token: expected '{}', got '{}'",
+              oidcProperties.getIssuer(),
+              issuer);
           filterChain.doFilter(request, response);
           return;
         }
 
         if (!oidcProperties.getAudience().equals(audience)) {
-          logger.debug("Invalid audience in token: {}", audience);
+          logger.debug(
+              "Invalid audience in token: expected '{}', got '{}'",
+              oidcProperties.getAudience(),
+              audience);
           filterChain.doFilter(request, response);
           return;
         }

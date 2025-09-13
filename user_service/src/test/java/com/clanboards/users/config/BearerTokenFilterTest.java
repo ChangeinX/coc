@@ -49,7 +49,7 @@ class BearerTokenFilterTest {
     publicKey = keyPair.getPublic();
 
     // Configure mocks
-    when(oidcProperties.getIssuer()).thenReturn("http://localhost:8080/api/v1/users");
+    when(oidcProperties.getIssuer()).thenReturn("http://localhost:8020/api/v1/users");
     when(oidcProperties.getAudience()).thenReturn("clanboards-mobile");
     when(oidcProperties.getAccessTtl()).thenReturn(Duration.ofHours(1));
     when(oidcProperties.getIdTtl()).thenReturn(Duration.ofHours(1));

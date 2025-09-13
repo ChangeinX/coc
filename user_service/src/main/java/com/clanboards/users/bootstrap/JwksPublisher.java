@@ -8,6 +8,7 @@ import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,6 +16,10 @@ import org.springframework.stereotype.Component;
  * validate JWTs without making HTTP calls.
  */
 @Component
+@ConditionalOnProperty(
+    value = "auth.oidc.jwks-publish",
+    havingValue = "true",
+    matchIfMissing = true)
 public class JwksPublisher {
 
   private static final Logger logger = LoggerFactory.getLogger(JwksPublisher.class);

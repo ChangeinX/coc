@@ -16,6 +16,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -118,9 +119,17 @@ public class SecurityConfig {
                 exceptions
                     .accessDeniedHandler(accessDeniedHandler())
                     .authenticationEntryPoint(authenticationEntryPoint()))
+        // Preserve SecurityContext across forwards/error/async within the same request
+        .securityContext(
+            context ->
+                context.securityContextRepository(new RequestAttributeSecurityContextRepository()))
         .csrf(csrf -> csrf.disable())
         .httpBasic(httpBasic -> httpBasic.disable())
-        .formLogin(formLogin -> formLogin.disable());
+        .formLogin(formLogin -> formLogin.disable())
+        .sessionManagement(
+            session ->
+                session.sessionCreationPolicy(
+                    org.springframework.security.config.http.SessionCreationPolicy.STATELESS));
 
     return http.build();
   }

@@ -82,6 +82,7 @@ celerybeat-schedule
 # dotenv
 archived/back-end/.env
 *.env
+.env.user_service
 
 # virtualenv
 venv
@@ -193,7 +194,11 @@ fabric.properties
 .DS_Store
 # Java build artifacts
 messages-java/build/
+messages-java/.dev/
 user_service/build/
+user_service/.gradle/
+user_service/.dev/
+user_service/dev-keys/
 notifications/build/
 recruiting/build/
 messages-java/.gradle/

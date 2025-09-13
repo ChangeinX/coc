@@ -1,4 +1,4 @@
-import { API_URL, AUTH_URL } from '@env';
+import { API_URL } from '@env';
 import { tokenStorage } from '@services/storage/secureStorage';
 
 let requestCounter = 0;
@@ -228,7 +228,7 @@ async function tryRefresh(): Promise<boolean> {
       console.log(`[${refreshId}] 📤 Making refresh request to auth service...`);
       const body = new URLSearchParams({ grant_type: 'refresh_token', refresh_token: rt }).toString();
       const refreshStartTime = Date.now();
-      const res = await fetch(`${AUTH_URL}/api/v1/users/oauth2/token`, {
+      const res = await fetch(`${API_URL}/api/v1/users/oauth2/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body,

@@ -55,6 +55,19 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
   }
 
   @Override
+  protected boolean shouldNotFilterAsyncDispatch() {
+    // Ensure authentication runs on async dispatches (e.g., Spring GraphQL),
+    // otherwise secondary dispatches can lose SecurityContext and trigger 401s.
+    return false;
+  }
+
+  @Override
+  protected boolean shouldNotFilterErrorDispatch() {
+    // Also run during error dispatch to maintain consistent auth context.
+    return false;
+  }
+
+  @Override
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
@@ -117,7 +130,7 @@ public class OidcAuthenticationFilter extends OncePerRequestFilter {
             sendUnauthorized(response, "Authentication failed", requestId);
             return;
           }
-          
+
           logger.debug(
               "[{}] REST request authenticated for userId: {}",
               requestId != null ? requestId : "unknown",

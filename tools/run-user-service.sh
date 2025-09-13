@@ -1,0 +1,289 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Quick launcher for user_service with optional local Postgres + migrations.
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE_SERVICE="$ROOT_DIR/user_service/.env"
+ENV_FILE_ROOT="$ROOT_DIR/.env.user_service"
+USER_SERVICE_DIR="$ROOT_DIR/user_service"
+GRADLEW_MODULE="$USER_SERVICE_DIR/gradlew"
+DEV_DIR="$USER_SERVICE_DIR/.dev"
+DEV_KEYS_DIR="$USER_SERVICE_DIR/dev-keys"
+DEV_PEM="$DEV_KEYS_DIR/oidc-private-key.pem"
+PID_FILE="$DEV_DIR/app.pid"
+LOG_FILE="$DEV_DIR/app.log"
+
+WITH_DB=0
+SKIP_DB=0
+BACKGROUND=0
+
+usage() {
+  cat <<EOF
+Usage: tools/run-user-service.sh [--with-db] [--skip-db] [--background] [stop|destroy] [--] [extra-gradle-args...]
+
+Options:
+  --with-db     Ensure local Postgres is up and run migrations (tools/local-db.sh)
+  --skip-db     Do not attempt DB startup/migrations
+  --background  Run the service in background (PID at user_service/.dev/app.pid)
+  -h, --help    Show this help
+
+Commands:
+  stop        Stop a background instance if running
+  destroy     Stop background instance, remove dev keys, and optionally destroy DB (with --with-db)
+
+Behavior:
+  - Exports env from user_service/.env (preferred) or .env.user_service if present
+  - If OIDC_PRIVATE_KEY_PEM_FILE is set, reads it into OIDC_PRIVATE_KEY_PEM
+  - Defaults COOKIE_SECURE=false for local HTTP if not set
+  - Sets GRADLE_USER_HOME to module-local .gradle
+  - Runs module task: "bootRun"
+EOF
+}
+
+ACTION="run"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --with-db) WITH_DB=1; shift ;;
+    --skip-db) SKIP_DB=1; shift ;;
+    --background) BACKGROUND=1; shift ;;
+    stop|destroy) ACTION="$1"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    --) shift; break ;;
+    *) break ;;
+  esac
+done
+
+log() { printf "[user_service] %s\n" "$*" >&2; }
+
+require_gradlew() {
+  if [[ ! -x "$GRADLEW_MODULE" ]]; then
+    log "gradlew not found at $GRADLEW_MODULE"
+    exit 1
+  fi
+}
+
+check_java() {
+  if ! command -v java >/dev/null 2>&1; then
+    log "Java not found in PATH (need JDK 21)"
+    exit 1
+  fi
+  local ver
+  ver=$(java -version 2>&1 | head -n1)
+  if [[ "$ver" != *"21"* ]]; then
+    log "Warning: expected JDK 21, detected: $ver"
+  fi
+}
+
+load_env() {
+  set -a
+  if [[ -f "$ENV_FILE_SERVICE" ]]; then
+    log "Loading env: user_service/.env"
+    # shellcheck disable=SC1090
+    source "$ENV_FILE_SERVICE"
+  elif [[ -f "$ENV_FILE_ROOT" ]]; then
+    log "Loading env: .env.user_service"
+    # shellcheck disable=SC1090
+    source "$ENV_FILE_ROOT"
+  else
+    log "No env file found (user_service/.env or .env.user_service). Proceeding with process env."
+  fi
+
+  # Read PEM from file if path provided and variable not already set
+  if [[ -n "${OIDC_PRIVATE_KEY_PEM_FILE:-}" && -z "${OIDC_PRIVATE_KEY_PEM:-}" ]]; then
+    if [[ -f "$OIDC_PRIVATE_KEY_PEM_FILE" ]]; then
+      log "Reading OIDC private key from: $OIDC_PRIVATE_KEY_PEM_FILE"
+      OIDC_PRIVATE_KEY_PEM=$(cat "$OIDC_PRIVATE_KEY_PEM_FILE")
+      export OIDC_PRIVATE_KEY_PEM
+    else
+      log "Warning: OIDC_PRIVATE_KEY_PEM_FILE set but file not found: $OIDC_PRIVATE_KEY_PEM_FILE"
+    fi
+  fi
+
+  # Default to insecure cookies for local HTTP unless overridden
+  if [[ -z "${COOKIE_SECURE:-}" ]]; then
+    export COOKIE_SECURE=false
+  fi
+  # Default local port to match Dockerfile unless overridden
+  if [[ -z "${SERVER_PORT:-}" ]]; then
+    export SERVER_PORT=8020
+  fi
+  set +a
+}
+
+ensure_db() {
+  if (( SKIP_DB == 1 )); then
+    return 0
+  fi
+  if (( WITH_DB == 1 )); then
+    log "Ensuring local Postgres is up and migrated..."
+    "$ROOT_DIR/tools/local-db.sh" up
+    "$ROOT_DIR/tools/local-db.sh" migrate
+    if [[ -z "${DATABASE_URL:-}" ]]; then
+      DATABASE_URL=$("$ROOT_DIR/tools/local-db.sh" url)
+      export DATABASE_URL
+      log "Using DATABASE_URL: $DATABASE_URL"
+    fi
+  fi
+}
+
+ensure_dirs() {
+  mkdir -p "$DEV_DIR" "$DEV_KEYS_DIR"
+}
+
+ensure_dev_key() {
+  if [[ -f "$DEV_PEM" ]]; then
+    return 0
+  fi
+  if ! command -v openssl >/dev/null 2>&1; then
+    log "openssl not found; will use ephemeral OIDC keys (JWKS unstable across runs)"
+    return 0
+  fi
+  log "Generating stable OIDC RSA key (PKCS#8) at: $DEV_PEM"
+  mkdir -p "$DEV_KEYS_DIR"
+  # Generate PKCS#8 RSA private key
+  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$DEV_PEM"
+}
+
+ensure_jwt_key() {
+  if [[ -n "${JWT_SIGNING_KEY:-}" ]]; then
+    return 0
+  fi
+  # Generate a random 48-byte base64 string; fall back to python if openssl missing
+  if command -v openssl >/dev/null 2>&1; then
+    export JWT_SIGNING_KEY=$(openssl rand -base64 48 | tr -d '\n')
+  else
+    export JWT_SIGNING_KEY=$(python3 - <<'PY'
+import secrets, base64
+print(base64.b64encode(secrets.token_bytes(48)).decode('ascii'))
+PY
+)
+  fi
+  log "Generated JWT_SIGNING_KEY for session tokens"
+}
+
+write_env_if_missing() {
+  if [[ -f "$ENV_FILE_SERVICE" ]]; then
+    return 0
+  fi
+  log "Creating user_service/.env from template with local defaults"
+  cat > "$ENV_FILE_SERVICE" <<EOF
+# Auto-generated by tools/run-user-service.sh
+JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
+COOKIE_SECURE=false
+COOKIE_DOMAIN=
+SESSION_MAX_AGE=604800
+SERVER_PORT=8020
+# OIDC issuer/audience loaded from DB (system_config) by OidcPropertiesLoader
+# Override with environment if needed: OIDC_ISSUER, OIDC_AUDIENCE, OIDC_KID
+OIDC_KID=dev-1
+OIDC_PRIVATE_KEY_PEM_FILE=${DEV_PEM}
+# DATABASE_URL will be set dynamically when using --with-db
+EOF
+}
+
+main() {
+  require_gradlew
+  check_java
+  ensure_dirs
+
+  if [[ "$ACTION" == "stop" ]]; then
+    # Stop by PID file first
+    if [[ -f "$PID_FILE" ]]; then
+      PID=$(cat "$PID_FILE" || true)
+      if [[ -n "${PID:-}" ]] && kill -0 "$PID" >/dev/null 2>&1; then
+        log "Stopping user_service (PID $PID) gracefully"
+        kill "$PID" || true
+        
+        # Wait up to 10 seconds for graceful shutdown
+        for i in {1..10}; do
+          if ! kill -0 "$PID" >/dev/null 2>&1; then
+            log "Service stopped gracefully"
+            break
+          fi
+          sleep 1
+        done
+        
+        # Force kill if still running
+        if kill -0 "$PID" >/dev/null 2>&1; then
+          log "Service still running, force killing (PID $PID)"
+          kill -9 "$PID" >/dev/null 2>&1 || true
+          sleep 2
+        fi
+      fi
+      rm -f "$PID_FILE"
+    fi
+    
+    # Find any remaining Java processes on port 8020 and kill them
+    log "Checking for any remaining processes on port 8020..."
+    REMAINING_PIDS=$(lsof -ti:8020 2>/dev/null || true)
+    if [[ -n "$REMAINING_PIDS" ]]; then
+      log "Found processes still using port 8020: $REMAINING_PIDS"
+      for pid in $REMAINING_PIDS; do
+        if ps -p "$pid" >/dev/null 2>&1; then
+          log "Force killing remaining process: $pid"
+          kill -9 "$pid" >/dev/null 2>&1 || true
+        fi
+      done
+      sleep 2
+      # Verify port is free
+      if lsof -ti:8020 >/dev/null 2>&1; then
+        log "Warning: Port 8020 still in use after cleanup"
+      else
+        log "Port 8020 is now free"
+      fi
+    else
+      log "No processes found on port 8020"
+    fi
+    
+    exit 0
+  fi
+
+  if [[ "$ACTION" == "destroy" ]]; then
+    # Stop if running
+    "$0" stop || true
+    # Remove dev keys
+    if [[ -f "$DEV_PEM" ]]; then
+      log "Removing dev key: $DEV_PEM"
+      rm -f "$DEV_PEM"
+    fi
+    # Optionally destroy DB when --with-db is supplied
+    if (( WITH_DB == 1 )); then
+      log "Destroying local Postgres (and volume)"
+      "$ROOT_DIR/tools/local-db.sh" destroy || true
+    fi
+    exit 0
+  fi
+
+  ensure_dev_key
+  ensure_jwt_key
+  write_env_if_missing
+  # Ensure OIDC_PRIVATE_KEY_PEM is populated from dev key if not set
+  export OIDC_PRIVATE_KEY_PEM_FILE=${OIDC_PRIVATE_KEY_PEM_FILE:-$DEV_PEM}
+
+  load_env
+  ensure_db
+
+  export GRADLE_USER_HOME="$USER_SERVICE_DIR/.gradle"
+  
+  # Ensure we build first to pick up any code changes
+  log "Building user_service to ensure latest code is included..."
+  (cd "$USER_SERVICE_DIR" && ./gradlew build -x test --no-daemon)
+  
+  if (( BACKGROUND == 1 )); then
+    log "Starting user_service in background... (logs: $LOG_FILE)"
+    (cd "$USER_SERVICE_DIR" && nohup ./gradlew bootRun --no-daemon >"$LOG_FILE" 2>&1 & echo $! >"$PID_FILE")
+    sleep 1
+    if [[ -s "$PID_FILE" ]]; then
+      log "Started with PID $(cat "$PID_FILE")"
+    else
+      log "Failed to start; check $LOG_FILE"
+      exit 1
+    fi
+  else
+    log "Starting user_service via module Gradle wrapper..."
+    (cd "$USER_SERVICE_DIR" && ./gradlew bootRun --no-daemon "$@")
+  fi
+}
+
+main "$@"
